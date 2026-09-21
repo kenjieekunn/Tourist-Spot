@@ -109,7 +109,7 @@ Client Token: abcdef1234567890abcdef1234567890
       android:value="@string/facebook_app_id" />
   ```
 - [ ] Check that Facebook activities are present
-- [ ] If missing, they should already be added (check SETUP_SUMMARY.md)
+- [ ] If missing, verify the setup files and database configuration.
 
 ### Verify build.gradle.kts
 - [ ] Open `android/app/build.gradle.kts`
