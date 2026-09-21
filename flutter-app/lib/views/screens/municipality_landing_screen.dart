@@ -1,19 +1,37 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:tourist_spot_app/models/municipality_model.dart';
 import 'package:tourist_spot_app/controllers/app_providers.dart';
+import 'package:tourist_spot_app/models/municipality_model.dart';
+import 'package:tourist_spot_app/views/widgets/cached_image_widget.dart';
 
-class MunicipalityLandingScreen extends ConsumerWidget {
-  const MunicipalityLandingScreen({Key? key}) : super(key: key);
+class MunicipalityLandingScreen extends ConsumerStatefulWidget {
+  const MunicipalityLandingScreen({super.key});
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MunicipalityLandingScreen> createState() =>
+      _MunicipalityLandingScreenState();
+}
+
+class _MunicipalityLandingScreenState
+    extends ConsumerState<MunicipalityLandingScreen> {
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final municipalitiesAsync = ref.watch(municipalitiesProvider);
 
     return Scaffold(
       body: municipalitiesAsync.when(
-        loading: () => _buildLoadingState(),
+        loading: _buildLoadingState,
         error: (error, stackTrace) => _buildErrorState(error, context, ref),
         data: (municipalities) =>
             _buildMunicipalitiesList(municipalities, context, ref),
@@ -154,7 +172,12 @@ class MunicipalityLandingScreen extends ConsumerWidget {
   }
 
   Widget _buildMunicipalitiesList(
-      List<Municipality> municipalities, BuildContext context, WidgetRef ref) {
+    List<Municipality> municipalities,
+    BuildContext context,
+    WidgetRef ref,
+  ) {
+    final filteredMunicipalities = _filterMunicipalities(municipalities);
+
     return CustomScrollView(
       slivers: [
         SliverAppBar(
@@ -194,41 +217,163 @@ class MunicipalityLandingScreen extends ConsumerWidget {
           sliver: SliverList(
             delegate: SliverChildListDelegate(
               [
-                Padding(
-                  padding: EdgeInsets.only(bottom: 12.h),
-                  child: Text(
-                    'Municipalities',
-                    style: GoogleFonts.roboto(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey[800],
+                Text(
+                  'Municipalities',
+                  style: GoogleFonts.roboto(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey[800],
+                  ),
+                ),
+                SizedBox(height: 12.h),
+                _buildSearchBar(),
+                SizedBox(height: 10.h),
+                Text(
+                  'Showing ${filteredMunicipalities.length} of ${municipalities.length} municipalities',
+                  style: GoogleFonts.roboto(
+                    fontSize: 12.sp,
+                    color: Colors.grey[700],
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                SizedBox(height: 16.h),
+                if (filteredMunicipalities.isEmpty)
+                  _buildEmptyState()
+                else
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 12.w,
+                      mainAxisSpacing: 12.w,
+                      childAspectRatio: 0.8,
                     ),
+                    itemCount: filteredMunicipalities.length,
+                    itemBuilder: (context, index) {
+                      final municipality = filteredMunicipalities[index];
+                      return _buildMunicipalityCard(
+                        municipality,
+                        context,
+                        ref,
+                      );
+                    },
                   ),
-                ),
-                GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 12.w,
-                    mainAxisSpacing: 12.w,
-                    childAspectRatio: 0.8,
-                  ),
-                  itemCount: municipalities.length,
-                  itemBuilder: (context, index) {
-                    final municipality = municipalities[index];
-                    return _buildMunicipalityCard(
-                      municipality,
-                      context,
-                      ref,
-                    );
-                  },
-                ),
               ],
             ),
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildSearchBar() {
+    return Container(
+      padding: EdgeInsets.all(14.w),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16.r),
+        gradient: const LinearGradient(
+          colors: [
+            Colors.white,
+            Color(0xFFFFF7F1),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        border: Border.all(color: const Color(0xFFFFD7C2)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: TextField(
+        controller: _searchController,
+        onChanged: (value) {
+          setState(() {
+            _searchQuery = value;
+          });
+        },
+        decoration: InputDecoration(
+          hintText: 'Search municipalities',
+          prefixIcon: const Icon(Icons.search),
+          suffixIcon: _searchQuery.isEmpty
+              ? null
+              : IconButton(
+                  icon: const Icon(Icons.clear),
+                  onPressed: () {
+                    _searchController.clear();
+                    setState(() {
+                      _searchQuery = '';
+                    });
+                  },
+                ),
+          filled: true,
+          fillColor: Colors.white,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12.r),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12.r),
+            borderSide: BorderSide(color: Colors.grey.shade300),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12.r),
+            borderSide: const BorderSide(color: Color(0xFFFF6B35)),
+          ),
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: 12.w,
+            vertical: 14.h,
+          ),
+        ),
+      ),
+    );
+  }
+
+  List<Municipality> _filterMunicipalities(List<Municipality> municipalities) {
+    final query = _searchQuery.trim().toLowerCase();
+    if (query.isEmpty) return municipalities;
+
+    return municipalities.where((municipality) {
+      return municipality.name.toLowerCase().contains(query) ||
+          (municipality.description ?? '').toLowerCase().contains(query);
+    }).toList();
+  }
+
+  Widget _buildEmptyState() {
+    return Padding(
+      padding: EdgeInsets.only(top: 18.h, bottom: 8.h),
+      child: Column(
+        children: [
+          Icon(
+            Icons.filter_alt_off,
+            size: 54.sp,
+            color: Colors.grey[500],
+          ),
+          SizedBox(height: 12.h),
+          Text(
+            'No municipalities match your search.',
+            style: GoogleFonts.roboto(
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey[700],
+            ),
+            textAlign: TextAlign.center,
+          ),
+          SizedBox(height: 6.h),
+          Text(
+            'Try a different keyword or clear the search bar.',
+            style: GoogleFonts.roboto(
+              fontSize: 12.sp,
+              color: Colors.grey[600],
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
     );
   }
 
@@ -252,23 +397,20 @@ class MunicipalityLandingScreen extends ConsumerWidget {
         ),
         child: Stack(
           children: [
-            // Background image
             Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12.r),
                 color: Colors.grey[300],
               ),
               child: (municipality.imageUrl ?? '').isNotEmpty
-                  ? Image.network(
-                      municipality.imageUrl!,
+                  ? CachedImageWidget(
+                      imageUrl: municipality.imageUrl!,
                       fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return _buildPlaceholder();
-                      },
+                      borderRadius: BorderRadius.circular(12.r),
+                      placeholderBuilder: _buildPlaceholder,
                     )
                   : _buildPlaceholder(),
             ),
-            // Gradient overlay
             Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12.r),
@@ -282,7 +424,6 @@ class MunicipalityLandingScreen extends ConsumerWidget {
                 ),
               ),
             ),
-            // Content
             Positioned(
               bottom: 0,
               left: 0,
@@ -311,14 +452,16 @@ class MunicipalityLandingScreen extends ConsumerWidget {
                           color: Colors.white70,
                         ),
                         SizedBox(width: 4.w),
-                        if (municipality.touristSpotsCount != null)
-                          Text(
-                            '${municipality.touristSpotsCount} Spots',
+                        Expanded(
+                          child: Text(
+                            '${municipality.touristSpotsCount ?? 0} Spots',
                             style: GoogleFonts.roboto(
                               fontSize: 10.sp,
                               color: Colors.white70,
                             ),
+                            overflow: TextOverflow.ellipsis,
                           ),
+                        ),
                       ],
                     ),
                   ],

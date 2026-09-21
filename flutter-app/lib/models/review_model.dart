@@ -1,57 +1,74 @@
+import 'dart:convert';
+
 class Review {
   final int id;
-  final int spotId;
+  final int? touristSpotId;
   final String userName;
-  final String? email;
   final int rating;
   final String comment;
-  final bool isVerified;
-  final int helpfulCount;
-  final List<Map<String, dynamic>>? images;
-  final DateTime createdAt;
+  final String? status;
+  final List<String> images;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
 
   Review({
     required this.id,
-    required this.spotId,
+    this.touristSpotId,
     required this.userName,
-    this.email,
     required this.rating,
     required this.comment,
-    required this.isVerified,
-    required this.helpfulCount,
-    this.images,
-    required this.createdAt,
+    this.status,
+    this.images = const [],
+    this.createdAt,
+    this.updatedAt,
   });
 
   factory Review.fromJson(Map<String, dynamic> json) {
+    final rawImages = json['images'];
+    List<String> parsedImages = [];
+    if (rawImages is List) {
+      parsedImages = rawImages.map((item) => item.toString()).toList();
+    } else if (rawImages is String && rawImages.isNotEmpty) {
+      try {
+        final decoded = jsonDecode(rawImages);
+        if (decoded is List) {
+          parsedImages = decoded.map((item) => item.toString()).toList();
+        }
+      } catch (_) {
+        parsedImages = [];
+      }
+    }
+
     return Review(
-      id: json['id'],
-      spotId: json['spot_id'],
-      userName: json['user_name'],
-      email: json['email'],
-      rating: json['rating'],
-      comment: json['comment'],
-      isVerified: json['is_verified'] ?? false,
-      helpfulCount: json['helpful_count'] ?? 0,
-      images: json['images'] != null
-          ? List<Map<String, dynamic>>.from(json['images'])
+      id: int.parse(json['id'].toString()),
+      touristSpotId: json['tourist_spot_id'] != null
+          ? int.tryParse(json['tourist_spot_id'].toString())
           : null,
-      createdAt: DateTime.parse(json['created_at']),
+      userName: json['user_name']?.toString() ?? 'Anonymous',
+      rating: int.tryParse(json['rating'].toString()) ?? 0,
+      comment: json['comment']?.toString() ?? '',
+      status: json['status']?.toString(),
+      images: parsedImages,
+      createdAt: json['created_at'] != null
+          ? DateTime.tryParse(json['created_at'].toString())
+          : null,
+      updatedAt: json['updated_at'] != null
+          ? DateTime.tryParse(json['updated_at'].toString())
+          : null,
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'spot_id': spotId,
+      'tourist_spot_id': touristSpotId,
       'user_name': userName,
-      'email': email,
       'rating': rating,
       'comment': comment,
-      'is_verified': isVerified,
-      'helpful_count': helpfulCount,
+      'status': status,
       'images': images,
-      'created_at': createdAt.toIso8601String(),
+      'created_at': createdAt?.toIso8601String(),
+      'updated_at': updatedAt?.toIso8601String(),
     };
   }
 }

@@ -6,6 +6,7 @@ import 'package:tourist_spot_app/views/screens/tourist_spots_list_screen.dart';
 import 'package:tourist_spot_app/views/screens/tourist_spot_detail_screen.dart';
 import 'package:tourist_spot_app/views/screens/tourist_spot_map_screen.dart';
 import 'package:tourist_spot_app/views/screens/add_review_screen.dart';
+import 'package:tourist_spot_app/views/screens/login_screen.dart';
 
 class AppRoutes {
   static const String splash = '/';
@@ -14,6 +15,7 @@ class AppRoutes {
   static const String spotDetail = '/spot-detail';
   static const String spotMap = '/spot-map';
   static const String addReview = '/add-review';
+  static const String login = '/login';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -40,6 +42,10 @@ class AppRoutes {
         final spot = settings.arguments as TouristSpot;
         return MaterialPageRoute(
           builder: (_) => AddReviewScreen(spot: spot),
+        );
+      case login:
+        return MaterialPageRoute(
+          builder: (_) => const LoginScreen(),
         );
       default:
         return MaterialPageRoute(

@@ -10,9 +10,9 @@ class TouristSpotMapScreen extends StatefulWidget {
   final TouristSpot touristSpot;
 
   const TouristSpotMapScreen({
-    Key? key,
+    super.key,
     required this.touristSpot,
-  }) : super(key: key);
+  });
 
   @override
   State<TouristSpotMapScreen> createState() => _TouristSpotMapScreenState();
@@ -122,8 +122,10 @@ class _TouristSpotMapScreenState extends State<TouristSpotMapScreen> {
       icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
     );
 
+    final facilityMarkers = _buildFacilityMarkers();
+
     setState(() {
-      _markers = {userMarker, destMarker};
+      _markers = {userMarker, destMarker, ...facilityMarkers};
     });
 
     // Create polyline (direct line to destination)
@@ -229,20 +231,227 @@ class _TouristSpotMapScreenState extends State<TouristSpotMapScreen> {
   }
 
   LatLngBounds _calculateBounds() {
-    final userLat = _userPosition!.latitude;
-    final userLng = _userPosition!.longitude;
-    final destLat = widget.touristSpot.latitude;
-    final destLng = widget.touristSpot.longitude;
+    final points = <LatLng>[
+      LatLng(_userPosition!.latitude, _userPosition!.longitude),
+      LatLng(widget.touristSpot.latitude, widget.touristSpot.longitude),
+      ..._structuredFacilities().where(_hasFacilityCoordinates).map(
+            (facility) => LatLng(
+              _facilityLatitude(facility)!,
+              _facilityLongitude(facility)!,
+            ),
+          ),
+    ];
 
-    final southwestLat = userLat < destLat ? userLat : destLat;
-    final southwestLng = userLng < destLng ? userLng : destLng;
-    final northeastLat = userLat > destLat ? userLat : destLat;
-    final northeastLng = userLng > destLng ? userLng : destLng;
+    final southwestLat =
+        points.map((point) => point.latitude).reduce((a, b) => a < b ? a : b);
+    final southwestLng =
+        points.map((point) => point.longitude).reduce((a, b) => a < b ? a : b);
+    final northeastLat =
+        points.map((point) => point.latitude).reduce((a, b) => a > b ? a : b);
+    final northeastLng =
+        points.map((point) => point.longitude).reduce((a, b) => a > b ? a : b);
 
     return LatLngBounds(
       southwest: LatLng(southwestLat - 0.01, southwestLng - 0.01),
       northeast: LatLng(northeastLat + 0.01, northeastLng + 0.01),
     );
+  }
+
+  List<Map<String, dynamic>> _structuredFacilities() {
+    return widget.touristSpot.nearbyFacilities ?? [];
+  }
+
+  List<Map<String, dynamic>> _facilitiesByType(String type) {
+    return _structuredFacilities()
+        .where((facility) =>
+            facility['type']?.toString().toLowerCase() == type.toLowerCase())
+        .toList();
+  }
+
+  bool _hasFacilityCoordinates(Map<String, dynamic> facility) {
+    return _facilityLatitude(facility) != null &&
+        _facilityLongitude(facility) != null;
+  }
+
+  double? _facilityLatitude(Map<String, dynamic> facility) {
+    return double.tryParse(facility['latitude']?.toString() ?? '');
+  }
+
+  double? _facilityLongitude(Map<String, dynamic> facility) {
+    return double.tryParse(facility['longitude']?.toString() ?? '');
+  }
+
+  String _facilityTypeLabel(String type) {
+    switch (type) {
+      case 'dining':
+        return 'Dining';
+      case 'gas_station':
+        return 'Gas Station';
+      case 'restroom':
+        return 'Restroom';
+      default:
+        return 'Nearby Facility';
+    }
+  }
+
+  double _facilityMarkerHue(String type) {
+    switch (type) {
+      case 'dining':
+        return BitmapDescriptor.hueOrange;
+      case 'gas_station':
+        return BitmapDescriptor.hueAzure;
+      case 'restroom':
+        return BitmapDescriptor.hueGreen;
+      default:
+        return BitmapDescriptor.hueViolet;
+    }
+  }
+
+  Set<Marker> _buildFacilityMarkers() {
+    return _structuredFacilities()
+        .where(_hasFacilityCoordinates)
+        .map((facility) {
+      final latitude = _facilityLatitude(facility)!;
+      final longitude = _facilityLongitude(facility)!;
+      final type = facility['type']?.toString().toLowerCase() ?? '';
+      final name = facility['name']?.toString() ?? 'Facility';
+      return Marker(
+        markerId: MarkerId(
+          'facility_${type}_${name.hashCode}_${latitude}_$longitude',
+        ),
+        position: LatLng(latitude, longitude),
+        icon: BitmapDescriptor.defaultMarkerWithHue(
+          _facilityMarkerHue(type),
+        ),
+        infoWindow: InfoWindow(
+          title: name,
+          snippet: _facilityTypeLabel(type),
+        ),
+      );
+    }).toSet();
+  }
+
+  List<Widget> _facilityNavigationButtons() {
+    final dining = _facilitiesByType('dining');
+    final gas = _facilitiesByType('gas_station');
+
+    final buttons = <Widget>[];
+
+    for (final facility in dining) {
+      if (!_hasFacilityCoordinates(facility)) continue;
+      buttons.add(
+        _buildFacilityActionButton(
+          facility,
+          icon: Icons.restaurant,
+          label: 'Dining',
+          color: Colors.orange,
+        ),
+      );
+    }
+
+    for (final facility in gas) {
+      if (!_hasFacilityCoordinates(facility)) continue;
+      buttons.add(
+        _buildFacilityActionButton(
+          facility,
+          icon: Icons.local_gas_station,
+          label: 'Gas Station',
+          color: Colors.blue,
+        ),
+      );
+    }
+
+    return buttons;
+  }
+
+  Widget _buildFacilityActionButton(
+    Map<String, dynamic> facility, {
+    required IconData icon,
+    required String label,
+    required Color color,
+  }) {
+    final name = facility['name']?.toString() ?? 'Nearby Facility';
+    return OutlinedButton.icon(
+      onPressed: () => _navigateToFacility(facility),
+      icon: Icon(icon, size: 16, color: color),
+      label: Text(
+        '$label: $name',
+        overflow: TextOverflow.ellipsis,
+      ),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: color,
+        side: BorderSide(color: color.withOpacity(0.35)),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      ),
+    );
+  }
+
+  Future<void> _navigateToFacility(Map<String, dynamic> facility) async {
+    final latitude = _facilityLatitude(facility);
+    final longitude = _facilityLongitude(facility);
+    if (latitude == null || longitude == null) return;
+
+    try {
+      final coords = Coords(latitude, longitude);
+      final availableMaps = await MapLauncher.installedMaps;
+      if (availableMaps.isEmpty) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No maps app installed')),
+        );
+        return;
+      }
+
+      final title = facility['name']?.toString() ?? 'Nearby Facility';
+      final description = _facilityTypeLabel(
+        facility['type']?.toString().toLowerCase() ?? '',
+      );
+
+      if (availableMaps.length == 1) {
+        await availableMaps.first.showMarker(
+          coords: coords,
+          title: title,
+          description: description,
+        );
+      } else {
+        if (!mounted) return;
+        showModalBottomSheet(
+          context: context,
+          builder: (context) => SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 12),
+                const Text(
+                  'Open in',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                ...availableMaps.map(
+                  (map) => ListTile(
+                    leading: const Icon(Icons.place, color: Colors.blue),
+                    title: Text(map.mapName),
+                    subtitle: Text(title),
+                    onTap: () async {
+                      Navigator.pop(context);
+                      await map.showMarker(
+                        coords: coords,
+                        title: title,
+                        description: description,
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not open facility map: $e')),
+      );
+    }
   }
 
   @override
@@ -279,7 +488,7 @@ class _TouristSpotMapScreenState extends State<TouristSpotMapScreen> {
                               polylines: _polylines,
                               myLocationEnabled: true,
                               myLocationButtonEnabled: true,
-                              zoomControlsEnabled: true,
+                              zoomControlsEnabled: false,
                             ),
                           // Distance info overlay
                           Positioned(
@@ -339,6 +548,45 @@ class _TouristSpotMapScreenState extends State<TouristSpotMapScreen> {
                               ),
                             ),
                           ),
+                          if (_facilityNavigationButtons().isNotEmpty)
+                            Positioned(
+                              left: 12,
+                              right: 12,
+                              bottom: 12,
+                              child: Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(8),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.1),
+                                      blurRadius: 8,
+                                    ),
+                                  ],
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Text(
+                                      'Nearby Amenities',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Wrap(
+                                      spacing: 8,
+                                      runSpacing: 8,
+                                      children: _facilityNavigationButtons(),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
                         ],
                       ),
                     ),

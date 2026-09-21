@@ -1,7 +1,3 @@
-import 'dart:io' show Platform;
-
-import 'package:flutter/foundation.dart';
-
 class ApiConstants {
   // Base API URL - Local XAMPP dev server for real-time sync with admin system
   // Override at runtime:
@@ -45,7 +41,14 @@ class ApiConstants {
 
   // Tourist Spots Endpoints (general)
   static const String touristSpots = 'tourist-spots';
+  static const String touristSpotSearch = 'tourist-spots/search';
   static String spotDetail(int id) => 'spots/$id';
+  static String toggleSpotFavorite(int id) => 'spots/$id/favorite';
+
+  // Auth Endpoints
+  static const String googleAuth = 'auth/google';
+  static const String facebookAuth = 'auth/facebook';
+  static const String currentUser = 'user';
 
   // Reviews Endpoints
   static String spotReviews(int spotId) => 'spots/$spotId/reviews';

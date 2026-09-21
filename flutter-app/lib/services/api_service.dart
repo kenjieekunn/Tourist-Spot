@@ -10,6 +10,7 @@ import 'package:tourist_spot_app/services/api_base_url_resolver.dart';
 class ApiService {
   late Dio _dio;
   bool _initialized = false;
+  static const String _authTokenKey = 'auth_token';
   static const String _municipalitiesCacheKey = 'cache_municipalities_v1';
   static const String _touristSpotsCacheKey = 'cache_tourist_spots_v1';
 
@@ -40,12 +41,36 @@ class ApiService {
     ));
   }
 
+  Future<Set<int>> _getLocalFavorites() async {
+    final prefs = await SharedPreferences.getInstance();
+    final favoritesJson = prefs.getString('local_favorites') ?? '{}';
+    try {
+      final favorites = Map<String, bool>.from(
+        (jsonDecode(favoritesJson) as Map).cast<String, bool>(),
+      );
+      return favorites.keys.map((key) => int.parse(key)).toSet();
+    } catch (_) {
+      return <int>{};
+    }
+  }
+
   Future<void> _ensureInitialized({bool forceDiscover = false}) async {
     if (_initialized && !forceDiscover) return;
     final resolvedBaseUrl =
         await ApiBaseUrlResolver.resolve(forceDiscover: forceDiscover);
     _initializeDio(baseUrl: resolvedBaseUrl);
+    await _syncAuthTokenFromPrefs();
     _initialized = true;
+  }
+
+  Future<void> _syncAuthTokenFromPrefs() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString(_authTokenKey);
+    if (token != null && token.isNotEmpty) {
+      _dio.options.headers['Authorization'] = 'Bearer $token';
+    } else {
+      _dio.options.headers.remove('Authorization');
+    }
   }
 
   // GET request
@@ -53,9 +78,11 @@ class ApiService {
       {Map<String, dynamic>? queryParameters}) async {
     try {
       await _ensureInitialized();
+      await _syncAuthTokenFromPrefs();
       return await _dio.get(endpoint, queryParameters: queryParameters);
     } catch (e) {
       await _ensureInitialized(forceDiscover: true);
+      await _syncAuthTokenFromPrefs();
       return await _dio.get(endpoint, queryParameters: queryParameters);
     }
   }
@@ -64,6 +91,7 @@ class ApiService {
   Future<Response> post(String endpoint, {dynamic data}) async {
     try {
       await _ensureInitialized();
+      await _syncAuthTokenFromPrefs();
       return await _dio.post(endpoint, data: data);
     } catch (e) {
       // Don't retry FormData requests (file uploads) as FormData can only be sent once
@@ -71,6 +99,7 @@ class ApiService {
         rethrow;
       }
       await _ensureInitialized(forceDiscover: true);
+      await _syncAuthTokenFromPrefs();
       return await _dio.post(endpoint, data: data);
     }
   }
@@ -79,9 +108,11 @@ class ApiService {
   Future<Response> put(String endpoint, {dynamic data}) async {
     try {
       await _ensureInitialized();
+      await _syncAuthTokenFromPrefs();
       return await _dio.put(endpoint, data: data);
     } catch (e) {
       await _ensureInitialized(forceDiscover: true);
+      await _syncAuthTokenFromPrefs();
       return await _dio.put(endpoint, data: data);
     }
   }
@@ -90,9 +121,11 @@ class ApiService {
   Future<Response> delete(String endpoint) async {
     try {
       await _ensureInitialized();
+      await _syncAuthTokenFromPrefs();
       return await _dio.delete(endpoint);
     } catch (e) {
       await _ensureInitialized(forceDiscover: true);
+      await _syncAuthTokenFromPrefs();
       return await _dio.delete(endpoint);
     }
   }
@@ -215,8 +248,43 @@ class ApiService {
       final response =
           await get(ApiConstants.municipalitySpots(municipalityId));
       final List<dynamic> data = response.data['data'] ?? response.data;
+      
+      // Get local favorites for non-authenticated users
+      final localFavorites = await _getLocalFavorites();
+      
       final spots = data
-          .map((s) => TouristSpot.fromJson(s as Map<String, dynamic>))
+          .map((s) {
+            final spot = TouristSpot.fromJson(s as Map<String, dynamic>);
+            // Override is_favorited if in local favorites
+            if (localFavorites.contains(spot.id)) {
+              return TouristSpot(
+                id: spot.id,
+                name: spot.name,
+                description: spot.description,
+                address: spot.address,
+                category: spot.category,
+                latitude: spot.latitude,
+                longitude: spot.longitude,
+                openingDays: spot.openingDays,
+                openingTime: spot.openingTime,
+                closingTime: spot.closingTime,
+                phone: spot.phone,
+                website: spot.website,
+                entranceFee: spot.entranceFee,
+                imageUrl: spot.imageUrl,
+                nearbyDining: spot.nearbyDining,
+                nearbyGasStations: spot.nearbyGasStations,
+                nearbyFacilities: spot.nearbyFacilities,
+                status: spot.status,
+                verificationStatus: spot.verificationStatus,
+                isFavorited: true,
+                municipality: spot.municipality,
+                averageRating: spot.averageRating,
+                reviewsCount: spot.reviewsCount,
+              );
+            }
+            return spot;
+          })
           .toList();
       await _writeListCache(
         _municipalitySpotsCacheKey(municipalityId),
@@ -242,6 +310,17 @@ class ApiService {
     }
   }
 
+  Future<Map<String, dynamic>> toggleSpotFavorite(int spotId) async {
+    try {
+      await _ensureInitialized();
+      await _syncAuthTokenFromPrefs();
+      final response = await post(ApiConstants.toggleSpotFavorite(spotId));
+      return Map<String, dynamic>.from(response.data['data'] ?? response.data);
+    } catch (e) {
+      throw Exception('Failed to update favorite: $e');
+    }
+  }
+
   // ===== Reviews Endpoints =====
 // REMOVED: _getDemoReviews() - Use real user reviews from DB
 
@@ -250,7 +329,10 @@ class ApiService {
       final response = await get(ApiConstants.spotDetail(spotId));
       final List<dynamic> data =
           (response.data['data']?['reviews']) ?? response.data['reviews'] ?? [];
-      return data.cast<Map<String, dynamic>>();
+      return data
+          .whereType<Map>()
+          .map((review) => Map<String, dynamic>.from(review))
+          .toList();
     } catch (e) {
       throw Exception('Reviews unavailable. Check API: $e');
     }
@@ -262,29 +344,27 @@ class ApiService {
     required int rating,
     required String comment,
     List<String>? imagePaths,
+    int? userId,
+    String? authToken,
   }) async {
     try {
-      final formData = FormData();
+      final formDataMap = <String, dynamic>{
+        'user_name': userName,
+        'rating': rating.toString(),
+        'comment': comment,
+      };
 
-      // Add form fields
-      formData.fields.addAll([
-        MapEntry('user_name', userName),
-        MapEntry('rating', rating.toString()),
-        MapEntry('comment', comment),
-      ]);
-
-      // Add image files if provided
-      if (imagePaths != null && imagePaths.isNotEmpty) {
-        for (int i = 0; i < imagePaths.length; i++) {
-          final imagePath = imagePaths[i];
-          formData.files.add(
-            MapEntry(
-              'images[]', // Use array notation for multiple files
-              await MultipartFile.fromFile(imagePath),
-            ),
-          );
-        }
+      if (userId != null) {
+        formDataMap['user_id'] = userId.toString();
       }
+
+      if (imagePaths != null && imagePaths.isNotEmpty) {
+        formDataMap['images'] = await Future.wait(
+          imagePaths.map((imagePath) => MultipartFile.fromFile(imagePath)),
+        );
+      }
+
+      final formData = FormData.fromMap(formDataMap);
 
       final response = await post(
         ApiConstants.createReview(spotId),
@@ -298,6 +378,23 @@ class ApiService {
         throw Exception(
             'Server returned: ${response.statusCode} - ${response.data}');
       }
+    } on DioException catch (e) {
+      final data = e.response?.data;
+      if (data is Map) {
+        final message = data['message']?.toString();
+        final errors = data['errors'];
+        if (errors is Map && errors.isNotEmpty) {
+          final firstError = errors.values.first;
+          if (firstError is List && firstError.isNotEmpty) {
+            throw Exception(firstError.first.toString());
+          }
+        }
+        if (message != null && message.isNotEmpty) {
+          throw Exception(message);
+        }
+      }
+
+      throw Exception('Failed to submit review: ${e.message}');
     } catch (e) {
       throw Exception('Failed to submit review: $e');
     }
@@ -314,7 +411,7 @@ class ApiService {
   // ===== Search Endpoints =====
   Future<List<TouristSpot>> searchTouristSpots(String query) async {
     try {
-      final response = await get('tourist-spots/search', queryParameters: {
+      final response = await get(ApiConstants.touristSpotSearch, queryParameters: {
         'q': query,
       });
       final List<dynamic> data = response.data['data'] ?? response.data;

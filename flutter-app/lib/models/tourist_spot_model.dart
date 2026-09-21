@@ -17,6 +17,10 @@ class TouristSpot {
   final String? imageUrl;
   final String? nearbyDining;
   final String? nearbyGasStations;
+  final List<Map<String, dynamic>>? nearbyFacilities;
+  final String? status;
+  final String? verificationStatus;
+  final bool isFavorited;
   final Map<String, dynamic>? municipality;
   final double? averageRating;
   final int? reviewsCount;
@@ -38,6 +42,10 @@ class TouristSpot {
     this.imageUrl,
     this.nearbyDining,
     this.nearbyGasStations,
+    this.nearbyFacilities,
+    this.status,
+    this.verificationStatus,
+    this.isFavorited = false,
     this.municipality,
     this.averageRating,
     this.reviewsCount,
@@ -59,30 +67,60 @@ class TouristSpot {
       }
     }
 
+    List<Map<String, dynamic>>? nearbyFacilities;
+    final rawFacilities = json['nearby_facilities'];
+    if (rawFacilities is List) {
+      nearbyFacilities = rawFacilities
+          .whereType<Map>()
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList();
+    } else if (rawFacilities is String && rawFacilities.isNotEmpty) {
+      try {
+        final decoded = jsonDecode(rawFacilities);
+        if (decoded is List) {
+          nearbyFacilities = decoded
+              .whereType<Map>()
+              .map((item) => Map<String, dynamic>.from(item))
+              .toList();
+        }
+      } catch (_) {
+        nearbyFacilities = null;
+      }
+    }
+
     return TouristSpot(
-      id: json['id'],
-      name: json['name'],
-      description: json['description'],
-      address: json['address'] ?? '',
-      category: json['category'],
+      id: int.parse(json['id'].toString()),
+      name: json['name']?.toString() ?? '',
+      description: json['description']?.toString() ?? '',
+      address: json['address']?.toString() ?? '',
+      category: json['category']?.toString(),
       latitude: double.parse(json['latitude'].toString()),
       longitude: double.parse(json['longitude'].toString()),
       openingDays: openingDays,
-      openingTime: json['opening_time'],
-      closingTime: json['closing_time'],
-      phone: json['phone'],
-      website: json['website'],
+      openingTime: json['opening_time']?.toString(),
+      closingTime: json['closing_time']?.toString(),
+      phone: json['phone']?.toString(),
+      website: json['website']?.toString(),
       entranceFee: json['entrance_fee'] != null
           ? double.tryParse(json['entrance_fee'].toString())
           : null,
-      imageUrl: json['image_url'],
-      nearbyDining: json['nearby_dining'],
-      nearbyGasStations: json['nearby_gas_stations'],
-      municipality: json['municipality'],
+      imageUrl: json['image_url']?.toString(),
+      nearbyDining: json['nearby_dining']?.toString(),
+      nearbyGasStations: json['nearby_gas_stations']?.toString(),
+      nearbyFacilities: nearbyFacilities,
+      status: json['status']?.toString(),
+      verificationStatus: json['verification_status']?.toString(),
+      isFavorited: json['is_favorited'] == true ||
+          json['is_favorited']?.toString() == '1',
+      municipality: json['municipality'] is Map
+          ? Map<String, dynamic>.from(json['municipality'])
+          : null,
       averageRating: json['average_rating'] != null
           ? double.tryParse(json['average_rating'].toString())
           : null,
-      reviewsCount: json['reviews_count'],
+      reviewsCount: json['reviews_count'] != null
+          ? int.tryParse(json['reviews_count'].toString())
+          : null,
     );
   }
 
@@ -104,9 +142,28 @@ class TouristSpot {
       'image_url': imageUrl,
       'nearby_dining': nearbyDining,
       'nearby_gas_stations': nearbyGasStations,
+      'nearby_facilities': nearbyFacilities,
+      'status': status,
+      'verification_status': verificationStatus,
+      'is_favorited': isFavorited,
       'municipality': municipality,
       'average_rating': averageRating,
       'reviews_count': reviewsCount,
     };
   }
+
+  bool get isVerified => verificationStatus == 'approved';
+
+  bool get isOpen => status == 'open' || status == 'active';
+
+  String get municipalityName =>
+      municipality != null
+          ? municipality!['name']?.toString() ?? 'Unknown Municipality'
+          : 'Unknown Municipality';
+
+  String? get municipalityImageUrl =>
+      municipality != null ? municipality!['image_url']?.toString() : null;
+
+  String get categoryLabel =>
+      (category ?? 'nature').replaceAll('_', ' ').toUpperCase();
 }

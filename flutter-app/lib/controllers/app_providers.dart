@@ -1,10 +1,26 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 import 'package:tourist_spot_app/models/municipality_model.dart';
 import 'package:tourist_spot_app/models/tourist_spot_model.dart';
 import 'package:tourist_spot_app/services/api_service.dart';
 
 final apiServiceProvider = Provider((ref) => ApiService());
+
+// Local favorites provider
+final localFavoritesProvider = FutureProvider<Set<int>>((ref) async {
+  final prefs = await SharedPreferences.getInstance();
+  final favoritesJson = prefs.getString('local_favorites') ?? '{}';
+  try {
+    final favorites = Map<String, bool>.from(
+      (jsonDecode(favoritesJson) as Map).cast<String, bool>(),
+    );
+    return favorites.keys.map((key) => int.parse(key)).toSet();
+  } catch (_) {
+    return <int>{};
+  }
+});
 
 // **REAL-TIME SYNC ✅**: Auto-refresh every 15s – admin edits reflect quickly in Flutter
 final touristSpotsByMunicipalityStreamProvider =

@@ -4,7 +4,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:tourist_spot_app/config/routes/app_routes.dart';
 import 'package:tourist_spot_app/config/theme/app_theme.dart';
-import 'package:tourist_spot_app/views/screens/municipality_landing_screen.dart';
 
 void main() {
   runApp(
@@ -15,7 +14,7 @@ void main() {
 }
 
 class TouristSpotApp extends StatelessWidget {
-  const TouristSpotApp({Key? key}) : super(key: key);
+  const TouristSpotApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +39,7 @@ class TouristSpotApp extends StatelessWidget {
 }
 
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({Key? key}) : super(key: key);
+  const SplashScreen({super.key});
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();

@@ -1,0 +1,25 @@
+# Composer dependencies
+admin-system/vendor/
+admin-system/.composer-cache/
+
+# Laravel local env and cache
+admin-system/.env
+admin-system/.phpunit.result.cache
+admin-system/storage/*.key
+admin-system/storage/framework/cache/
+admin-system/storage/framework/sessions/
+admin-system/storage/framework/views/
+admin-system/storage/logs/
+
+# Flutter build artifacts
+flutter-app/.dart_tool/
+flutter-app/build/
+flutter-app/.packages
+flutter-app/.flutter-plugins
+flutter-app/.flutter-plugins-dependencies
+
+# IDE / OS files
+.vscode/
+*.log
+Thumbs.db
+Desktop.ini

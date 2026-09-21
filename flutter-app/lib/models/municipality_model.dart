@@ -19,13 +19,15 @@ class Municipality {
 
   factory Municipality.fromJson(Map<String, dynamic> json) {
     return Municipality(
-      id: json['id'],
-      name: json['name'],
+      id: int.parse(json['id'].toString()),
+      name: json['name']?.toString() ?? '',
       description: json['description'],
       imageUrl: json['image_url'] ?? json['image_path'],
       latitude: double.parse(json['latitude'].toString()),
       longitude: double.parse(json['longitude'].toString()),
-      touristSpotsCount: json['tourist_spots_count'],
+      touristSpotsCount: json['tourist_spots_count'] != null
+          ? int.tryParse(json['tourist_spots_count'].toString())
+          : null,
     );
   }
 

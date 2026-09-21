@@ -1,22 +1,33 @@
-# Fixed Sidebar Layout Task - ✅ COMPLETED
+# Social Auth + Login-Required Review Implementation
 
-## Steps Completed:
-1. ✅ Understand current layout structure from app.blade.php
-2. ✅ Confirm no other dependent views need changes 
-3. ✅ Create detailed edit plan for CSS in app.blade.php
-4. ✅ User approved and proceeded with plan
-5. ✅ Implement CSS changes:
-   - Fixed .main-content: Simple margin-left:350px, padding:2rem, auto-width expansion
-   - Updated .main-col: margin-left:350px, padding:0
-   - Removed rigid calc widths/margins/paddings preventing expansion
-   - Enhanced responsive media queries for main-col/content on mobile/tablet
-   - Removed duplicate CSS rules
-6. ✅ Tested layout logic (sidebar fixed, content fills remaining width responsively)
-7. ✅ Updated TODO.md
-8. ✅ All changes applied successfully
+## Backend Tasks (API-only, no web system changes)
+- [x] Create TODO.md
+- [x] Migration: add `auth_provider`, `provider_id`, `profile_image_url`, `api_token` to users table
+- [x] Migration: add `user_id` foreign key to reviews table
+- [x] Update `User` model: add fillable fields, add `reviews()` relation
+- [x] Update `Review` model: add `user_id` fillable, add `user()` relation
+- [x] Create `SocialAuthController` (Api namespace) — Google + Facebook login, custom token creation
+- [x] Update `routes/api.php` — add auth endpoints, protect review POST route
+- [x] Update `TouristSpotApiController::addReview` — require Bearer token auth, store `user_id`, auto-fill name
+- [x] Update `TouristSpotApiController::transformReview` — include user profile image from relation
+- [x] Run migrations
 
-**Result:** Admin sidebar is now fixed (350px wide, full height, position:fixed). Main content automatically expands to fill the remaining screen width with proper spacing, responsive collapse on smaller screens. No horizontal scroll, Bootstrap grids in child views expand fully.
+## Flutter Tasks
+- [ ] Update `pubspec.yaml` — add `google_sign_in`, `flutter_facebook_auth`
+- [ ] Create `AuthUser` model (`lib/models/auth_user_model.dart`)
+- [ ] Create `AuthService` (`lib/services/auth_service.dart`) — Google/Facebook sign-in, local session
+- [ ] Create auth Riverpod providers (`lib/controllers/auth_providers.dart`)
+- [ ] Create `LoginScreen` (`lib/views/screens/login_screen.dart`)
+- [ ] Update `app_routes.dart` — add `/login` route
+- [ ] Update `ApiService` — attach Bearer token, remove manual `userName` from `submitReview`
+- [ ] Update `AddReviewScreen` — login gate, auto-fill display name from auth profile
+- [ ] Update `TouristSpotDetailScreen` — show profile image in reviews if available
+- [ ] Run `flutter pub get`
 
-Refresh your admin dashboard (e.g., http://localhost/tourist-spot-system/admin-system/public/admin/dashboard.php or via XAMPP Apache) and resize browser to verify.
+## Testing
+- [ ] Test Google Sign-In flow
+- [ ] Test review submission as authenticated user
+- [ ] Verify `user_id` stored in reviews table
+- [ ] Verify unauthenticated review POST returns 401
 
 
