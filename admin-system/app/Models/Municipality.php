@@ -15,6 +15,7 @@ class Municipality extends Model
         'latitude',
         'longitude',
         'image_url',
+        'is_active',
     ];
 
     public function touristSpots()
@@ -25,5 +26,10 @@ class Municipality extends Model
     public function admins()
     {
         return $this->hasMany(User::class)->where('role', 'municipality-admin');
+    }
+
+    public function staffAccounts()
+    {
+        return $this->hasMany(User::class)->where('role', 'municipality-staff');
     }
 }

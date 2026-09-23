@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('title', 'Municipalities')
-@section('header', 'Manage Municipalities')
+@section('header', '')
 
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-4">

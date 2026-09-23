@@ -17,7 +17,7 @@ class DashboardController extends Controller
         
         if ($user->isSuperAdmin()) {
             return redirect()->route('super-admin.dashboard');
-        } else if ($user->isMunicipalityAdmin()) {
+        } else if ($user->belongsToMunicipalityTeam()) {
             return redirect()->route('municipality-admin.dashboard');
         }
         

@@ -248,44 +248,42 @@ class ApiService {
       final response =
           await get(ApiConstants.municipalitySpots(municipalityId));
       final List<dynamic> data = response.data['data'] ?? response.data;
-      
+
       // Get local favorites for non-authenticated users
       final localFavorites = await _getLocalFavorites();
-      
-      final spots = data
-          .map((s) {
-            final spot = TouristSpot.fromJson(s as Map<String, dynamic>);
-            // Override is_favorited if in local favorites
-            if (localFavorites.contains(spot.id)) {
-              return TouristSpot(
-                id: spot.id,
-                name: spot.name,
-                description: spot.description,
-                address: spot.address,
-                category: spot.category,
-                latitude: spot.latitude,
-                longitude: spot.longitude,
-                openingDays: spot.openingDays,
-                openingTime: spot.openingTime,
-                closingTime: spot.closingTime,
-                phone: spot.phone,
-                website: spot.website,
-                entranceFee: spot.entranceFee,
-                imageUrl: spot.imageUrl,
-                nearbyDining: spot.nearbyDining,
-                nearbyGasStations: spot.nearbyGasStations,
-                nearbyFacilities: spot.nearbyFacilities,
-                status: spot.status,
-                verificationStatus: spot.verificationStatus,
-                isFavorited: true,
-                municipality: spot.municipality,
-                averageRating: spot.averageRating,
-                reviewsCount: spot.reviewsCount,
-              );
-            }
-            return spot;
-          })
-          .toList();
+
+      final spots = data.map((s) {
+        final spot = TouristSpot.fromJson(s as Map<String, dynamic>);
+        // Override is_favorited if in local favorites
+        if (localFavorites.contains(spot.id)) {
+          return TouristSpot(
+            id: spot.id,
+            name: spot.name,
+            description: spot.description,
+            address: spot.address,
+            category: spot.category,
+            latitude: spot.latitude,
+            longitude: spot.longitude,
+            openingDays: spot.openingDays,
+            openingTime: spot.openingTime,
+            closingTime: spot.closingTime,
+            phone: spot.phone,
+            website: spot.website,
+            entranceFee: spot.entranceFee,
+            imageUrl: spot.imageUrl,
+            nearbyDining: spot.nearbyDining,
+            nearbyGasStations: spot.nearbyGasStations,
+            nearbyFacilities: spot.nearbyFacilities,
+            status: spot.status,
+            verificationStatus: spot.verificationStatus,
+            isFavorited: true,
+            municipality: spot.municipality,
+            averageRating: spot.averageRating,
+            reviewsCount: spot.reviewsCount,
+          );
+        }
+        return spot;
+      }).toList();
       await _writeListCache(
         _municipalitySpotsCacheKey(municipalityId),
         spots.map((s) => s.toJson()).toList(),
@@ -344,6 +342,7 @@ class ApiService {
     required int rating,
     required String comment,
     List<String>? imagePaths,
+    List<String>? videoPaths,
     int? userId,
     String? authToken,
   }) async {
@@ -358,9 +357,13 @@ class ApiService {
         formDataMap['user_id'] = userId.toString();
       }
 
-      if (imagePaths != null && imagePaths.isNotEmpty) {
-        formDataMap['images'] = await Future.wait(
-          imagePaths.map((imagePath) => MultipartFile.fromFile(imagePath)),
+      final mediaPaths = <String>[
+        ...?imagePaths,
+        ...?videoPaths,
+      ];
+      if (mediaPaths.isNotEmpty) {
+        formDataMap['media'] = await Future.wait(
+          mediaPaths.map((mediaPath) => MultipartFile.fromFile(mediaPath)),
         );
       }
 
@@ -411,7 +414,8 @@ class ApiService {
   // ===== Search Endpoints =====
   Future<List<TouristSpot>> searchTouristSpots(String query) async {
     try {
-      final response = await get(ApiConstants.touristSpotSearch, queryParameters: {
+      final response =
+          await get(ApiConstants.touristSpotSearch, queryParameters: {
         'q': query,
       });
       final List<dynamic> data = response.data['data'] ?? response.data;

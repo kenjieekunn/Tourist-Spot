@@ -3,19 +3,19 @@ import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
   // Colors
-  static const Color primaryColor = Color(0xFFFF6B35);
-  static const Color secondaryColor = Color(0xFF004E89);
-  static const Color accentColor = Color(0xFF9D84B7);
-  static const Color backgroundColor = Color(0xFFF5F5F5);
+  static const Color primaryColor = Color(0xFF0F766E);
+  static const Color secondaryColor = Color(0xFF3F7D42);
+  static const Color accentColor = Color(0xFF2A9D8F);
+  static const Color backgroundColor = Color(0xFFF7F9FC);
   static const Color surfaceColor = Color(0xFFFFFFFF);
   static const Color errorColor = Color(0xFFE74C3C);
   static const Color successColor = Color(0xFF27AE60);
   static const Color warningColor = Color(0xFFF39C12);
 
   // Text Colors
-  static const Color textPrimary = Color(0xFF212121);
-  static const Color textSecondary = Color(0xFF757575);
-  static const Color textHint = Color(0xFFBDBDBD);
+  static const Color textPrimary = Color(0xFF173F43);
+  static const Color textSecondary = Color(0xFF5E6C84);
+  static const Color textHint = Color(0xFF97A3B6);
 
   static const Color _darkBackground = Color(0xFF1E1E1E);
   static const Color _darkSurface = Color(0xFF2D2D2D);
@@ -132,6 +132,10 @@ class AppTheme {
         elevation: 2,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         color: surfaceColor,
+      ),
+      dividerTheme: const DividerThemeData(
+        color: Color(0xFFE4EAF2),
+        thickness: 1,
       ),
     );
   }

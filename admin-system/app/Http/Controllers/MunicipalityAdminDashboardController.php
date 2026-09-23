@@ -8,6 +8,7 @@ use App\Models\Municipality;
 use App\Models\Review;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Notifications\DatabaseNotification;
 
 class MunicipalityAdminDashboardController extends Controller
 {
@@ -43,6 +44,11 @@ class MunicipalityAdminDashboardController extends Controller
                 : TouristSpot::where('municipality_id', $municipality->id)
                     ->where('status', 'inactive')
                     ->count(),
+            'rejectedSpots' => $hasVerificationStatus
+                ? TouristSpot::where('municipality_id', $municipality->id)
+                    ->where('verification_status', 'rejected')
+                    ->count()
+                : 0,
             'closedSpots' => TouristSpot::where('municipality_id', $municipality->id)
                 ->where('status', 'closed')
                 ->count(),
@@ -77,9 +83,34 @@ class MunicipalityAdminDashboardController extends Controller
                 ->take(5)
                 ->with('touristSpot')
                 ->get(),
+            'revisionNotifications' => $user->unreadNotifications()
+                ->where('type', 'App\\Notifications\\SpotRevisionRequested')
+                ->latest()
+                ->take(10)
+                ->get(),
         ];
 
         return view('dashboard.municipality-admin', $dashboardData);
+    }
+
+    public function openNotification(DatabaseNotification $notification)
+    {
+        abort_unless(auth()->user()->hasPermission('manage_spots'), 403, 'You do not have permission to manage tourist spots.');
+        abort_unless($notification->notifiable_id === auth()->id(), 403);
+        $notification->markAsRead();
+        $spotId = data_get($notification->data, 'tourist_spot_id');
+
+        return $spotId
+            ? redirect()->route('tourist_spots.edit', $spotId)
+            : redirect()->route('municipality-admin.dashboard');
+    }
+
+    public function markNotificationsRead()
+    {
+        abort_unless(auth()->user()->hasPermission('manage_spots'), 403, 'You do not have permission to manage tourist spots.');
+        auth()->user()->unreadNotifications()->update(['read_at' => now()]);
+
+        return back()->with('success', 'Revision notifications marked as read.');
     }
 
     /**
@@ -88,6 +119,7 @@ class MunicipalityAdminDashboardController extends Controller
     public function touristSpots(Request $request)
     {
         $user = auth()->user();
+        abort_unless($user->hasPermission('manage_spots'), 403, 'You do not have permission to manage tourist spots.');
         
         if (!$user->municipality_id || !$user->municipality) {
             return redirect()->route('login.form')->with('error', 'Your municipality has not been assigned.');
@@ -121,18 +153,38 @@ class MunicipalityAdminDashboardController extends Controller
             });
 
         if ($hasVerificationStatus) {
-            $spotsQuery->orderByRaw("FIELD(verification_status, 'pending', 'rejected', 'approved')")
-                ->orderByDesc('created_at');
+            $spotsQuery->where('verification_status', 'approved');
         } else {
-            $spotsQuery->orderBy('status')
-                ->orderByDesc('created_at');
+            $spotsQuery->whereIn('status', ['open', 'active']);
         }
 
+        $pendingSpotsQuery = TouristSpot::where('municipality_id', $municipality->id)
+            ->with('reviews')
+            ->withCount(['reviews'])
+            ->when($searchTerm !== '', function ($query) use ($searchTerm) {
+                $query->where(function ($searchQuery) use ($searchTerm) {
+                    $searchQuery->where('name', 'like', '%' . $searchTerm . '%')
+                        ->orWhere('address', 'like', '%' . $searchTerm . '%')
+                        ->orWhere('description', 'like', '%' . $searchTerm . '%');
+                });
+            })
+            ->when($selectedCategory !== 'all' && array_key_exists($selectedCategory, $spotCategories), function ($query) use ($selectedCategory) {
+                $query->where('category', $selectedCategory);
+            });
+
+        if ($hasVerificationStatus) {
+            $pendingSpotsQuery->where('verification_status', 'pending');
+        } else {
+            $pendingSpotsQuery->where('status', 'inactive');
+        }
+
+        $pendingSpots = $pendingSpotsQuery->latest('created_at')->get();
         $spots = $spotsQuery->paginate(20)->withQueryString();
 
         return view('dashboard.municipality-admin-spots', [
             'municipality' => $municipality,
             'spots' => $spots,
+            'pendingSpots' => $pendingSpots,
             'searchTerm' => $searchTerm,
             'selectedCategory' => $selectedCategory,
             'spotCategories' => $spotCategories,
@@ -145,6 +197,7 @@ class MunicipalityAdminDashboardController extends Controller
     public function reports(Request $request)
     {
         $user = auth()->user();
+        abort_unless($user->hasPermission('view_reports'), 403, 'You do not have permission to view reports.');
 
         if (!$user->municipality_id || !$user->municipality) {
             return redirect()->route('login.form')->with('error', 'Your municipality has not been assigned.');
@@ -200,6 +253,7 @@ class MunicipalityAdminDashboardController extends Controller
     public function reviews(Request $request)
     {
         $user = auth()->user();
+        abort_unless($user->hasPermission('manage_reviews'), 403, 'You do not have permission to manage reviews.');
         
         if (!$user->municipality_id || !$user->municipality) {
             return redirect()->route('login.form')->with('error', 'Your municipality has not been assigned.');
@@ -240,7 +294,6 @@ class MunicipalityAdminDashboardController extends Controller
             'reviewDate' => $reviewDate,
             'totalReviews' => $reportReviews->count(),
             'averageRating' => $reportReviews->isNotEmpty() ? round((float) $reportReviews->avg('rating'), 1) : 0,
-            'reportedIssues' => $reportReviews->where('status', 'rejected')->count(),
             'reportPeriod' => $reviewDate !== ''
                 ? Carbon::createFromFormat('!Y-m-d', $reviewDate)->format('F j, Y')
                 : 'All dates',

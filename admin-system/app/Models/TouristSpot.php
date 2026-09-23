@@ -14,6 +14,7 @@ class TouristSpot extends Model
     protected $fillable = [
         'municipality_id',
         'created_by',
+        'edited_by',
         'barangay',
         'category',
         'name',
@@ -34,7 +35,9 @@ class TouristSpot extends Model
         'nearby_gas_stations',
         'nearby_facilities',
         'status',
+        'status_reason',
         'verification_status',
+        'rejection_reason',
     ];
 
     protected $casts = [
@@ -54,6 +57,11 @@ class TouristSpot extends Model
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function editor()
+    {
+        return $this->belongsTo(User::class, 'edited_by');
     }
 
     public function reviews()

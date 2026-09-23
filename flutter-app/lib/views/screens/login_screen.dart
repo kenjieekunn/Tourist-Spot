@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:tourist_spot_app/controllers/auth_providers.dart';
+import 'package:tourist_spot_app/config/theme/app_theme.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -70,7 +71,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             fontWeight: FontWeight.bold,
           ),
         ),
-        backgroundColor: const Color(0xFFFF6B35),
+        backgroundColor: AppTheme.primaryColor,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -86,7 +87,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             Icon(
               Icons.verified_user,
               size: 80.sp,
-              color: const Color(0xFFFF6B35),
+              color: AppTheme.primaryColor,
             ),
             SizedBox(height: 24.h),
             Text(
@@ -139,9 +140,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
-                  foregroundColor: Colors.black87,
+                  foregroundColor: AppTheme.primaryColor,
                   padding: EdgeInsets.symmetric(vertical: 14.h),
-                  side: BorderSide(color: Colors.grey[300]!),
+                  side: const BorderSide(color: AppTheme.primaryColor),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8.r),
                   ),
@@ -162,7 +163,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1877F2),
+                  backgroundColor: AppTheme.secondaryColor,
                   foregroundColor: Colors.white,
                   padding: EdgeInsets.symmetric(vertical: 14.h),
                   shape: RoundedRectangleBorder(
@@ -174,7 +175,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             if (_isLoading) ...[
               SizedBox(height: 20.h),
               const CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFF6B35)),
+                valueColor:
+                    AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
               ),
             ],
           ],

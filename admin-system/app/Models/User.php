@@ -18,8 +18,11 @@ class User extends Authenticatable
         'username',
         'password',
         'role',
+        'permissions',
+        'max_staff_accounts',
         'municipality_id',
         'is_active',
+        'last_login_at',
         'auth_provider',
         'provider_id',
         'api_token',
@@ -33,6 +36,9 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'is_active' => 'boolean',
+        'permissions' => 'array',
+        'max_staff_accounts' => 'integer',
+        'last_login_at' => 'datetime',
     ];
 
     /**
@@ -85,11 +91,35 @@ class User extends Authenticatable
         return $this->role === 'municipality-admin';
     }
 
+    public function isMunicipalityStaff(): bool
+    {
+        return $this->role === 'municipality-staff';
+    }
+
+    public function belongsToMunicipalityTeam(): bool
+    {
+        return $this->isMunicipalityAdmin() || $this->isMunicipalityStaff();
+    }
+
+    public function hasPermission(string $permission): bool
+    {
+        if ($this->isSuperAdmin()) {
+            return true;
+        }
+
+        if (!$this->belongsToMunicipalityTeam()) {
+            return false;
+        }
+
+        // Existing municipality admins remain fully capable until configured by the super admin.
+        return $this->permissions === null || (bool) ($this->permissions[$permission] ?? false);
+    }
+
     /**
      * Check if user is any type of admin
      */
     public function isAdmin()
     {
-        return $this->isSuperAdmin() || $this->isMunicipalityAdmin();
+        return $this->isSuperAdmin() || $this->belongsToMunicipalityTeam();
     }
 }

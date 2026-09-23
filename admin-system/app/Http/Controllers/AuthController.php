@@ -46,8 +46,10 @@ class AuthController extends Controller
             });
 
         $user = $userQuery->first();
-
         if ($user && Hash::check($validated['password'], $user->password)) {
+            if (Schema::hasColumn('users', 'last_login_at')) {
+                $user->forceFill(['last_login_at' => now()])->save();
+            }
             Auth::login($user);
             \Log::info('Login successful', [
                 'login' => $loginValue,
@@ -56,11 +58,11 @@ class AuthController extends Controller
                 'timestamp' => now()
             ]);
             $request->session()->regenerate();
-            
+
             // Redirect based on user role
             if (Auth::user()->isSuperAdmin()) {
                 return redirect()->route('super-admin.dashboard');
-            } else if (Auth::user()->isMunicipalityAdmin()) {
+            } else if (Auth::user()->belongsToMunicipalityTeam()) {
                 return redirect()->route('municipality-admin.dashboard');
             }
             

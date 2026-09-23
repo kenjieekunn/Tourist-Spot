@@ -31,11 +31,11 @@
         html[data-admin-theme="dark"] .table { --bs-table-color: #e5e7eb; --bs-table-bg: #1f2937; --bs-table-border-color: #4b5563; }
         html[data-admin-theme="dark"] .bg-light { background-color: #374151 !important; color: #f9fafb !important; }
         :root {
-            --sidebar-width: 350px;
-            --sidebar-gap: 40px;
+            --sidebar-width: 260px;
+            --sidebar-gap: 24px;
         }
         .sidebar {
-            background-color: #2c3e50;
+            background-color: #173f43;
             min-height: 100vh;
             color: white;
             padding: 0;
@@ -47,41 +47,85 @@
             height: 100vh;
             overflow-y: auto;
             box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+            transform: translateX(0);
+            transition: transform 0.3s ease;
         }
         .main-content {
             flex: 1;
-            padding: 2rem 2rem 2rem 0;
+            padding: 2rem;
             min-height: calc(100vh - 80px);
         }
         .main-col {
             display: flex;
             flex-direction: column;
             padding: 0;
-            padding-left: calc(var(--sidebar-width) + var(--sidebar-gap));
             flex: 1;
+            margin-left: var(--sidebar-width);
+        }
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 1020;
+            background: rgba(15, 23, 42, 0.4);
+        }
+        .sidebar-toggle {
+            width: 2.5rem;
+            height: 2.5rem;
+            border: 1px solid #d9dde3;
+            border-radius: 0.5rem;
+            background: #fff;
+            color: #2c3e50;
+            display: none;
+        }
+        .sidebar-toggle:hover {
+            background: #f3f4f6;
         }
         @media (max-width: 991.98px) {
             .sidebar {
                 transform: translateX(-100%);
-                transition: transform 0.3s ease;
+            }
+            body.sidebar-open .sidebar {
+                transform: translateX(0);
+            }
+            body.sidebar-open .sidebar-overlay {
+                display: block;
+            }
+            .main-col {
+                margin-left: 0;
+            }
+            .sidebar-toggle {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
             }
             .main-col,
             .main-content {
                 padding-left: 1rem !important;
+                padding-right: 1rem !important;
             }
         }
         .sidebar .nav-link {
             color: #bbb;
             padding: 1rem 1.5rem;
             border-left: 4px solid transparent;
+            min-height: 3.5rem;
+            display: flex;
+            align-items: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
             transition: all 0.3s;
         }
         .sidebar .nav-link:hover,
         .sidebar .nav-link.active {
             color: #fff;
             background-color: rgba(255,255,255,0.1);
-            border-left-color: #ff6b35;
+            border-left-color: #2dd4bf;
         }
+        .sidebar .nav-link i { width: 1.25rem; margin-right: .35rem; color: #99f6e4; }
+        .sidebar .nav-link.active i,
+        .sidebar .nav-link:hover i { color: #fff; }
         .sidebar .municipality-nav-link {
             border-left-color: transparent;
             border-left-width: 4px;
@@ -91,85 +135,13 @@
         .sidebar .municipality-nav-link.active {
             color: #fff;
         }
-        .sidebar .municipality-nav-link.dashboard-tab:hover,
-        .sidebar .municipality-nav-link.dashboard-tab.active {
-            background-color: rgba(20, 184, 166, 0.24);
-            border-left-color: #2dd4bf;
-        }
-        .sidebar .municipality-nav-link.spots-tab:hover,
-        .sidebar .municipality-nav-link.spots-tab.active {
-            background-color: rgba(59, 130, 246, 0.26);
-            border-left-color: #60a5fa;
-        }
-        .sidebar .municipality-nav-link.reports-tab:hover,
-        .sidebar .municipality-nav-link.reports-tab.active {
-            background-color: rgba(245, 158, 11, 0.25);
-            border-left-color: #fbbf24;
-        }
-        .sidebar .municipality-nav-link.reviews-tab:hover,
-        .sidebar .municipality-nav-link.reviews-tab.active {
-            background-color: rgba(236, 72, 153, 0.23);
-            border-left-color: #f472b6;
-        }
-        .sidebar .municipality-nav-link.dashboard-tab i { color: #5eead4; }
-        .sidebar .municipality-nav-link.spots-tab i { color: #93c5fd; }
-        .sidebar .municipality-nav-link.reports-tab i { color: #fcd34d; }
-        .sidebar .municipality-nav-link.reviews-tab i { color: #f9a8d4; }
-        .sidebar .settings-heading {
-            color: #94a3b8;
-            font-size: 0.72rem;
-            font-weight: 700;
-            letter-spacing: 0.12em;
-            margin: 1.15rem 1.1rem 0.35rem;
-            text-transform: uppercase;
-        }
-        .sidebar .settings-dropdown {
-            margin-top: 0.35rem;
-        }
-        .sidebar .settings-dropdown summary {
-            color: #94a3b8;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 0.65rem;
-            font-size: 1rem;
-            font-weight: 400;
-            list-style: none;
-            margin: 0;
-            padding: 0.85rem 1.1rem;
-            border-left: 4px solid transparent;
-            transition: all 0.3s;
-        }
-        .sidebar .settings-dropdown summary:hover,
-        .sidebar .settings-dropdown[open] summary {
-            background-color: rgba(148, 163, 184, 0.16);
-            border-left-color: #cbd5e1;
-            color: #fff;
-        }
-        .sidebar .settings-dropdown summary i {
-            width: 1.1rem;
-            text-align: center;
-        }
-        .sidebar .settings-dropdown summary::-webkit-details-marker {
-            display: none;
-        }
-        .sidebar .settings-link {
-            color: #cbd5e1;
-            font-size: 0.9rem;
-            padding: 0.65rem 1.1rem 0.65rem 2.15rem;
-        }
-        .sidebar .settings-link:hover,
-        .sidebar .settings-link.active {
-            background-color: rgba(148, 163, 184, 0.16);
-            color: #fff;
-        }
         .sidebar .brand {
             padding: 1.5rem;
             background-color: #1a252f;
             border-bottom: 1px solid #444;
             font-size: 1.5rem;
             font-weight: bold;
-            color: #ff6b35;
+            color: #5eead4;
             text-align: center;
         }
         .sidebar-nav {
@@ -183,23 +155,11 @@
             padding: 0 1.5rem 1.25rem;
             background: linear-gradient(
                 to top,
-                rgba(44, 62, 80, 0.95),
-                rgba(44, 62, 80, 0)
+                rgba(23, 63, 67, 0.98),
+                rgba(23, 63, 67, 0)
             );
         }
-        @if(request()->routeIs('municipalities.edit', 'municipalities.show', 'profile.edit', 'tourist_spots.create', 'tourist_spots.show', 'tourist_spots.edit', 'super-admin.admins.edit', 'super-admin.admins.create'))
-        .sidebar {
-            display: none;
-        }
-        .main-col {
-            padding-left: 1in;
-        }
-        @endif
-        @if(request()->routeIs('super-admin.*', 'municipality-admin.*'))
-        :root {
-            --sidebar-width: 260px;
-            --sidebar-gap: 24px;
-        }
+        @if(request()->routeIs('super-admin.*', 'municipality-admin.*', 'tourist_spots.*', 'municipalities.*'))
         .sidebar .nav-link {
             padding: 0.85rem 1.1rem;
         }
@@ -283,12 +243,13 @@
             white-space: nowrap;
         }
         .sidebar-profile:hover {
-            color: #ffb08f;
+            color: #99f6e4;
         }
+        .sidebar-account { border-top: 1px solid rgba(153, 246, 228, .22); padding: .9rem 0 1rem; color: #e6fffb; }
+        .sidebar-account-icon { width: 2.35rem; height: 2.35rem; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; background: #2dd4bf; color: #134e4a; }
+        .sidebar-account-role { color: #99f6e4; font-size: .72rem; }
+        .sidebar-version { color: #8bb8b3; font-size: .7rem; letter-spacing: .04em; }
         @media (max-width: 768px) {
-            .sidebar {
-                display: none;
-            }
             .main-col,
             .main-content {
                 padding: 1rem !important;
@@ -308,7 +269,7 @@
                         ? 'Super Admin Console'
                         : ($currentUser->isMunicipalityAdmin() && $currentUser->municipality
                             ? $currentUser->municipality->name . ' Admin Console'
-                            : 'Admin Panel');
+                            : ($currentUser->isMunicipalityStaff() ? 'Staff Panel' : 'Admin Panel'));
                 @endphp
                 <div class="brand">
                     <span class="d-block"><i class="fas fa-map-marker-alt"></i> Pangasinan 2nd District</span>
@@ -328,47 +289,37 @@
                         <a class="nav-link @if(Route::currentRouteName() == 'super-admin.reports') active @endif" href="{{ route('super-admin.reports') }}">
                             <i class="fas fa-chart-column"></i> Reports
                         </a>
-                        <details class="settings-dropdown" @if(request()->routeIs('profile.edit')) open @endif>
-                            <summary><span>Settings</span></summary>
-                            <a class="nav-link settings-link @if(Route::currentRouteName() == 'profile.edit' && !request()->get('section')) active @endif" href="{{ route('profile.edit', ['section' => 'profile']) }}">
-                                <i class="fas fa-user"></i> My Profile
-                            </a>
-                            <a class="nav-link settings-link @if(Route::currentRouteName() == 'profile.edit' && request()->get('section') === 'admins') active @endif" href="{{ route('profile.edit', ['section' => 'admins']) }}">
-                                <i class="fas fa-users-cog"></i> Admin Management
-                            </a>
-                            <a class="nav-link settings-link @if(Route::currentRouteName() == 'profile.edit' && request()->get('section') === 'preferences') active @endif" href="{{ route('profile.edit', ['section' => 'preferences']) }}">
-                                <i class="fas fa-bell"></i> Notifications
-                            </a>
-                            <a class="nav-link settings-link @if(Route::currentRouteName() == 'profile.edit' && request()->get('section') === 'preferences') active @endif" href="{{ route('profile.edit', ['section' => 'preferences']) }}">
-                                <i class="fas fa-sliders"></i> System Preferences
-                            </a>
-                        </details>
-                    @elseif(auth()->user()->isMunicipalityAdmin())
+                        <a class="nav-link district-municipalities-tab @if(request()->routeIs('municipalities.*')) active @endif" href="{{ route('municipalities.index') }}" title="2nd District Municipalities">
+                            <i class="fas fa-building"></i> 2nd District Municipalities
+                        </a>
+                        <a class="nav-link @if(request()->routeIs('super-admin.admins*')) active @endif" href="{{ route('super-admin.admins') }}">
+                            <i class="fas fa-user-shield"></i> Municipality Admins Management
+                        </a>
+                    @elseif(auth()->user()->belongsToMunicipalityTeam())
                         <!-- Municipality Admin Navigation -->
                         <a class="nav-link municipality-nav-link dashboard-tab @if(Route::currentRouteName() == 'municipality-admin.dashboard') active @endif" href="{{ route('municipality-admin.dashboard') }}">
                             <i class="fas fa-dashboard"></i> Dashboard
                         </a>
-                        <a class="nav-link municipality-nav-link spots-tab @if(Route::currentRouteName() == 'municipality-admin.tourist-spots') active @endif" href="{{ route('municipality-admin.tourist-spots') }}">
-                            <i class="fas fa-map-location-dot"></i> Tourist Spots
-                        </a>
-                        <a class="nav-link municipality-nav-link reports-tab @if(Route::currentRouteName() == 'municipality-admin.reports') active @endif" href="{{ route('municipality-admin.reports') }}">
-                            <i class="fas fa-chart-column"></i> Reports
-                        </a>
-                        <a class="nav-link municipality-nav-link reviews-tab @if(Route::currentRouteName() == 'municipality-admin.reviews') active @endif" href="{{ route('municipality-admin.reviews') }}">
-                            <i class="fas fa-star"></i> Reviews
-                        </a>
-                        <details class="settings-dropdown" @if(request()->routeIs('profile.edit')) open @endif>
-                            <summary><span>Settings</span></summary>
-                            <a class="nav-link settings-link @if(Route::currentRouteName() == 'profile.edit' && !request()->get('section')) active @endif" href="{{ route('profile.edit') }}">
-                                <i class="fas fa-user"></i> Admin Profile
+                        @if(auth()->user()->hasPermission('manage_spots'))
+                            <a class="nav-link municipality-nav-link spots-tab @if(Route::currentRouteName() == 'municipality-admin.tourist-spots') active @endif" href="{{ route('municipality-admin.tourist-spots') }}">
+                                <i class="fas fa-map-location-dot"></i> Tourist Spots
                             </a>
-                            <a class="nav-link settings-link @if(Route::currentRouteName() == 'profile.edit' && request()->get('section') === 'account') active @endif" href="{{ route('profile.edit', ['section' => 'account']) }}">
-                                <i class="fas fa-user-gear"></i> Account Settings
+                        @endif
+                        @if(auth()->user()->hasPermission('view_reports'))
+                            <a class="nav-link municipality-nav-link reports-tab @if(Route::currentRouteName() == 'municipality-admin.reports') active @endif" href="{{ route('municipality-admin.reports') }}">
+                                <i class="fas fa-chart-column"></i> Reports
                             </a>
-                            <a class="nav-link settings-link @if(Route::currentRouteName() == 'profile.edit' && request()->get('section') === 'preferences') active @endif" href="{{ route('profile.edit', ['section' => 'preferences']) }}">
-                                <i class="fas fa-sliders"></i> System Preferences
+                        @endif
+                        @if(auth()->user()->hasPermission('manage_reviews'))
+                            <a class="nav-link municipality-nav-link reviews-tab @if(Route::currentRouteName() == 'municipality-admin.reviews') active @endif" href="{{ route('municipality-admin.reviews') }}">
+                                <i class="fas fa-star"></i> Reviews
                             </a>
-                        </details>
+                        @endif
+                        @if(auth()->user()->isMunicipalityAdmin() && auth()->user()->hasPermission('manage_staff'))
+                            <a class="nav-link municipality-nav-link @if(Route::currentRouteName() == 'municipality-admin.staff') active @endif" href="{{ route('municipality-admin.staff') }}">
+                                <i class="fas fa-users"></i> Staff Accounts
+                            </a>
+                        @endif
                     @else
                         <!-- Default Navigation -->
                         <a class="nav-link @if(Route::currentRouteName() == 'dashboard') active @endif" href="{{ route('dashboard') }}">
@@ -384,6 +335,12 @@
                 </nav>
                 <div class="sidebar-logout">
                     <hr style="border-color: #555;">
+                    <div class="sidebar-account d-flex align-items-center gap-2">
+                        <span class="sidebar-account-icon"><i class="fas fa-user-tie"></i></span>
+                        <div class="min-w-0">
+                            <strong class="d-block text-truncate">{{ $currentUser->name ?: 'Provincial Tourism Office' }}</strong>
+                        </div>
+                    </div>
                     <div class="d-flex align-items-center justify-content-between gap-2">
                         <form action="{{ route('logout') }}" method="POST">
                             @csrf
@@ -394,12 +351,20 @@
                     </div>
                 </div>
             </div>
+            <div class="sidebar-overlay" data-sidebar-overlay></div>
 
             <!-- Main Content -->
             <div class="main-col">
                 <div class="navbar-custom">
                     <div class="d-flex justify-content-between align-items-center">
-                        <h4 class="m-0">@yield('header', 'Dashboard')</h4>
+                        <div class="d-flex align-items-center gap-2">
+                            <button type="button" class="sidebar-toggle" data-sidebar-toggle aria-controls="admin-sidebar" aria-expanded="false" aria-label="Open menu" title="Open menu">
+                                <i class="fas fa-bars"></i>
+                            </button>
+                            @if(trim($__env->yieldContent('header', 'Dashboard')) !== '')
+                                <h4 class="m-0">@yield('header', 'Dashboard')</h4>
+                            @endif
+                        </div>
                         <div class="d-flex align-items-center gap-2 flex-wrap justify-content-end">
                             @yield('header_actions')
                         </div>
@@ -439,6 +404,33 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const sidebar = document.querySelector('.sidebar');
+            const toggle = document.querySelector('[data-sidebar-toggle]');
+            const overlay = document.querySelector('[data-sidebar-overlay]');
+
+            if (!sidebar || !toggle || !overlay) return;
+
+            sidebar.id = 'admin-sidebar';
+
+            function setSidebarOpen(isOpen) {
+                document.body.classList.toggle('sidebar-open', isOpen);
+                toggle.setAttribute('aria-expanded', String(isOpen));
+                toggle.setAttribute('aria-label', isOpen ? 'Close menu' : 'Open menu');
+                toggle.title = isOpen ? 'Close menu' : 'Open menu';
+                toggle.innerHTML = `<i class="fas fa-${isOpen ? 'times' : 'bars'}"></i>`;
+            }
+
+            toggle.addEventListener('click', function () {
+                setSidebarOpen(!document.body.classList.contains('sidebar-open'));
+            });
+            overlay.addEventListener('click', function () { setSidebarOpen(false); });
+            document.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape') setSidebarOpen(false);
+            });
+        });
+    </script>
     @yield('scripts')
 </body>
 </html>

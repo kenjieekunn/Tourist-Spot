@@ -18,12 +18,14 @@ class Review extends Model
         'status',
         'image_path',
         'images',
+        'media',
     ];
 
     protected $casts = [
         'rating' => 'integer',
         'image_path' => 'string',
         'images' => 'array',
+        'media' => 'array',
     ];
 
     public function touristSpot()

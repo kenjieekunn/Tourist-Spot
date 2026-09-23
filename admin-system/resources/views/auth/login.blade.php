@@ -20,7 +20,7 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             position: relative;
             overflow: hidden;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #173f43 0%, #0f766e 58%, #3f7d42 100%);
             background-image: url('https://www.discoverthephilippines.com/wp-content/uploads/2021/08/article-cover-photo-pangasinan-guide-810x421.jpg');
             background-repeat: no-repeat;
             background-attachment: fixed;
@@ -60,16 +60,16 @@
         }
 
         .login-card {
-            background: rgba(255, 255, 255, 0.95);
+            background: rgba(255, 255, 255, 0.97);
             border-radius: 16px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
             overflow: hidden;
             backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(220, 233, 229, 0.9);
         }
 
         .login-header {
-            background: linear-gradient(135deg, #ff6b35 0%, #e55a2b 100%);
+            background: linear-gradient(135deg, #173f43 0%, #0f766e 68%, #3f7d42 100%);
             color: white;
             padding: 2.5rem 2rem;
             text-align: center;
@@ -118,7 +118,7 @@
         }
 
         .form-label i {
-            color: #ff6b35;
+            color: #0f766e;
             font-size: 0.9rem;
         }
 
@@ -132,9 +132,9 @@
         }
 
         .form-control:focus {
-            border-color: #ff6b35;
+            border-color: #0f766e;
             background-color: white;
-            box-shadow: 0 0 0 4px rgba(255, 107, 53, 0.1);
+            box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.12);
         }
 
         .form-control::placeholder {
@@ -161,6 +161,27 @@
             color: white;
         }
 
+        .password-toggle {
+            border: 2px solid #e0e0e0;
+            border-left: 0;
+            background: #fafafa;
+            color: #0f766e;
+            padding: 0 1rem;
+        }
+
+        .password-toggle:hover,
+        .password-toggle:focus {
+            background: #e5f5f1;
+            border-color: #0f766e;
+            color: #115e59;
+            box-shadow: none;
+        }
+
+        .password-toggle:focus-visible {
+            outline: 3px solid rgba(15, 118, 110, 0.2);
+            outline-offset: 1px;
+        }
+
         .btn-login:active {
             transform: translateY(-1px);
         }
@@ -175,14 +196,14 @@
         }
 
         .login-footer a {
-            color: #ff6b35;
+            color: #0f766e;
             text-decoration: none;
             font-weight: 700;
             transition: all 0.3s ease;
         }
 
         .login-footer a:hover {
-            color: #e55a2b;
+            color: #115e59;
             text-decoration: underline;
         }
 
@@ -292,7 +313,7 @@
 
                     <div class="mb-3">
                         <label for="login" class="form-label">
-                            <i class="fas fa-user"></i> Username or Email
+                            <i class="fas fa-user"></i> Email/Username
                         </label>
                         <input 
                             type="text" 
@@ -313,14 +334,19 @@
                         <label for="password" class="form-label">
                             <i class="fas fa-lock"></i> Password
                         </label>
-                        <input 
-                            type="password" 
-                            class="form-control @error('password') is-invalid @enderror" 
-                            id="password" 
-                            name="password" 
-                            placeholder="Enter your password"
-                            required
-                        >
+                        <div class="input-group">
+                            <input
+                                type="password"
+                                class="form-control @error('password') is-invalid @enderror"
+                                id="password"
+                                name="password"
+                                placeholder="Enter your password"
+                                required
+                            >
+                            <button type="button" class="btn password-toggle" id="toggle-password" aria-label="Show password" aria-pressed="false">
+                                <i class="fas fa-eye" aria-hidden="true"></i>
+                            </button>
+                        </div>
                         @error('password')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
@@ -353,7 +379,6 @@
             
             // Test if image can be loaded
             const img = new Image();
-            img.crossOrigin = 'Anonymous';
             
             img.onload = function() {
                 console.log('✓ Background image loaded successfully');
@@ -365,13 +390,24 @@
                 console.error('✗ Background image failed to load - using fallback gradient');
                 // Fallback to gradient if image fails
                 document.body.style.backgroundImage = 'none';
-                document.body.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+                document.body.style.background = 'linear-gradient(135deg, #173f43 0%, #0f766e 58%, #3f7d42 100%)';
             };
             
             img.src = bgImageUrl;
             
             // Log background info
             console.log('Background Image URL:', bgImageUrl);
+
+            const passwordInput = document.getElementById('password');
+            const passwordToggle = document.getElementById('toggle-password');
+
+            passwordToggle.addEventListener('click', function() {
+                const isHidden = passwordInput.type === 'password';
+                passwordInput.type = isHidden ? 'text' : 'password';
+                passwordToggle.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
+                passwordToggle.setAttribute('aria-pressed', String(isHidden));
+                passwordToggle.querySelector('i').className = isHidden ? 'fas fa-eye-slash' : 'fas fa-eye';
+            });
         });
     </script>
 </body>

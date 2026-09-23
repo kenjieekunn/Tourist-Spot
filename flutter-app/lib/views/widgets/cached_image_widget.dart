@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tourist_spot_app/services/image_cache_service.dart';
+import 'package:tourist_spot_app/config/theme/app_theme.dart';
 
 class CachedImageWidget extends StatefulWidget {
   final String imageUrl;
@@ -109,7 +110,7 @@ class _CachedImageWidgetState extends State<CachedImageWidget> {
   Widget _buildLoadingWidget() {
     return const Center(
       child: CircularProgressIndicator(
-        valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFF6B35)),
+        valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
       ),
     );
   }

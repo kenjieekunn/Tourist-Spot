@@ -8,6 +8,7 @@ import 'package:tourist_spot_app/controllers/app_providers.dart';
 import 'package:tourist_spot_app/controllers/auth_providers.dart';
 import 'package:tourist_spot_app/models/tourist_spot_model.dart';
 import 'package:tourist_spot_app/config/routes/app_routes.dart';
+import 'package:tourist_spot_app/config/theme/app_theme.dart';
 import 'dart:io';
 
 class AddReviewScreen extends ConsumerStatefulWidget {
@@ -28,6 +29,7 @@ class _AddReviewScreenState extends ConsumerState<AddReviewScreen> {
   final _commentController = TextEditingController();
   double _rating = 3.0;
   final List<String> _selectedImages = [];
+  String? _selectedVideo;
   final ImagePicker _imagePicker = ImagePicker();
   bool _isSubmitting = false;
 
@@ -72,6 +74,23 @@ class _AddReviewScreenState extends ConsumerState<AddReviewScreen> {
     }
   }
 
+  Future<void> _pickVideo() async {
+    try {
+      final XFile? pickedFile = await _imagePicker.pickVideo(
+        source: ImageSource.gallery,
+        maxDuration: const Duration(seconds: 60),
+      );
+
+      if (pickedFile != null) {
+        setState(() => _selectedVideo = pickedFile.path);
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error picking video: $e')),
+      );
+    }
+  }
+
   void _removeImage(int index) {
     setState(() {
       _selectedImages.removeAt(index);
@@ -96,6 +115,8 @@ class _AddReviewScreenState extends ConsumerState<AddReviewScreen> {
 
       List<String>? imagePaths =
           _selectedImages.isNotEmpty ? _selectedImages : null;
+      List<String>? videoPaths =
+          _selectedVideo != null ? [_selectedVideo!] : null;
 
       await ref.read(apiServiceProvider).submitReview(
             spotId: widget.spot.id,
@@ -103,6 +124,7 @@ class _AddReviewScreenState extends ConsumerState<AddReviewScreen> {
             rating: safeRating,
             comment: _commentController.text.trim(),
             imagePaths: imagePaths,
+            videoPaths: videoPaths,
             userId: authUser.id,
             authToken: authUser.token,
           );
@@ -147,7 +169,7 @@ class _AddReviewScreenState extends ConsumerState<AddReviewScreen> {
               fontWeight: FontWeight.bold,
             ),
           ),
-          backgroundColor: const Color(0xFFFF6B35),
+          backgroundColor: AppTheme.primaryColor,
           elevation: 0,
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
@@ -197,7 +219,7 @@ class _AddReviewScreenState extends ConsumerState<AddReviewScreen> {
                       }
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFFF6B35),
+                      backgroundColor: AppTheme.primaryColor,
                       padding: EdgeInsets.symmetric(vertical: 14.h),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8.r),
@@ -229,7 +251,7 @@ class _AddReviewScreenState extends ConsumerState<AddReviewScreen> {
             fontWeight: FontWeight.bold,
           ),
         ),
-        backgroundColor: const Color(0xFFFF6B35),
+        backgroundColor: AppTheme.primaryColor,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -382,7 +404,7 @@ class _AddReviewScreenState extends ConsumerState<AddReviewScreen> {
                   decoration: BoxDecoration(
                     border: Border.all(
                       color: _selectedImages.length < 5
-                          ? const Color(0xFFFF6B35)
+                          ? AppTheme.primaryColor
                           : Colors.grey[300]!,
                       width: 2,
                     ),
@@ -394,7 +416,7 @@ class _AddReviewScreenState extends ConsumerState<AddReviewScreen> {
                       Icon(
                         Icons.add_photo_alternate_outlined,
                         color: _selectedImages.length < 5
-                            ? const Color(0xFFFF6B35)
+                            ? AppTheme.primaryColor
                             : Colors.grey[400],
                         size: 40.sp,
                       ),
@@ -470,6 +492,27 @@ class _AddReviewScreenState extends ConsumerState<AddReviewScreen> {
                   },
                 ),
               ],
+              SizedBox(height: 12.h),
+              OutlinedButton.icon(
+                onPressed: _pickVideo,
+                icon: const Icon(Icons.video_library_outlined),
+                label: Text(_selectedVideo == null
+                    ? 'Add short video (up to 60 seconds)'
+                    : 'Change selected video'),
+              ),
+              if (_selectedVideo != null) ...[
+                SizedBox(height: 8.h),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.video_file_outlined),
+                  title:
+                      Text(_selectedVideo!.split(Platform.pathSeparator).last),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => setState(() => _selectedVideo = null),
+                  ),
+                ),
+              ],
               SizedBox(height: 32.h),
 
               // Submit Button
@@ -478,7 +521,7 @@ class _AddReviewScreenState extends ConsumerState<AddReviewScreen> {
                 child: ElevatedButton(
                   onPressed: _isSubmitting ? null : _submitReview,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFFF6B35),
+                    backgroundColor: AppTheme.primaryColor,
                     padding: EdgeInsets.symmetric(vertical: 14.h),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8.r),

@@ -19,7 +19,7 @@ class EnsureMunicipalityAdmin
             return redirect()->route('login.form');
         }
 
-        if (!auth()->user()->isMunicipalityAdmin()) {
+        if (!auth()->user()->belongsToMunicipalityTeam()) {
             abort(403, 'Unauthorized access. Municipality admin privileges required.');
         }
 

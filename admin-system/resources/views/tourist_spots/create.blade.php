@@ -1,7 +1,7 @@
 ﻿@extends('layouts.app')
 
 @section('title', 'Add Tourist Spot')
-@section('header', 'Add New Tourist Spot')
+@section('header', '')
 
 @section('content')
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -12,7 +12,7 @@
 
 <style>
     #map {
-        height: 400px;
+        height: 520px;
         border-radius: 8px;
         margin-top: 10px;
         border: 2px solid #dee2e6;
@@ -135,6 +135,26 @@
         color: #fff;
         margin-right: 8px;
     }
+    .spot-form-layout { display: grid; grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr); gap: 1.25rem; align-items: start; }
+    .spot-form-column { min-width: 0; }
+    .spot-map-column { position: sticky; top: 1rem; }
+    .spot-section { border: 1px solid #e6e9ef; border-radius: 14px; padding: 1rem; background: #fff; margin-bottom: 1rem; }
+    .spot-section-title { display: flex; align-items: center; gap: .55rem; margin-bottom: 1rem; font-weight: 750; color: #164e63; }
+    .municipality-tag { display: inline-flex; align-items: center; gap: .45rem; padding: .55rem .8rem; border-radius: 999px; background: #eef4ff; color: #2453b8; font-weight: 700; }
+    .category-chips { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .6rem; }
+    .category-chip { position: relative; }
+    .category-chip input { position: absolute; opacity: 0; pointer-events: none; }
+    .category-chip label { display: flex; align-items: center; gap: .55rem; padding: .75rem .8rem; border: 1px solid #d9e0e8; border-radius: 10px; cursor: pointer; font-weight: 650; background: #fff; }
+    .category-chip input:checked + label { border-color: #ff6b35; background: #fff3ed; color: #c2410c; box-shadow: 0 0 0 2px rgba(255,107,53,.12); }
+    .dropzone { border: 2px dashed #b8c4d3; border-radius: 14px; padding: 1.25rem; text-align: center; background: #f8fafc; cursor: pointer; }
+    .dropzone:hover, .dropzone.dragover { border-color: #ff6b35; background: #fff7f3; }
+    .dropzone i { color: #ff6b35; font-size: 1.8rem; }
+    .upload-previews { display: grid; grid-template-columns: repeat(3, 1fr); gap: .6rem; margin-top: .8rem; }
+    .upload-preview { position: relative; }
+    .upload-preview img { width: 100%; height: 90px; object-fit: cover; border-radius: 8px; }
+    .cover-badge { position: absolute; left: .35rem; bottom: .35rem; font-size: .68rem; }
+    .facility-radius-warning { color: #b91c1c; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: .55rem .7rem; display: none; }
+    @media (max-width: 991.98px) { .spot-form-layout { grid-template-columns: 1fr; } .spot-map-column { position: static; } }
 </style>
 
 @php
@@ -151,7 +171,7 @@
 @endphp
 
 <div class="row justify-content-center">
-    <div class="col-lg-8">
+    <div class="col-12 col-xl-11">
         <div class="card">
             <div class="card-body p-4">
                 @if(auth()->user()->isSuperAdmin())
@@ -162,16 +182,17 @@
                 <form id="tourist-spot-form" action="{{ route('tourist_spots.store') }}" method="POST" enctype="multipart/form-data">
                     @csrf
 
-                    <h5 class="mb-3"><i class="fas fa-map"></i> Location & Map</h5>
+                    <div class="spot-form-layout">
+                        <div class="spot-form-column">
+                            <div class="spot-section">
+                                <div class="spot-section-title"><i class="fas fa-circle-info"></i> Basic Information</div>
 
                     @if($assignedMunicipality)
                         <div class="mb-3">
-                            <label class="form-label">Municipality</label>
-                            <div class="border rounded-3 p-3 bg-light">
-                                <strong>{{ $assignedMunicipality->name }}</strong>
-                            </div>
-                            <input type="hidden" name="municipality_id" value="{{ $assignedMunicipality->id }}">
+                            <label class="form-label">Assigned Municipality</label>
+                            <div class="municipality-tag"><i class="fas fa-location-dot"></i>{{ $assignedMunicipality->name }}</div>
                         </div>
+                        <input type="hidden" name="municipality_id" value="{{ $assignedMunicipality->id }}">
                     @else
                         <div class="mb-3">
                             <label for="municipality_id" class="form-label">Municipality <span class="text-danger">*</span></label>
@@ -191,14 +212,12 @@
 
                     <div class="mb-3">
                         <label for="category" class="form-label">Category <span class="text-danger">*</span></label>
-                        <select class="form-select @error('category') is-invalid @enderror" id="category" name="category" required>
-                            <option value="">Select Category</option>
+                        <div class="category-chips">
+                            @php $categoryIcons = ['beach' => 'fa-umbrella-beach', 'parks' => 'fa-tree', 'falls' => 'fa-water', 'nature' => 'fa-leaf', 'resort' => 'fa-person-swimming']; @endphp
                             @foreach($spotCategories as $value => $label)
-                                <option value="{{ $value }}" @selected(old('category', 'nature') === $value)>
-                                    {{ $label }}
-                                </option>
+                                <div class="category-chip"><input type="radio" id="category-{{ $value }}" name="category" value="{{ $value }}" @checked($selectedCategory === $value) required><label for="category-{{ $value }}"><i class="fas {{ $categoryIcons[$value] ?? 'fa-location-dot' }}"></i>{{ $label }}</label></div>
                             @endforeach
-                        </select>
+                        </div>
                         @error('category')
                             <div class="invalid-feedback d-block">{{ $message }}</div>
                         @enderror
@@ -224,9 +243,28 @@
                         <div id="name-validation-feedback" class="mt-2"></div>
                     </div>
 
-                    <!-- Location Search Bar -->
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description <span class="text-danger">*</span></label>
+                        <textarea class="form-control @error('description') is-invalid @enderror" id="description" name="description" rows="5" required>{{ old('description') }}</textarea>
+                        @error('description')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="images" class="form-label">Spot Images</label>
+                        <label for="images" class="dropzone d-block"><i class="fas fa-cloud-arrow-up d-block mb-2"></i><strong>Drag & drop photos here or click to browse</strong><small class="d-block text-muted mt-1">Up to 5 JPG, PNG, or WebP images, 2MB each</small></label>
+                        <input type="file" class="d-none @error('images') is-invalid @enderror" id="images" name="images[]" accept="image/*" multiple>
+                        <div id="upload-previews" class="upload-previews"></div>
+                        @error('images')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+                    </div>
+                            </div>
+                        </div>
+
+                        <div class="spot-form-column spot-map-column">
+                            <div class="spot-section">
+                                <div class="spot-section-title"><i class="fas fa-map-location-dot"></i> Geographic Location</div>
+
                     <div class="search-location-container">
-                        <label class="form-label">Search for Location</label>
+                        <label class="form-label"><i class="fas fa-search"></i> Search Location</label>
                         <div class="search-location-form">
                             <div class="search-location-input-group">
                                 <input 
@@ -270,52 +308,38 @@
                             <div class="row g-2">
                                 <div class="col-md-4">
                                     <label class="form-label">Facility Type</label>
-                                    <select id="facility-type" class="form-select">
+                                    <select id="facility-type" class="form-select" disabled>
+                                        <option value="" selected>Select Facility</option>
                                         <option value="dining">Dining</option>
                                         <option value="gas_station">Gas Station</option>
-                                        <option value="restroom">Restroom</option>
                                     </select>
                                 </div>
                                 <div class="col-md-5">
                                     <label class="form-label">Facility Name</label>
-                                    <input type="text" id="facility-name" class="form-control" placeholder="e.g., Bos Coffee">
+                                    <input type="text" id="facility-name" class="form-control" placeholder="Add Name" disabled>
                                 </div>
                                 <div class="col-md-3 d-flex align-items-end">
-                                    <button type="button" id="facility-add-btn" class="btn btn-outline-primary w-100">
-                                        Click map to add
+                                    <button type="button" id="facility-add-btn" class="btn btn-outline-primary w-100" disabled>
+                                        <i class="fas fa-plus"></i> Add
                                     </button>
                                 </div>
                             </div>
                             <div class="form-text mt-2" id="facility-hint">
-                                Select a type and name, then click the map to drop a marker.
+                                Select the main tourist spot location first.
                             </div>
                             <div class="form-text text-primary mt-1">
                                 Nearby facilities must stay within a 2 km radius of the main spot marker.
                             </div>
+                            <div id="facility-radius-warning" class="facility-radius-warning mt-2"><i class="fas fa-triangle-exclamation me-1"></i> Facility is outside the 2 km radius. Choose a location inside the circle.</div>
                         </div>
                         <div id="facility-list" class="mt-3"></div>
+                        <div id="facility-count" class="form-text text-primary mt-2">You can add multiple nearby facilities.</div>
+                    </div>
+                            </div>
+                        </div>
                     </div>
 
                     <hr class="my-4">
-
-                    <h5 class="mb-3"><i class="fas fa-info-circle"></i> Basic Information</h5>
-
-                    <div class="mb-3">
-                        <label for="description" class="form-label">Description <span class="text-danger">*</span></label>
-                        <textarea class="form-control @error('description') is-invalid @enderror" id="description" name="description" rows="4" required>{{ old('description') }}</textarea>
-                        @error('description')
-                            <div class="invalid-feedback d-block">{{ $message }}</div>
-                        @enderror
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="images" class="form-label">Spot Images</label>
-                        <input type="file" class="form-control @error('images') is-invalid @enderror" id="images" name="images[]" accept="image/*" multiple>
-                        @error('images')
-                            <div class="invalid-feedback d-block">{{ $message }}</div>
-                        @enderror
-                        <div class="form-text">Upload up to 5 JPG, PNG, or WebP images (max 2MB each). The first image becomes the cover image.</div>
-                    </div>
 
                     <div id="schedule-section" class="{{ $showScheduleFields ? '' : 'd-none' }}">
                         @php
@@ -393,6 +417,7 @@
     let searchTimeout;
     let facilityMarkers = [];
     let pendingFacility = null;
+    let pendingFacilityMarker = null;
     let googleAutocompleteService = null;
     let googleGeocoder = null;
     let spotLabelInfoWindow = null;
@@ -408,12 +433,10 @@
     const facilityColors = {
         dining: '#ff6b35',
         gas_station: '#0d6efd',
-        restroom: '#20c997'
     };
     const facilityLabels = {
         dining: 'Dining',
         gas_station: 'Gas Station',
-        restroom: 'Restroom'
     };
     const initialFacilities = @json($initialFacilities);
     let facilities = Array.isArray(initialFacilities) ? initialFacilities : [];
@@ -436,6 +459,11 @@
             east: bounds.east,
             west: bounds.west
         };
+    }
+
+    function isLocationWithinMunicipality(lat, lng) {
+        const bounds = getDistrictBounds();
+        return lat >= bounds.south && lat <= bounds.north && lng >= bounds.west && lng <= bounds.east;
     }
 
     function focusMap(lat, lng, zoom) {
@@ -666,6 +694,7 @@
 
             updateMarkerLabel();
             refreshFacilityRadiusOverlay();
+            resetFacilityRadiusControl();
             return;
         }
 
@@ -677,11 +706,15 @@
 
         updateMarkerLabel();
         refreshFacilityRadiusOverlay();
+        resetFacilityRadiusControl();
     }
 
     function getCurrentSpotCoordinates() {
-        const latInput = Number(document.getElementById('latitude')?.value);
-        const lngInput = Number(document.getElementById('longitude')?.value);
+        const latValue = document.getElementById('latitude')?.value?.trim();
+        const lngValue = document.getElementById('longitude')?.value?.trim();
+        if (!latValue || !lngValue) return null;
+        const latInput = Number(latValue);
+        const lngInput = Number(lngValue);
         if (Number.isFinite(latInput) && Number.isFinite(lngInput)) {
             return { lat: latInput, lng: lngInput };
         }
@@ -786,6 +819,18 @@
     function updateCoordinates(lat, lng) {
         document.getElementById('latitude').value = lat.toFixed(6);
         document.getElementById('longitude').value = lng.toFixed(6);
+        updateFacilityControlsState();
+    }
+
+    function updateFacilityControlsState() {
+        const hasLocation = Boolean(getCurrentSpotCoordinates());
+        const typeSelect = document.getElementById('facility-type');
+        const nameInput = document.getElementById('facility-name');
+        const addButton = document.getElementById('facility-add-btn');
+        [typeSelect, nameInput, addButton].forEach((control) => { if (control) control.disabled = !hasLocation; });
+        if (hasLocation && nameInput?.placeholder === 'Add Name') {
+            setFacilityHint('Choose a facility type, then click its location on the map.');
+        }
     }
 
     function setResolvedAddress(address) {
@@ -870,11 +915,7 @@
                 const lng = e.latLng.lng();
 
                 if (pendingFacility) {
-                    if (addFacilityMarker(pendingFacility.type, pendingFacility.name, lat, lng)) {
-                        pendingFacility = null;
-                        document.getElementById('facility-name').value = '';
-                        setFacilityHint('Select a type and name, then click the map to drop a marker.');
-                    }
+                    setPendingFacilityLocation(lat, lng);
                     return;
                 }
 
@@ -928,11 +969,7 @@
                 const lng = e.latlng.lng;
 
                 if (pendingFacility) {
-                    if (addFacilityMarker(pendingFacility.type, pendingFacility.name, lat, lng)) {
-                        pendingFacility = null;
-                        document.getElementById('facility-name').value = '';
-                        setFacilityHint('Select a type and name, then click the map to drop a marker.');
-                    }
+                    setPendingFacilityLocation(lat, lng);
                     return;
                 }
 
@@ -1171,7 +1208,7 @@
 
     function searchLocationAPI(query) {
         const normalizedQuery = query.trim();
-        if (normalizedQuery.length < 3) return;
+        if (normalizedQuery.length < 1) return;
 
         Promise.all([
             Promise.resolve(buildLocalSuggestions(normalizedQuery)),
@@ -1182,7 +1219,7 @@
                 ...googleResults
             ]);
 
-            const tokens = normalizeSearchText(normalizedQuery).split(/\s+/).filter((token) => token.length >= 2);
+            const tokens = normalizeSearchText(normalizedQuery).split(/\s+/).filter((token) => token.length >= 1);
             primaryResults.sort((a, b) => scoreSuggestion(b, normalizeSearchText(normalizedQuery), tokens) - scoreSuggestion(a, normalizeSearchText(normalizedQuery), tokens));
 
             if (primaryResults.length > 0) {
@@ -1341,24 +1378,55 @@
     
     // Real-time search as user types
     document.addEventListener('DOMContentLoaded', function() {
-        const categorySelect = document.getElementById('category');
+        const categoryInputs = document.querySelectorAll('input[name="category"]');
         const scheduleSection = document.getElementById('schedule-section');
         const scheduleInputs = scheduleSection
             ? scheduleSection.querySelectorAll('input, select, textarea')
             : [];
         function toggleScheduleFields() {
-            if (!categorySelect || !scheduleSection) return;
-            const isPark = categorySelect.value === 'parks';
+            if (!scheduleSection) return;
+            const selectedCategory = document.querySelector('input[name="category"]:checked');
+            const isPark = selectedCategory?.value === 'parks';
             scheduleSection.classList.toggle('d-none', !isPark);
             scheduleInputs.forEach((input) => {
                 input.disabled = !isPark;
             });
         }
 
-        if (categorySelect && scheduleSection) {
-            categorySelect.addEventListener('change', toggleScheduleFields);
+        if (scheduleSection) {
+            categoryInputs.forEach((input) => input.addEventListener('change', toggleScheduleFields));
             toggleScheduleFields();
         }
+
+        const imageInput = document.getElementById('images');
+        const dropzone = document.querySelector('.dropzone');
+        const previewContainer = document.getElementById('upload-previews');
+        function renderImagePreviews(files) {
+            if (!previewContainer) return;
+            previewContainer.innerHTML = '';
+            Array.from(files).slice(0, 5).forEach((file, index) => {
+                if (!file.type.startsWith('image/')) return;
+                const reader = new FileReader();
+                reader.onload = function (event) {
+                    const preview = document.createElement('div');
+                    preview.className = 'upload-preview';
+                    preview.innerHTML = `<img src="${event.target.result}" alt="Selected image ${index + 1}">${index === 0 ? '<span class="badge bg-dark cover-badge">Cover Image</span>' : ''}`;
+                    previewContainer.appendChild(preview);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+        imageInput?.addEventListener('change', () => renderImagePreviews(imageInput.files));
+        dropzone?.addEventListener('dragover', (event) => { event.preventDefault(); dropzone.classList.add('dragover'); });
+        dropzone?.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+        dropzone?.addEventListener('drop', (event) => {
+            event.preventDefault();
+            dropzone.classList.remove('dragover');
+            if (imageInput && event.dataTransfer.files.length) {
+                imageInput.files = event.dataTransfer.files;
+                renderImagePreviews(imageInput.files);
+            }
+        });
 
         const searchInput = document.getElementById('location-search');
         const nameInput = document.getElementById('name');
@@ -1368,7 +1436,7 @@
             clearTimeout(searchTimeout);
             const query = e.target.value;
             
-            if (query.length >= 3) {
+            if (query.length >= 1) {
                 searchTimeout = setTimeout(() => {
                     searchLocationAPI(query);
                 }, 500); // Debounce search by 500ms
@@ -1425,6 +1493,12 @@
                 const addressInput = document.getElementById('address');
                 const lat = Number(document.getElementById('latitude')?.value);
                 const lng = Number(document.getElementById('longitude')?.value);
+
+                if (Number.isFinite(lat) && Number.isFinite(lng) && !isLocationWithinMunicipality(lat, lng)) {
+                    e.preventDefault();
+                    alert('The selected location is outside the assigned municipality. Please move the main marker inside the municipality map area.');
+                    return;
+                }
 
                 if (addressInput && addressInput.value.trim() === '' && Number.isFinite(lat) && Number.isFinite(lng)) {
                     e.preventDefault();
@@ -1494,6 +1568,10 @@
         const radiusStatus = getFacilityRadiusStatus(Number(lat), Number(lng));
         if (!radiusStatus.allowed) {
             setFacilityHint(radiusStatus.message, 'danger');
+            const warning = document.getElementById('facility-radius-warning');
+            if (warning) warning.style.display = 'block';
+            const addButton = document.getElementById('facility-add-btn');
+            if (addButton) { addButton.disabled = true; addButton.textContent = 'Outside 2 km radius'; }
             return false;
         }
 
@@ -1507,7 +1585,55 @@
         refreshFacilityMarkers();
         renderFacilityList();
         setFacilityHint(`Facility added within ${(radiusStatus.distanceMeters / 1000).toFixed(2)} km of the main spot marker.`, 'primary');
+        const warning = document.getElementById('facility-radius-warning');
+        if (warning) warning.style.display = 'none';
+        resetFacilityRadiusControl();
         return true;
+    }
+
+    function setPendingFacilityLocation(lat, lng) {
+        const radiusStatus = getFacilityRadiusStatus(Number(lat), Number(lng));
+        pendingFacility.lat = Number(lat);
+        pendingFacility.lng = Number(lng);
+        if (!radiusStatus.allowed) {
+            setFacilityHint(radiusStatus.message, 'danger');
+            const warning = document.getElementById('facility-radius-warning');
+            if (warning) warning.style.display = 'block';
+            const addButton = document.getElementById('facility-add-btn');
+            if (addButton) addButton.disabled = true;
+        } else {
+            setFacilityHint(`Preview location set ${ (radiusStatus.distanceMeters / 1000).toFixed(2) } km from the main spot. Press Add to save or click the map to move it.`, 'primary');
+            const warning = document.getElementById('facility-radius-warning');
+            if (warning) warning.style.display = 'none';
+            const addButton = document.getElementById('facility-add-btn');
+            if (addButton) addButton.disabled = false;
+            document.getElementById('facility-name')?.focus();
+        }
+        if (useGoogleMaps && window.google?.maps) {
+            if (!pendingFacilityMarker) {
+                pendingFacilityMarker = new google.maps.Marker({ map, draggable: true, title: 'Pending facility location', icon: { path: google.maps.SymbolPath.CIRCLE, scale: 9, fillColor: '#dc2626', fillOpacity: .75, strokeColor: '#fff', strokeWeight: 2 } });
+                pendingFacilityMarker.addListener('dragend', () => { const position = pendingFacilityMarker.getPosition(); if (position) setPendingFacilityLocation(position.lat(), position.lng()); });
+            }
+            pendingFacilityMarker.setPosition({ lat: Number(lat), lng: Number(lng) });
+            pendingFacilityMarker.setMap(map);
+        } else if (map) {
+            if (pendingFacilityMarker) pendingFacilityMarker.remove();
+            pendingFacilityMarker = L.marker([lat, lng], { draggable: true }).addTo(map);
+            pendingFacilityMarker.on('dragend', (event) => { const position = event.target.getLatLng(); setPendingFacilityLocation(position.lat, position.lng); });
+        }
+    }
+
+    function clearPendingFacilityLocation() {
+        if (pendingFacilityMarker) {
+            if (useGoogleMaps && pendingFacilityMarker.setMap) pendingFacilityMarker.setMap(null);
+            else if (pendingFacilityMarker.remove) pendingFacilityMarker.remove();
+        }
+        pendingFacilityMarker = null;
+    }
+
+    function resetFacilityRadiusControl() {
+        const addButton = document.getElementById('facility-add-btn');
+        if (addButton) { addButton.disabled = false; addButton.innerHTML = '<i class="fas fa-plus"></i> Add'; }
     }
 
     function refreshFacilityMarkers() {
@@ -1592,6 +1718,10 @@
                 </div>
             `;
         }).join('');
+        const count = document.getElementById('facility-count');
+        if (count) count.textContent = facilities.length
+            ? `${facilities.length} nearby facilit${facilities.length === 1 ? 'y' : 'ies'} added. You can add more.`
+            : 'You can add multiple nearby facilities.';
     }
 
     document.addEventListener('DOMContentLoaded', function() {
@@ -1599,6 +1729,16 @@
         const typeSelect = document.getElementById('facility-type');
         const nameInput = document.getElementById('facility-name');
         const list = document.getElementById('facility-list');
+        updateFacilityControlsState();
+
+        typeSelect?.addEventListener('change', function() {
+            if (!getCurrentSpotCoordinates()) {
+                setFacilityHint('Select the main spot location first, then choose a facility type.', 'danger');
+                return;
+            }
+            pendingFacility = { type: typeSelect.value };
+            setFacilityHint(`Click the map to choose the ${facilityLabels[typeSelect.value]} location.`, 'primary');
+        });
 
         if (addButton) {
             addButton.addEventListener('click', function() {
@@ -1608,13 +1748,31 @@
                 }
                 const type = typeSelect ? typeSelect.value : 'dining';
                 const name = nameInput ? nameInput.value.trim() : '';
-                if (!name) {
-                    setFacilityHint('Enter a facility name before placing it on the map.', 'danger');
-                    if (nameInput) nameInput.focus();
+                if (!type) {
+                    setFacilityHint('Select a facility type first.', 'danger');
+                    if (typeSelect) typeSelect.focus();
                     return;
                 }
-                pendingFacility = { type, name };
-                setFacilityHint(`Click the map to place "${name}" (${facilityLabels[type]}).`, 'primary');
+                if (pendingFacility?.lat !== undefined && pendingFacility?.lng !== undefined) {
+                    if (!name) {
+                        setFacilityHint('Enter the facility name before pressing Add.', 'danger');
+                        if (nameInput) nameInput.focus();
+                        return;
+                    }
+                    const radiusStatus = getFacilityRadiusStatus(pendingFacility.lat, pendingFacility.lng);
+                    if (!radiusStatus.allowed) return setFacilityHint(radiusStatus.message, 'danger');
+                    addFacilityMarker(pendingFacility.type, name, pendingFacility.lat, pendingFacility.lng);
+                    clearPendingFacilityLocation();
+                    pendingFacility = null;
+                    typeSelect.value = '';
+                    nameInput.value = '';
+                    addButton.textContent = 'Add';
+                    setFacilityHint('Choose another facility type, click its map location, enter its name, then press Add.', 'muted');
+                    return;
+                }
+                pendingFacility = { type };
+                addButton.textContent = 'Add';
+                setFacilityHint(`Click the map to choose the ${facilityLabels[type]} location.`, 'primary');
             });
         }
 

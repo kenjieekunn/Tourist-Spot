@@ -1,21 +1,28 @@
 @extends('layouts.app')
 
 @section('title', 'Reports - ' . $municipality->name)
-@section('header', 'Reports')
+@section('header', '')
 
 @section('content')
 <style>
+    .reports-page { --tourism-teal: #0f766e; --tourism-green: #3f7d42; --tourism-ink: #173f43; }
+    .reports-page .card { border: 1px solid #dce9e5; border-radius: 10px; box-shadow: 0 8px 24px rgba(23, 63, 67, .06); }
+    .reports-page .btn-tourism { background: var(--tourism-teal); border-color: var(--tourism-teal); color: #fff; }
+    .reports-page .btn-tourism:hover { background: #115e59; border-color: #115e59; color: #fff; }
+    .report-stat { border-top: 3px solid var(--tourism-teal); }
+    .report-stat .stat-icon { color: var(--tourism-teal); font-size: 1.15rem; }
+    .report-stat .card-body { min-height: 132px; display: flex; flex-direction: column; justify-content: center; }
     .official-report {
         color: #1f2937;
         background: #fff;
     }
     .official-report-header {
-        border-bottom: 3px solid #164e63;
+        border-bottom: 3px solid #0f766e;
         padding: 1.5rem 1.5rem 1rem;
         text-align: center;
     }
     .report-mark {
-        color: #164e63;
+        color: #0f766e;
         font-size: 2rem;
     }
     .official-report-header h1,
@@ -24,7 +31,7 @@
         margin: 0;
     }
     .official-report-header h1 {
-        color: #123b4a;
+        color: #173f43;
         font-size: 1.35rem;
         letter-spacing: 0.04em;
         text-transform: uppercase;
@@ -39,8 +46,8 @@
         font-weight: 600;
     }
     .report-section-title {
-        border-bottom: 2px solid #164e63;
-        color: #164e63;
+        border-bottom: 2px solid #0f766e;
+        color: #0f766e;
         font-size: 0.95rem;
         font-weight: 800;
         letter-spacing: 0.08em;
@@ -70,8 +77,8 @@
         vertical-align: top;
     }
     .report-detail-table th {
-        background: #e6f0f2;
-        color: #123b4a;
+        background: #e6f5f1;
+        color: #173f43;
         font-size: 0.78rem;
         text-transform: uppercase;
     }
@@ -88,6 +95,20 @@
         margin: 1.5rem;
         padding-top: 0.5rem;
         text-align: center;
+    }
+    .report-filter-actions {
+        display: flex;
+        align-items: stretch;
+        justify-content: flex-end;
+        gap: .5rem;
+        flex-wrap: wrap;
+    }
+    .report-filter-actions .btn {
+        min-height: 38px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        white-space: nowrap;
     }
     @media print {
         @page {
@@ -125,6 +146,7 @@
     }
 </style>
 
+<div class="reports-page">
 <div class="report-controls card mb-4">
     <div class="card-body">
         <form method="GET" action="{{ route('municipality-admin.reports') }}" class="row g-3 align-items-end">
@@ -136,17 +158,20 @@
                 <label for="report-date" class="form-label">Date added</label>
                 <input type="date" name="date" id="report-date" value="{{ $reportDate }}" class="form-control">
             </div>
-            <div class="col-12 col-md-auto">
-                <button type="submit" class="btn btn-primary"><i class="fas fa-filter"></i> Filter</button>
+            <div class="col-12 col-lg-4 report-filter-actions">
                 <a href="{{ route('municipality-admin.reports') }}" class="btn btn-outline-secondary">Reset</a>
-            </div>
-            <div class="col-12 col-md-auto ms-md-auto">
                 <button type="button" class="btn btn-dark report-print-button" onclick="window.print()">
                     <i class="fas fa-print"></i> Print All Reports
                 </button>
             </div>
         </form>
     </div>
+</div>
+
+<div class="row g-3 mb-4 report-controls">
+    <div class="col-12 col-md-4"><div class="card report-stat h-100"><div class="card-body"><div class="stat-icon"><i class="fas fa-location-dot"></i></div><div class="text-muted small text-uppercase">Tourist Spots</div><div class="fs-2 fw-bold" style="color: var(--tourism-teal);">{{ $totalSpots }}</div></div></div></div>
+    <div class="col-12 col-md-4"><div class="card report-stat h-100"><div class="card-body"><div class="stat-icon"><i class="fas fa-circle-check"></i></div><div class="text-muted small text-uppercase">Verified</div><div class="fs-2 fw-bold">{{ $verifiedSpots }}</div></div></div></div>
+    <div class="col-12 col-md-4"><div class="card report-stat h-100"><div class="card-body"><div class="stat-icon"><i class="fas fa-hourglass-half"></i></div><div class="text-muted small text-uppercase">Pending</div><div class="fs-2 fw-bold">{{ $pendingSpots }}</div></div></div></div>
 </div>
 
 <div class="card official-report">
@@ -215,5 +240,6 @@
         <p>Date Printed: ___________________________________</p>
     </div>
     <footer class="report-footer">Tourist Spot Inventory Report | {{ $municipality->name }} | <span class="report-page-number"></span></footer>
+</div>
 </div>
 @endsection

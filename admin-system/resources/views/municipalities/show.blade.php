@@ -5,8 +5,15 @@
 
 @section('content')
 <style>
+    .municipality-details-page {
+        --tourism-teal: #0f766e;
+        --tourism-green: #3f7d42;
+        --tourism-ink: #173f43;
+        --tourism-mint: #e5f5f1;
+        --tourism-border: #dce9e5;
+    }
     .municipality-detail-header {
-        border: 1px solid #e6e9ef;
+        border: 1px solid var(--tourism-border);
         border-radius: 14px;
         overflow: hidden;
         background: #ffffff;
@@ -16,28 +23,29 @@
         height: 220px;
         object-fit: cover;
         display: block;
-        background: #f2f4f8;
+        background: #eef5f2;
     }
     .municipality-detail-placeholder {
         height: 220px;
         display: flex;
         align-items: center;
         justify-content: center;
-        background: linear-gradient(135deg, #eef1f6 0%, #f9fafc 100%);
+        background: linear-gradient(135deg, #effaf7 0%, #f7fbf3 100%);
         color: #8a94a6;
     }
     .spot-category-section {
-        border: 1px solid #e6e9ef;
+        border: 1px solid var(--tourism-border);
         border-radius: 14px;
         background: #ffffff;
         overflow: hidden;
     }
     .spot-category-header {
-        background: linear-gradient(135deg, #f7f9fc 0%, #eef4ff 100%);
-        border-bottom: 1px solid #eef1f6;
+        background: linear-gradient(135deg, #effaf7 0%, #f7fbf3 100%);
+        border-bottom: 1px solid var(--tourism-border);
+        color: var(--tourism-ink);
     }
     .spot-card {
-        border: 1px solid #eef1f6;
+        border: 1px solid var(--tourism-border);
         border-radius: 12px;
         background: #ffffff;
         overflow: hidden;
@@ -50,27 +58,38 @@
     }
     .spot-image {
         object-fit: cover;
-        background: #f2f4f8;
+        background: #eef5f2;
     }
     .spot-image-placeholder {
         display: flex;
         align-items: center;
         justify-content: center;
-        background: linear-gradient(135deg, #eef1f6 0%, #f9fafc 100%);
+        background: linear-gradient(135deg, #effaf7 0%, #f7fbf3 100%);
         color: #8a94a6;
     }
     .spot-meta {
         color: #6c757d;
         font-size: 0.9rem;
     }
+    .municipality-details-page h3,
+    .municipality-details-page h5,
+    .municipality-details-page h6 {
+        color: var(--tourism-ink);
+    }
+    .municipality-spots-badge,
+    .municipality-details-page .btn-tourism {
+        background: var(--tourism-teal);
+        border-color: var(--tourism-teal);
+        color: #fff;
+    }
+    .municipality-details-page .btn-tourism:hover {
+        background: #115e59;
+        border-color: #115e59;
+        color: #fff;
+    }
 </style>
 
-<div class="mb-3">
-    <a href="{{ route('super-admin.dashboard') }}" class="btn btn-outline-secondary btn-sm">
-        <i class="fas fa-arrow-left"></i> Back
-    </a>
-</div>
-
+<div class="municipality-details-page">
 <div class="municipality-detail-header mb-4">
     @if($municipality->image_url)
         <img
@@ -87,7 +106,7 @@
                 <h3 class="mb-1">{{ $municipality->name }}</h3>
                 <p class="text-muted mb-0">{{ $municipality->description ?: 'Tourist spots in ' . $municipality->name }}</p>
             </div>
-            <span class="badge bg-info">{{ $groupedSpots->sum(fn ($spots) => $spots->count()) }} spots</span>
+            <span class="badge municipality-spots-badge">{{ $groupedSpots->sum(fn ($spots) => $spots->count()) }} spots</span>
         </div>
     </div>
 </div>
@@ -128,7 +147,7 @@
                                             </span>
                                         </div>
                                         <div class="mt-auto pt-3">
-                                            <a href="{{ route('tourist_spots.show', $spot->id) }}" class="btn btn-sm btn-info">
+                                            <a href="{{ route('tourist_spots.show', $spot->id) }}" class="btn btn-sm btn-tourism">
                                                 <i class="fas fa-eye"></i> View Spot
                                             </a>
                                         </div>
@@ -148,4 +167,5 @@
         </div>
     </div>
 @endif
+</div>
 @endsection

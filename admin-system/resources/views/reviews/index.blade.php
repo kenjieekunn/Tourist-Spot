@@ -16,6 +16,13 @@
     .review-image-thumbnail:hover {
         transform: scale(1.1);
     }
+    .review-video-thumbnail {
+        width: 60px;
+        height: 60px;
+        object-fit: cover;
+        border-radius: 4px;
+        background: #111827;
+    }
     .modal-body img {
         max-width: 100%;
         height: auto;
@@ -34,7 +41,7 @@
                     <th>User</th>
                     <th>Rating</th>
                     <th>Comment</th>
-                    <th>Image</th>
+                    <th>Media</th>
                     <th>Status</th>
                     <th>Actions</th>
                 </tr>
@@ -42,6 +49,9 @@
             <tbody>
                 @forelse($reviews as $review)
                     <tr>
+                        @php
+                            $reviewMedia = $review->media ?? collect($review->images ?? [])->map(fn ($path) => ['path' => $path, 'type' => 'image'])->all();
+                        @endphp
                         <td>
                             <strong>{{ $review->touristSpot->name }}</strong>
                         </td>
@@ -60,17 +70,14 @@
                             <small>{{ Str::limit($review->comment, 40) }}</small>
                         </td>
                         <td>
-                            @if($review->images && count($review->images) > 0)
+                            @if(count($reviewMedia) > 0)
                                 <div class="d-flex gap-1">
-                                    @foreach($review->images as $index => $imagePath)
-                                        <img 
-                                            src="{{ asset('storage/' . $imagePath) }}" 
-                                            alt="Review image {{ $index + 1 }}" 
-                                            class="review-image-thumbnail"
-                                            data-bs-toggle="modal" 
-                                            data-bs-target="#imageModal{{ $review->id }}"
-                                            onclick="setModalImage('{{ asset('storage/' . $imagePath) }}')"
-                                        >
+                                    @foreach($reviewMedia as $index => $media)
+                                        @if(($media['type'] ?? 'image') === 'video')
+                                            <video src="{{ asset('storage/' . $media['path']) }}" class="review-video-thumbnail" muted preload="metadata" data-bs-toggle="modal" data-bs-target="#imageModal{{ $review->id }}"></video>
+                                        @else
+                                            <img src="{{ asset('storage/' . $media['path']) }}" alt="Review image {{ $index + 1 }}" class="review-image-thumbnail" data-bs-toggle="modal" data-bs-target="#imageModal{{ $review->id }}">
+                                        @endif
                                     @endforeach
                                 </div>
                             @else
@@ -95,27 +102,31 @@
                         </td>
                     </tr>
 
-                    @if($review->images && count($review->images) > 0)
-                    <!-- Images Modal -->
+                    @if(count($reviewMedia) > 0)
+                    <!-- Review media modal -->
                     <div class="modal fade" id="imageModal{{ $review->id }}" tabindex="-1" aria-labelledby="imageModalLabel{{ $review->id }}" aria-hidden="true">
                         <div class="modal-dialog modal-lg modal-dialog-centered">
                             <div class="modal-content">
                                 <div class="modal-header">
                                     <h5 class="modal-title" id="imageModalLabel{{ $review->id }}">
-                                        Review Images - {{ $review->user_name }}
+                                        Review Media - {{ $review->user_name }}
                                     </h5>
                                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                 </div>
                                 <div class="modal-body">
                                     <div id="reviewImagesCarousel{{ $review->id }}" class="carousel slide mb-3" data-bs-ride="carousel">
                                         <div class="carousel-inner">
-                                            @foreach($review->images as $index => $imagePath)
+                                            @foreach($reviewMedia as $index => $media)
                                                 <div class="carousel-item @if($index === 0) active @endif">
-                                                    <img src="{{ asset('storage/' . $imagePath) }}" alt="Review image {{ $index + 1 }}" style="width: 100%; max-height: 400px; object-fit: contain;">
+                                                    @if(($media['type'] ?? 'image') === 'video')
+                                                        <video src="{{ asset('storage/' . $media['path']) }}" controls style="width: 100%; max-height: 400px;"></video>
+                                                    @else
+                                                        <img src="{{ asset('storage/' . $media['path']) }}" alt="Review image {{ $index + 1 }}" style="width: 100%; max-height: 400px; object-fit: contain;">
+                                                    @endif
                                                 </div>
                                             @endforeach
                                         </div>
-                                        @if(count($review->images) > 1)
+                                        @if(count($reviewMedia) > 1)
                                             <button class="carousel-control-prev" type="button" data-bs-target="#reviewImagesCarousel{{ $review->id }}" data-bs-slide="prev">
                                                 <span class="carousel-control-prev-icon" aria-hidden="true"></span>
                                                 <span class="visually-hidden">Previous</span>

@@ -197,7 +197,6 @@
                                     <select id="facility-type" class="form-select">
                                         <option value="dining">Dining</option>
                                         <option value="gas_station">Gas Station</option>
-                                        <option value="restroom">Restroom</option>
                                     </select>
                                 </div>
                                 <div class="col-md-5">
@@ -357,12 +356,10 @@
     const facilityColors = {
         dining: '#ff6b35',
         gas_station: '#0d6efd',
-        restroom: '#20c997'
     };
     const facilityLabels = {
         dining: 'Dining',
         gas_station: 'Gas Station',
-        restroom: 'Restroom'
     };
     const initialFacilities = @json($initialFacilities);
     let facilities = Array.isArray(initialFacilities) ? initialFacilities : [];

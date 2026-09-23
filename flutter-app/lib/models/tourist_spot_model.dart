@@ -19,6 +19,7 @@ class TouristSpot {
   final String? nearbyGasStations;
   final List<Map<String, dynamic>>? nearbyFacilities;
   final String? status;
+  final String? statusReason;
   final String? verificationStatus;
   final bool isFavorited;
   final Map<String, dynamic>? municipality;
@@ -44,6 +45,7 @@ class TouristSpot {
     this.nearbyGasStations,
     this.nearbyFacilities,
     this.status,
+    this.statusReason,
     this.verificationStatus,
     this.isFavorited = false,
     this.municipality,
@@ -109,6 +111,7 @@ class TouristSpot {
       nearbyGasStations: json['nearby_gas_stations']?.toString(),
       nearbyFacilities: nearbyFacilities,
       status: json['status']?.toString(),
+      statusReason: json['status_reason']?.toString(),
       verificationStatus: json['verification_status']?.toString(),
       isFavorited: json['is_favorited'] == true ||
           json['is_favorited']?.toString() == '1',
@@ -144,6 +147,7 @@ class TouristSpot {
       'nearby_gas_stations': nearbyGasStations,
       'nearby_facilities': nearbyFacilities,
       'status': status,
+      'status_reason': statusReason,
       'verification_status': verificationStatus,
       'is_favorited': isFavorited,
       'municipality': municipality,
@@ -156,10 +160,23 @@ class TouristSpot {
 
   bool get isOpen => status == 'open' || status == 'active';
 
-  String get municipalityName =>
-      municipality != null
-          ? municipality!['name']?.toString() ?? 'Unknown Municipality'
-          : 'Unknown Municipality';
+  String get statusLabel {
+    switch (status) {
+      case 'under_maintenance':
+        return 'UNDER MAINTENANCE';
+      case 'seasonal':
+        return 'SEASONAL';
+      case 'open':
+      case 'active':
+        return 'OPEN';
+      default:
+        return 'CLOSED';
+    }
+  }
+
+  String get municipalityName => municipality != null
+      ? municipality!['name']?.toString() ?? 'Unknown Municipality'
+      : 'Unknown Municipality';
 
   String? get municipalityImageUrl =>
       municipality != null ? municipality!['image_url']?.toString() : null;

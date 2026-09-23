@@ -5,10 +5,10 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\SuperAdminDashboardController;
 use App\Http\Controllers\MunicipalityAdminDashboardController;
-use App\Http\Controllers\AdminProfileController;
 use App\Http\Controllers\TouristSpotController;
 use App\Http\Controllers\MunicipalityController;
 use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\MunicipalityStaffController;
 
 // Auth Routes
 Route::get('/register', [AuthController::class, 'register'])->name('register');
@@ -29,11 +29,13 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/dashboard', [SuperAdminDashboardController::class, 'index'])->name('dashboard');
         Route::post('/spots/{touristSpot}/approve', [SuperAdminDashboardController::class, 'approveSpot'])->name('spots.approve');
         Route::post('/spots/{touristSpot}/reject', [SuperAdminDashboardController::class, 'rejectSpot'])->name('spots.reject');
+        Route::post('/spots/{touristSpot}/request-revision', [SuperAdminDashboardController::class, 'requestSpotRevision'])->name('spots.request-revision');
         Route::get('/tourist-spots', [SuperAdminDashboardController::class, 'touristSpots'])->name('tourist-spots');
         Route::get('/admins', [SuperAdminDashboardController::class, 'admins'])->name('admins');
         Route::get('/admins/create', [SuperAdminDashboardController::class, 'createAdmin'])->name('admins.create');
         Route::post('/admins', [SuperAdminDashboardController::class, 'storeAdmin'])->name('admins.store');
         Route::get('/reports', [SuperAdminDashboardController::class, 'reports'])->name('reports');
+        Route::get('/admins/{admin}', [SuperAdminDashboardController::class, 'showAdmin'])->name('admins.show');
         Route::get('/admins/{admin}/edit', [SuperAdminDashboardController::class, 'editAdmin'])->name('admins.edit');
         Route::put('/admins/{admin}', [SuperAdminDashboardController::class, 'updateAdmin'])->name('admins.update');
         Route::patch('/admins/{admin}/status', [SuperAdminDashboardController::class, 'toggleAdminStatus'])->name('admins.toggle-status');
@@ -43,15 +45,17 @@ Route::middleware(['auth'])->group(function () {
     // Municipality Admin Routes
     Route::middleware(['municipalityadmin'])->prefix('municipality-admin')->name('municipality-admin.')->group(function () {
         Route::get('/dashboard', [MunicipalityAdminDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/notifications/{notification}/open', [MunicipalityAdminDashboardController::class, 'openNotification'])->name('notifications.open');
+        Route::post('/notifications/read-all', [MunicipalityAdminDashboardController::class, 'markNotificationsRead'])->name('notifications.read-all');
         Route::get('/tourist-spots', [MunicipalityAdminDashboardController::class, 'touristSpots'])->name('tourist-spots');
         Route::get('/reports', [MunicipalityAdminDashboardController::class, 'reports'])->name('reports');
         Route::get('/reviews', [MunicipalityAdminDashboardController::class, 'reviews'])->name('reviews');
-    });
-
-    // Shared Admin Profile Routes
-    Route::middleware(['admin'])->group(function () {
-        Route::get('/profile', [AdminProfileController::class, 'edit'])->name('profile.edit');
-        Route::put('/profile', [AdminProfileController::class, 'update'])->name('profile.update');
+        Route::get('/staff', [MunicipalityStaffController::class, 'index'])->name('staff');
+        Route::get('/staff/create', [MunicipalityStaffController::class, 'create'])->name('staff.create');
+        Route::post('/staff', [MunicipalityStaffController::class, 'store'])->name('staff.store');
+        Route::get('/staff/{staff}/edit', [MunicipalityStaffController::class, 'edit'])->name('staff.edit');
+        Route::put('/staff/{staff}', [MunicipalityStaffController::class, 'update'])->name('staff.update');
+        Route::patch('/staff/{staff}/status', [MunicipalityStaffController::class, 'toggleStatus'])->name('staff.toggle-status');
     });
 
     // Tourist Spots

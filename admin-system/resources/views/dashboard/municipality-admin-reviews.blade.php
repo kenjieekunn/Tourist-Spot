@@ -63,7 +63,6 @@
     <table class="reviews-report-summary"><tbody>
         <tr><td>Total Reviews</td><td>{{ $totalReviews }}</td></tr>
         <tr><td>Average Rating</td><td>{{ number_format($averageRating, 1) }} / 5</td></tr>
-        <tr><td>Reported Issues</td><td>{{ $reportedIssues }}</td></tr>
     </tbody></table>
     <div class="reviews-report-title">Ratings by Tourist Spot</div>
     <table class="reviews-report-table"><thead><tr><th>Tourist Spot</th><th>Reviews</th><th>Rating</th></tr></thead><tbody>
@@ -73,12 +72,13 @@
             <tr><td colspan="3" class="text-center">No reviews found</td></tr>
         @endforelse
     </tbody></table>
-    <div class="reviews-report-title">Tourist Comments and Reported Issues</div>
-    <table class="reviews-report-table"><thead><tr><th>Tourist Spot</th><th>Comment</th><th>Status</th><th>Date</th></tr></thead><tbody>
+    <div class="reviews-report-title">Tourist Comments</div>
+    <table class="reviews-report-table"><thead><tr><th>Tourist Spot</th><th>Comment</th><th>Status</th><th>Date</th><th>Media</th></tr></thead><tbody>
         @forelse($reportReviews as $review)
-            <tr><td>{{ $review->touristSpot?->name ?? 'Unknown Tourist Spot' }}</td><td>{{ $review->comment ?: 'No comment provided' }}</td><td>{{ $review->status === 'rejected' ? 'Reported Issue' : ucfirst($review->status ?? 'pending') }}</td><td>{{ $review->created_at?->format('M d, Y') ?? 'Not available' }}</td></tr>
+            @php $reviewMedia = $review->media ?? collect($review->images ?? [])->map(fn ($path) => ['path' => $path, 'type' => 'image'])->all(); @endphp
+            <tr><td>{{ $review->touristSpot?->name ?? 'Unknown Tourist Spot' }}</td><td>{{ $review->comment ?: 'No comment provided' }}</td><td>{{ ucfirst($review->status ?? 'pending') }}</td><td>{{ $review->created_at?->format('M d, Y') ?? 'Not available' }}</td><td>@forelse($reviewMedia as $media)<a href="{{ asset('storage/' . $media['path']) }}" target="_blank" rel="noopener">{{ ($media['type'] ?? 'image') === 'video' ? 'View video' : 'View image' }}</a>@if(!$loop->last), @endif @empty None @endforelse</td></tr>
         @empty
-            <tr><td colspan="4" class="text-center">No comments or reported issues found</td></tr>
+            <tr><td colspan="5" class="text-center">No tourist comments found</td></tr>
         @endforelse
     </tbody></table>
     <div class="reviews-report-signoff"><p>Prepared by: ____________________________________</p><p>Position: Municipal Tourism Officer</p><p>Date Printed: ___________________________________</p></div>

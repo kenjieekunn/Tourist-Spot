@@ -16,6 +16,7 @@ import 'package:tourist_spot_app/models/tourist_spot_model.dart';
 import 'package:tourist_spot_app/controllers/app_providers.dart';
 import 'package:tourist_spot_app/config/constants/api_constants.dart';
 import 'package:tourist_spot_app/views/widgets/cached_image_widget.dart';
+import 'package:tourist_spot_app/config/theme/app_theme.dart';
 
 class TouristSpotDetailScreen extends ConsumerStatefulWidget {
   final TouristSpot spot;
@@ -341,7 +342,7 @@ class _TouristSpotDetailScreenState
             stretch: true,
             pinned: false,
             floating: true,
-            backgroundColor: const Color(0xFFFF6B35),
+            backgroundColor: AppTheme.primaryColor,
             leading: GestureDetector(
               onTap: () => Navigator.pop(context),
               child: Container(
@@ -352,7 +353,7 @@ class _TouristSpotDetailScreenState
                 ),
                 child: const Icon(
                   Icons.arrow_back,
-                  color: Color(0xFFFF6B35),
+                  color: AppTheme.primaryColor,
                 ),
               ),
             ),
@@ -367,7 +368,7 @@ class _TouristSpotDetailScreenState
                   child: IconButton(
                     icon: const Icon(
                       Icons.share,
-                      color: Color(0xFFFF6B35),
+                      color: AppTheme.primaryColor,
                     ),
                     onPressed: _shareSpot,
                   ),
@@ -495,7 +496,7 @@ class _TouristSpotDetailScreenState
                     : const Color(0xFFB26A00),
               ),
               _buildChip(
-                label: widget.spot.isOpen ? 'OPEN' : 'CLOSED',
+                label: widget.spot.statusLabel,
                 backgroundColor: widget.spot.isOpen
                     ? const Color(0xFFE8F5E9)
                     : const Color(0xFFFFEBEE),
@@ -505,13 +506,21 @@ class _TouristSpotDetailScreenState
               ),
             ],
           ),
+          if ((widget.spot.statusReason ?? '').isNotEmpty)
+            Padding(
+              padding: EdgeInsets.only(top: 6.h),
+              child: Text(
+                widget.spot.statusReason!,
+                style: TextStyle(fontSize: 12.sp, color: Colors.grey[700]),
+              ),
+            ),
           SizedBox(height: 10.h),
           Row(
             children: [
               Icon(
                 Icons.place,
                 size: 16.sp,
-                color: const Color(0xFFFF6B35),
+                color: AppTheme.primaryColor,
               ),
               SizedBox(width: 6.w),
               Expanded(
@@ -533,7 +542,7 @@ class _TouristSpotDetailScreenState
                 vertical: 4.h,
               ),
               decoration: BoxDecoration(
-                color: const Color(0xFFFF6B35),
+                color: AppTheme.primaryColor,
                 borderRadius: BorderRadius.circular(20.r),
               ),
               child: Row(
@@ -595,7 +604,7 @@ class _TouristSpotDetailScreenState
         Polyline(
           polylineId: const PolylineId('live_route'),
           points: routePoints,
-          color: const Color(0xFFFF6B35),
+          color: AppTheme.primaryColor,
           width: 4,
         ),
     };
@@ -655,7 +664,7 @@ class _TouristSpotDetailScreenState
                     Icon(
                       Icons.location_on,
                       size: 16.sp,
-                      color: const Color(0xFFFF6B35),
+                      color: AppTheme.primaryColor,
                     ),
                     SizedBox(width: 8.w),
                     Expanded(
@@ -807,7 +816,7 @@ class _TouristSpotDetailScreenState
                           width: 24.w,
                           height: 24.w,
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFF6B35),
+                            color: AppTheme.primaryColor,
                             borderRadius: BorderRadius.circular(12.r),
                           ),
                           child: Center(
@@ -864,7 +873,7 @@ class _TouristSpotDetailScreenState
                     ),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFFF6B35),
+                    backgroundColor: AppTheme.primaryColor,
                     foregroundColor: Colors.white,
                     padding: EdgeInsets.symmetric(vertical: 12.h),
                     shape: RoundedRectangleBorder(
@@ -1022,7 +1031,7 @@ class _TouristSpotDetailScreenState
         Icon(
           icon,
           size: 18.sp,
-          color: const Color(0xFFFF6B35),
+          color: AppTheme.primaryColor,
         ),
         SizedBox(width: 12.w),
         Expanded(
@@ -1143,14 +1152,14 @@ class _TouristSpotDetailScreenState
       children: [
         Row(
           children: [
-            Icon(icon, size: 16.sp, color: const Color(0xFFFF6B35)),
+            Icon(icon, size: 16.sp, color: AppTheme.primaryColor),
             SizedBox(width: 6.w),
             Text(
               title,
               style: GoogleFonts.roboto(
                 fontSize: 13.sp,
                 fontWeight: FontWeight.w600,
-                color: const Color(0xFFFF6B35),
+                color: AppTheme.primaryColor,
               ),
             ),
           ],
@@ -1263,7 +1272,7 @@ class _TouristSpotDetailScreenState
                       style: GoogleFonts.roboto(fontSize: 11.sp),
                     ),
                     style: TextButton.styleFrom(
-                      foregroundColor: const Color(0xFFFF6B35),
+                      foregroundColor: AppTheme.primaryColor,
                       padding: EdgeInsets.symmetric(
                         horizontal: 10.w,
                         vertical: 8.h,
@@ -1314,7 +1323,7 @@ class _TouristSpotDetailScreenState
                     vertical: 6.h,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFF6B35),
+                    color: AppTheme.primaryColor,
                     borderRadius: BorderRadius.circular(6.r),
                   ),
                   child: Text(
@@ -1370,14 +1379,14 @@ class _TouristSpotDetailScreenState
       children: [
         Row(
           children: [
-            Icon(Icons.place, size: 16.sp, color: const Color(0xFFFF6B35)),
+            Icon(Icons.place, size: 16.sp, color: AppTheme.primaryColor),
             SizedBox(width: 6.w),
             Text(
               'Structured Facilities',
               style: GoogleFonts.roboto(
                 fontSize: 13.sp,
                 fontWeight: FontWeight.w600,
-                color: const Color(0xFFFF6B35),
+                color: AppTheme.primaryColor,
               ),
             ),
           ],
@@ -1414,7 +1423,7 @@ class _TouristSpotDetailScreenState
                         style: GoogleFonts.roboto(fontSize: 11.sp),
                       ),
                       style: TextButton.styleFrom(
-                        foregroundColor: const Color(0xFFFF6B35),
+                        foregroundColor: AppTheme.primaryColor,
                         padding: EdgeInsets.symmetric(
                           horizontal: 10.w,
                           vertical: 8.h,
@@ -1592,7 +1601,7 @@ Longitude: ${widget.spot.longitude}''';
                         backgroundColor: Colors.grey[200],
                         child: const Icon(
                           Icons.map,
-                          color: Color(0xFFFF6B35),
+                          color: AppTheme.primaryColor,
                         ),
                       ),
                       title: Text(
@@ -1783,7 +1792,7 @@ Longitude: ${widget.spot.longitude}''';
                       backgroundColor: Colors.grey[200],
                       child: const Icon(
                         Icons.place,
-                        color: Color(0xFFFF6B35),
+                        color: AppTheme.primaryColor,
                       ),
                     ),
                     title: Text(

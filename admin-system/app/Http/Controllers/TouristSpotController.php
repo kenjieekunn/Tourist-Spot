@@ -7,18 +7,24 @@ use App\Models\TouristSpot;
 use App\Models\Municipality;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 
 class TouristSpotController extends Controller
 {
     public function index(Request $request)
     {
         $user = auth()->user();
+        if ($user && $user->belongsToMunicipalityTeam()) {
+            abort_unless($user->hasPermission('manage_spots'), 403, 'You do not have permission to manage tourist spots.');
+        }
         $spotsQuery = TouristSpot::with('municipality');
 
         if ($user && $user->isSuperAdmin()) {
             // Super admins can see everything.
-        } elseif ($user && $user->isMunicipalityAdmin()) {
+        } elseif ($user && $user->belongsToMunicipalityTeam()) {
             $spotsQuery->where('municipality_id', $user->municipality_id);
         } else {
             $spotsQuery->where('verification_status', 'approved')
@@ -26,6 +32,16 @@ class TouristSpotController extends Controller
         }
 
         $searchTerm = trim((string) $request->query('q'));
+        $municipalityId = $request->integer('municipality_id');
+        $statusFilter = (string) $request->query('status', 'all');
+        if (!in_array($statusFilter, ['all', 'approved', 'pending', 'closed'], true)) {
+            $statusFilter = 'all';
+        }
+        $viewMode = $request->query('view') === 'list' ? 'list' : 'grid';
+
+        if ($municipalityId > 0 && $user && $user->isSuperAdmin()) {
+            $spotsQuery->where('municipality_id', $municipalityId);
+        }
 
         if ($searchTerm !== '') {
             $spotsQuery->where(function ($query) use ($searchTerm) {
@@ -34,6 +50,14 @@ class TouristSpotController extends Controller
                         $municipalityQuery->where('name', 'like', '%' . $searchTerm . '%');
                     });
             });
+        }
+
+        if ($statusFilter === 'approved') {
+            $spotsQuery->where('verification_status', 'approved');
+        } elseif ($statusFilter === 'pending') {
+            $spotsQuery->where('verification_status', 'pending');
+        } elseif ($statusFilter === 'closed') {
+            $spotsQuery->where('status', 'closed');
         }
 
         $spots = $spotsQuery->get();
@@ -51,35 +75,39 @@ class TouristSpotController extends Controller
             'groupedSpots' => $groupedSpots,
             'spotCategories' => $spotCategories,
             'searchTerm' => $searchTerm,
+            'municipalityId' => $municipalityId,
+            'statusFilter' => $statusFilter,
+            'viewMode' => $viewMode,
+            'municipalities' => Municipality::orderBy('name')->get(['id', 'name']),
         ]);
     }
 
     public function create()
     {
         $user = auth()->user();
-        abort_unless($user && $user->isAdmin(), 403, 'Unauthorized access to create tourist spots.');
+        abort_unless($user && $user->isAdmin() && $user->hasPermission('manage_spots'), 403, 'You do not have permission to add tourist spots.');
         $municipalities = $user && $user->isSuperAdmin()
             ? Municipality::orderBy('name')->get()
             : collect();
 
         return view('tourist_spots.create', [
             'municipalities' => $municipalities,
-            'assignedMunicipality' => $user && $user->isMunicipalityAdmin() ? $user->municipality : null,
+            'assignedMunicipality' => $user && $user->belongsToMunicipalityTeam() ? $user->municipality : null,
             'spotCategories' => $this->spotCategories(),
-            'districtMapContext' => $this->districtMapContext(),
+            'districtMapContext' => $this->districtMapContext($user->belongsToMunicipalityTeam() ? $user->municipality : null),
         ]);
     }
 
     public function store(Request $request)
     {
         $user = auth()->user();
-        abort_unless($user && $user->isAdmin(), 403, 'Unauthorized access to create tourist spots.');
+        abort_unless($user && $user->isAdmin() && $user->hasPermission('manage_spots'), 403, 'You do not have permission to add tourist spots.');
         $selectedCategory = (string) $request->input('category', 'nature');
 
         $validator = Validator::make($request->all(), [
             'municipality_id' => 'required|exists:municipalities,id',
             'barangay' => 'nullable|string|max:255',
-            'category' => 'required|in:beach,parks,falls,nature,resort',
+            'category' => 'required|in:beach,parks,falls,nature,resort,historical,cultural,religious',
             'name' => 'required|string|min:3|max:255|unique:tourist_spots|regex:/^[a-zA-Z0-9\s\-.,&()\'"]+$/',
             'description' => 'required|string',
             'address' => 'required|string|max:255',
@@ -187,7 +215,13 @@ class TouristSpotController extends Controller
 
         $validated = $validator->validate();
 
-        if ($user && $user->isMunicipalityAdmin()) {
+        if ($user->belongsToMunicipalityTeam() && !$this->coordinatesWithinMunicipality($user->municipality, (float) $validated['latitude'], (float) $validated['longitude'])) {
+            throw ValidationException::withMessages([
+                'latitude' => 'The selected location must be inside your assigned municipality.',
+            ]);
+        }
+
+        if ($user && $user->belongsToMunicipalityTeam()) {
             $validated['municipality_id'] = $user->municipality_id;
             $validated['status'] = 'closed';
             $validated['verification_status'] = 'pending';
@@ -230,7 +264,7 @@ class TouristSpotController extends Controller
         $spot = TouristSpot::create($validated);
 // event(new TouristSpotChanged('created', $spot->toArray())); // Disabled broadcasting to fix Pusher error
 
-        if ($user && $user->isMunicipalityAdmin()) {
+        if ($user && $user->belongsToMunicipalityTeam()) {
             return redirect()->route('municipality-admin.tourist-spots')->with('success', 'Tourist spot created successfully!');
         }
 
@@ -246,6 +280,7 @@ class TouristSpotController extends Controller
         $this->ensureSpotAccess($touristSpot);
 
         $user = auth()->user();
+        abort_unless($user && $user->hasPermission('manage_spots'), 403, 'You do not have permission to edit tourist spots.');
         if ($user && $user->isSuperAdmin()) {
             abort(403, 'Super admin can verify tourist spots, but cannot edit them.');
         }
@@ -260,10 +295,10 @@ class TouristSpotController extends Controller
         return view('tourist_spots.edit', [
             'spot' => $touristSpot,
             'municipalities' => $municipalities,
-            'assignedMunicipality' => $user && $user->isMunicipalityAdmin() ? $user->municipality : null,
+            'assignedMunicipality' => $user && $user->belongsToMunicipalityTeam() ? $user->municipality : null,
             'spotCategories' => $this->spotCategories(),
             'initialFacilities' => $initialFacilities,
-            'districtMapContext' => $this->districtMapContext(),
+            'districtMapContext' => $this->districtMapContext($touristSpot->municipality),
         ]);
     }
 
@@ -272,6 +307,7 @@ class TouristSpotController extends Controller
         $this->ensureSpotAccess($touristSpot);
 
         $user = auth()->user();
+        abort_unless($user && $user->hasPermission('manage_spots'), 403, 'You do not have permission to edit tourist spots.');
         if ($user && $user->isSuperAdmin()) {
             abort(403, 'Super admin can verify tourist spots, but cannot edit them.');
         }
@@ -279,7 +315,7 @@ class TouristSpotController extends Controller
         $validator = Validator::make($request->all(), [
             'municipality_id' => 'required|exists:municipalities,id',
             'barangay' => 'nullable|string|max:255',
-            'category' => 'required|in:beach,parks,falls,nature,resort',
+            'category' => 'required|in:beach,parks,falls,nature,resort,historical,cultural,religious',
             'name' => 'required|string|min:3|max:255|unique:tourist_spots,name,' . $touristSpot->id . '|regex:/^[a-zA-Z0-9\s\-.,&()\'"]+$/',
             'description' => 'required|string',
             'address' => 'required|string|max:255',
@@ -294,7 +330,10 @@ class TouristSpotController extends Controller
             'nearby_dining' => 'nullable|string',
             'nearby_gas_stations' => 'nullable|string',
             'nearby_facilities' => 'nullable|string',
-            'status' => 'required|in:open,closed,active,inactive',
+            'status' => 'required|in:open,closed,active,inactive,under_maintenance,seasonal',
+            'status_reason' => 'nullable|string|max:255',
+            'remove_images' => 'nullable|array',
+            'remove_images.*' => 'string|max:2048',
         ], [
             'name.required' => 'The tourist spot name is required.',
             'name.min' => 'The tourist spot name must be at least 3 characters long.',
@@ -389,11 +428,20 @@ class TouristSpotController extends Controller
 
         $validated = $validator->validate();
 
+        if ($user->belongsToMunicipalityTeam() && !$this->coordinatesWithinMunicipality($user->municipality, (float) $validated['latitude'], (float) $validated['longitude'])) {
+            throw ValidationException::withMessages([
+                'latitude' => 'The selected location must be inside your assigned municipality.',
+            ]);
+        }
+
         $validated['status'] = $validated['status'] === 'active'
             ? 'open'
             : ($validated['status'] === 'inactive' ? 'closed' : $validated['status']);
+        if (!in_array($validated['status'], ['closed', 'under_maintenance', 'seasonal'], true)) {
+            $validated['status_reason'] = null;
+        }
 
-        if ($user && $user->isMunicipalityAdmin()) {
+        if ($user && $user->belongsToMunicipalityTeam()) {
             $validated['municipality_id'] = $user->municipality_id;
             $validated['verification_status'] = $touristSpot->verification_status;
         }
@@ -417,14 +465,29 @@ class TouristSpotController extends Controller
             $validated['closing_time'] = null;
         }
 
-        unset($validated['images']);
-        $imageUrls = $this->storeImagesAndGetUrls($request, 'images', 'spot-images', $touristSpot->image_urls ?? []);
-        if (!empty($imageUrls)) {
+        unset($validated['images'], $validated['remove_images']);
+        $existingImageUrls = $touristSpot->image_urls ?? [];
+        $removedImageUrls = array_values(array_intersect($existingImageUrls, $request->input('remove_images', [])));
+        if (!empty($removedImageUrls)) {
+            $this->deleteStoredImages($removedImageUrls);
+        }
+        $remainingImageUrls = array_values(array_diff($existingImageUrls, $removedImageUrls));
+        $newImageUrls = $this->storeImagesAndGetUrls($request, 'images', 'spot-images');
+        $imageUrls = array_slice(array_values(array_unique(array_merge($remainingImageUrls, $newImageUrls))), 0, 5);
+        if ($imageUrls !== $existingImageUrls || !empty($newImageUrls) || !empty($removedImageUrls)) {
             $validated['images'] = $imageUrls;
-            $validated['image_url'] = $imageUrls[0];
+            $validated['image_url'] = $imageUrls[0] ?? null;
+        }
+
+        if (Schema::hasColumn('tourist_spots', 'edited_by')) {
+            $validated['edited_by'] = $user->id;
         }
 
         $touristSpot->update($validated);
+        if (Schema::hasColumn('tourist_spots', 'rejection_reason')
+            && str_starts_with((string) $touristSpot->rejection_reason, 'Revision requested:')) {
+            $touristSpot->update(['rejection_reason' => null]);
+        }
 // event(new TouristSpotChanged('updated', $touristSpot->fresh()->toArray())); // Disabled broadcasting to fix Pusher error
 
         $returnTo = $request->input('return_to');
@@ -462,7 +525,7 @@ class TouristSpotController extends Controller
         }
 
         $user = $request->user();
-        if ($user && method_exists($user, 'isMunicipalityAdmin') && $user->isMunicipalityAdmin()) {
+        if ($user && method_exists($user, 'belongsToMunicipalityTeam') && $user->belongsToMunicipalityTeam()) {
             return redirect()->route('municipality-admin.tourist-spots')->with('success', 'Tourist spot deleted successfully!');
         }
 
@@ -480,9 +543,13 @@ class TouristSpotController extends Controller
             abort(404);
         }
 
-        $touristSpot->load(['municipality', 'reviews']);
+        $touristSpot->load(['municipality.admins', 'creator', 'reviews']);
+        $verificationEvents = Schema::hasTable('tourist_spot_verification_events')
+            ? DB::table('tourist_spot_verification_events')->where('tourist_spot_id', $touristSpot->id)->latest()->get()
+            : collect();
         return view('tourist_spots.show', [
             'spot' => $touristSpot,
+            'verificationEvents' => $verificationEvents,
             'districtMapContext' => $this->districtMapContext(),
         ]);
     }
@@ -521,7 +588,7 @@ class TouristSpotController extends Controller
             return [];
         }
 
-        $allowedTypes = ['dining', 'gas_station', 'restroom'];
+        $allowedTypes = ['dining', 'gas_station'];
         $facilities = [];
 
         foreach ($decoded as $entry) {
@@ -623,10 +690,26 @@ class TouristSpotController extends Controller
             'falls' => 'Falls',
             'nature' => 'Nature',
             'resort' => 'Resort',
+            'historical' => 'Historical',
+            'cultural' => 'Cultural',
+            'religious' => 'Church / Religious',
         ];
     }
 
-    private function districtMapContext(): array
+    private function coordinatesWithinMunicipality(?Municipality $municipality, float $latitude, float $longitude): bool
+    {
+        if (!$municipality) {
+            return false;
+        }
+
+        $context = $this->districtMapContext($municipality);
+        $bounds = $context['bounds'];
+
+        return $latitude >= $bounds['south'] && $latitude <= $bounds['north']
+            && $longitude >= $bounds['west'] && $longitude <= $bounds['east'];
+    }
+
+    private function districtMapContext(?Municipality $selectedMunicipality = null): array
     {
         $municipalities = [
             ['name' => 'Lingayen', 'latitude' => 16.0146, 'longitude' => 120.2327],
@@ -650,11 +733,18 @@ class TouristSpotController extends Controller
             'Aguilar' => ['Alon', 'Balangabang', 'Balantac', 'Balat', 'Balayong', 'Bani', 'Banaoang', 'Bangar', 'Bansalao'],
         ];
 
-        $latitudes = array_column($municipalities, 'latitude');
-        $longitudes = array_column($municipalities, 'longitude');
-        $padding = 0.06;
-        $municipalityNames = array_column($municipalities, 'name');
-        $localPlaces = collect($municipalities)->map(function (array $municipality) {
+        $municipalityNames = $selectedMunicipality
+            ? [$selectedMunicipality->name]
+            : array_column($municipalities, 'name');
+        $selectedPoint = collect($municipalities)->firstWhere('name', $selectedMunicipality?->name);
+        $visibleMunicipalities = $selectedPoint ? [$selectedPoint] : $municipalities;
+        $visibleBarangays = $selectedMunicipality
+            ? [$selectedMunicipality->name => ($barangays[$selectedMunicipality->name] ?? [])]
+            : $barangays;
+        $latitudes = array_column($visibleMunicipalities, 'latitude');
+        $longitudes = array_column($visibleMunicipalities, 'longitude');
+        $padding = $selectedPoint ? 0.025 : 0.06;
+        $localPlaces = collect($visibleMunicipalities)->map(function (array $municipality) {
             return [
                 'name' => $municipality['name'],
                 'subtitle' => 'Municipality center • Pangasinan 2nd District',
@@ -707,9 +797,9 @@ class TouristSpotController extends Controller
             ->all();
 
         return [
-            'municipalities' => array_column($municipalities, 'name'),
-            'municipalityPoints' => $municipalities,
-            'barangays' => $barangays,
+            'municipalities' => $municipalityNames,
+            'municipalityPoints' => $visibleMunicipalities,
+            'barangays' => $visibleBarangays,
             'localPlaces' => $localPlaces,
             'bounds' => [
                 'north' => max($latitudes) + $padding,
@@ -721,7 +811,9 @@ class TouristSpotController extends Controller
                 'lat' => round(array_sum($latitudes) / count($latitudes), 6),
                 'lng' => round(array_sum($longitudes) / count($longitudes), 6),
             ],
-            'searchSuffix' => 'Pangasinan 2nd District, Pangasinan, Philippines',
+            'searchSuffix' => $selectedMunicipality
+                ? $selectedMunicipality->name . ', Pangasinan, Philippines'
+                : 'Pangasinan 2nd District, Pangasinan, Philippines',
         ];
     }
 
@@ -827,7 +919,7 @@ class TouristSpotController extends Controller
             return;
         }
 
-        if ($user && $user->isMunicipalityAdmin() && (int) $touristSpot->municipality_id === (int) $user->municipality_id) {
+        if ($user && $user->belongsToMunicipalityTeam() && (int) $touristSpot->municipality_id === (int) $user->municipality_id) {
             return;
         }
 

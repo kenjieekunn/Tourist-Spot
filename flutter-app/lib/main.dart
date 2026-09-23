@@ -63,7 +63,7 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppTheme.backgroundColor,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -77,7 +77,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 return Icon(
                   Icons.location_on,
                   size: 80.sp,
-                  color: const Color(0xFFFF6B35),
+                  color: AppTheme.primaryColor,
                 );
               },
             ),
@@ -87,7 +87,7 @@ class _SplashScreenState extends State<SplashScreen> {
               style: GoogleFonts.roboto(
                 fontSize: 28.sp,
                 fontWeight: FontWeight.bold,
-                color: const Color(0xFFFF6B35),
+                color: AppTheme.primaryColor,
               ),
             ),
             SizedBox(height: 10.h),
@@ -108,7 +108,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 child: LinearProgressIndicator(
                   backgroundColor: Colors.grey[300],
                   valueColor: const AlwaysStoppedAnimation<Color>(
-                    Color(0xFFFF6B35),
+                    AppTheme.primaryColor,
                   ),
                 ),
               ),

@@ -1,24 +1,24 @@
 @extends('layouts.app')
 
 @section('title', 'Edit Tourist Spot')
-@section('header', 'Edit Tourist Spot: ' . $spot->name)
+@section('header', '')
 
 @section('content')
 <script src="https://maps.googleapis.com/maps/api/js?key={{ env('GOOGLE_MAPS_API_KEY') }}&libraries=places"></script>
 
 <style>
     #map {
-        height: 400px;
+        height: 440px;
         border-radius: 8px;
         margin-top: 10px;
         border: 2px solid #dee2e6;
     }
     .search-location-container {
-        margin-bottom: 15px;
-        padding: 15px;
+        margin-bottom: 10px;
+        padding: 10px;
         background-color: #f8f9fa;
         border-radius: 8px;
-        border: 2px solid #007bff;
+        border: 1px solid #b8dcd7;
     }
     .search-location-form {
         display: flex;
@@ -40,8 +40,8 @@
     }
     .search-location-input:focus {
         outline: none;
-        border-color: #007bff;
-        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        border-color: #0f766e;
+        box-shadow: 0 0 0 0.2rem rgba(15, 118, 110, 0.15);
     }
     .search-suggestions {
         position: absolute;
@@ -96,7 +96,7 @@
         text-transform: uppercase;
     }
     .facility-tools {
-        padding: 15px;
+        padding: 10px;
         background: #f8f9fa;
         border: 1px solid #e1e5ea;
         border-radius: 8px;
@@ -116,6 +116,80 @@
         color: #fff;
         margin-right: 8px;
     }
+    .spot-map-column { position: sticky; top: 1rem; }
+    #tourist-spot-form { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: .35rem 1.25rem; align-items: start; }
+    #tourist-spot-form > h5:first-of-type { grid-column: 2; grid-row: 2; margin-bottom: .25rem !important; }
+    #tourist-spot-form > .municipality-field { grid-column: 1; grid-row: 2; }
+    #tourist-spot-form > .category-field { grid-column: 1; grid-row: 3; }
+    #tourist-spot-form > .name-field { grid-column: 1; grid-row: 4; }
+    #tourist-spot-form > h5:nth-of-type(2) { grid-column: 1; grid-row: 5; }
+    #tourist-spot-form > .description-field { grid-column: 1; grid-row: 6; }
+    #tourist-spot-form > .images-field { grid-column: 1; grid-row: 7; }
+    #tourist-spot-form > #schedule-section { grid-column: 1; grid-row: 8; }
+    #tourist-spot-form > .status-field { grid-column: 1; grid-row: 9; }
+    #tourist-spot-form > .search-location-container { grid-column: 2; grid-row: 3; }
+    #tourist-spot-form > #map { grid-column: 2; grid-row: 4; }
+    #tourist-spot-form > .map-legend { grid-column: 2; grid-row: 5; }
+    #tourist-spot-form > .address-field { grid-column: 2; grid-row: 6; }
+    #tourist-spot-form > #map ~ .mt-4 { grid-column: 2; grid-row: 7; }
+    #tourist-spot-form > hr { display: none; }
+    #tourist-spot-form > .d-flex { grid-column: 1 / -1; grid-row: 10; }
+    #tourist-spot-form > input[type="hidden"],
+    #tourist-spot-form > .text-danger.small { display: none; }
+    #tourist-spot-form > .facility-tools,
+    #tourist-spot-form > #facility-list,
+    #tourist-spot-form > #facility-count { grid-column: 2; }
+    #tourist-spot-form > .facility-tools { margin-top: 0; }
+    .municipality-tag { display: inline-flex; align-items: center; gap: .45rem; padding: .55rem .8rem; border-radius: 999px; background: #eef4ff; color: #2453b8; font-weight: 700; }
+    .category-chips { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .6rem; }
+    .category-chip input { position: absolute; opacity: 0; pointer-events: none; }
+    .category-chip label { display: flex; align-items: center; gap: .55rem; padding: .75rem .8rem; border: 1px solid #d9e0e8; border-radius: 10px; cursor: pointer; font-weight: 650; background: #fff; }
+    .category-chip input:checked + label { border-color: #0f766e; background: #e8f5f2; color: #0f766e; }
+    .dropzone { border: 2px dashed #b8c4d3; border-radius: 10px; padding: 1.1rem; text-align: center; background: #f8fafc; cursor: pointer; }
+    .dropzone i { color: #0f766e; font-size: 1.8rem; }
+    .dropzone.dragover { border-color: #0f766e; background: #effaf8; }
+    .upload-previews { display: grid; grid-template-columns: repeat(3, 1fr); gap: .6rem; margin-top: .8rem; }
+    .upload-preview { position: relative; }
+    .upload-preview img { width: 100%; height: 90px; object-fit: cover; border-radius: 8px; }
+    .cover-badge { position: absolute; left: .35rem; bottom: .35rem; font-size: .68rem; }
+    .existing-image-remove { position: absolute; top: .35rem; right: .35rem; }
+    .existing-image-card { position: relative; }
+    .btn-tourism { background: #0f766e; border-color: #0f766e; color: #fff; }
+    .btn-tourism:hover { background: #115e59; border-color: #115e59; color: #fff; }
+    .map-legend { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: .65rem; font-size: .78rem; color: #4b5563; }
+    .map-legend-item { display: inline-flex; align-items: center; gap: .35rem; }
+    .map-legend-dot { width: .7rem; height: .7rem; border-radius: 50%; display: inline-block; border: 1px solid #fff; box-shadow: 0 0 0 1px #9ca3af; }
+    .map-legend-dot.spot { background: #dc2626; }
+    .map-legend-dot.dining { background: #ff6b35; }
+    .map-legend-dot.gas { background: #0d6efd; }
+    .map-legend-dot.radius { background: rgba(15,118,110,.35); }
+    .search-status { min-height: 1.25rem; font-size: .8rem; }
+    .status-reason { display: none; }
+    .status-reason.show { display: block; }
+    #tourist-spot-form {
+        display: block;
+    }
+    #tourist-spot-form > * {
+        grid-column: auto !important;
+        grid-row: auto !important;
+    }
+    #tourist-spot-form > hr {
+        display: block;
+    }
+    #tourist-spot-form > h5:first-of-type {
+        margin-top: 0;
+    }
+    .edit-spot-card .alert { margin-bottom: 1rem; padding: .65rem .8rem; }
+    .edit-spot-card .mb-3 { margin-bottom: .8rem !important; }
+    .edit-spot-card .mb-4 { margin-bottom: 1rem !important; }
+    .edit-spot-card h5 { margin-bottom: .8rem !important; }
+    .edit-spot-card hr { margin: 1rem 0 !important; }
+    .edit-spot-card .form-label { margin-bottom: .3rem; }
+    .edit-spot-card .card-body { padding: 1.25rem !important; }
+    @media (max-width: 991.98px) {
+        .spot-map-column { position: static; }
+        #map { height: 380px; }
+    }
 </style>
 
 @php
@@ -131,19 +205,27 @@
     $selectedCategory = old('category', $spot->category ?? 'nature');
     $showScheduleFields = $selectedCategory === 'parks';
     $spotImages = collect($spot->image_urls ?? []);
+    $isPending = $spot->verification_status === 'pending';
+    $isApprovedPublished = $spot->verification_status === 'approved' && in_array($spot->status, ['open', 'active'], true);
+    $normalizedStatus = old('status', $spot->status === 'active' ? 'open' : ($spot->status === 'inactive' ? 'closed' : $spot->status));
+    $statusReason = old('status_reason', $spot->status_reason);
 @endphp
 
 <div class="row">
-    <div class="col-lg-8">
-        <div class="card">
-            <div class="card-body p-4">
-                @if(auth()->user()->isSuperAdmin())
-                    <div class="alert alert-info">
-                        Super admin edits remain published immediately.
+    <div class="col-12">
+        <div class="card edit-spot-card">
+            <div class="card-body">
+                @if($isPending)
+                    <div class="alert alert-warning">
+                        <i class="fas fa-clock me-1"></i> This spot is still pending Super Admin approval. Changes will not affect its verification status.
+                    </div>
+                @elseif($isApprovedPublished)
+                    <div class="alert alert-warning">
+                        <i class="fas fa-triangle-exclamation me-1"></i> This spot is approved and published. Saving changes will update the live public listing immediately.
                     </div>
                 @else
                     <div class="alert alert-info">
-                        Saving changes from a municipality admin will keep approved spots published immediately.
+                        Saving changes will update this tourist spot while keeping its current verification status.
                     </div>
                 @endif
                 <form id="tourist-spot-form" action="{{ route('tourist_spots.update', $spot->id) }}" method="POST" enctype="multipart/form-data">
@@ -154,15 +236,15 @@
                     <h5 class="mb-3"><i class="fas fa-map"></i> Location & Map</h5>
 
                     @if($assignedMunicipality)
-                        <div class="mb-3">
+                        <div class="mb-3 municipality-field">
                             <label class="form-label">Municipality</label>
-                            <div class="border rounded-3 p-3 bg-light">
-                                <strong>{{ $assignedMunicipality->name }}</strong>
+                            <div class="municipality-tag">
+                                <i class="fas fa-location-dot"></i><strong>{{ $assignedMunicipality->name }}</strong>
                             </div>
                             <input type="hidden" name="municipality_id" value="{{ $assignedMunicipality->id }}">
                         </div>
                     @else
-                        <div class="mb-3">
+                        <div class="mb-3 municipality-field">
                             <label for="municipality_id" class="form-label">Municipality <span class="text-danger">*</span></label>
                             <select class="form-select @error('municipality_id') is-invalid @enderror" id="municipality_id" name="municipality_id" required>
                                 <option value="">Select Municipality</option>
@@ -178,22 +260,20 @@
                         </div>
                     @endif
 
-                    <div class="mb-3">
+                    <div class="mb-3 category-field">
                         <label for="category" class="form-label">Category <span class="text-danger">*</span></label>
-                        <select class="form-select @error('category') is-invalid @enderror" id="category" name="category" required>
-                            <option value="">Select Category</option>
+                        <div class="category-chips">
+                            @php $categoryIcons = ['beach' => 'fa-umbrella-beach', 'parks' => 'fa-tree', 'falls' => 'fa-water', 'nature' => 'fa-leaf', 'resort' => 'fa-person-swimming', 'historical' => 'fa-landmark', 'cultural' => 'fa-masks-theater', 'religious' => 'fa-church']; @endphp
                             @foreach($spotCategories as $value => $label)
-                                <option value="{{ $value }}" @selected(old('category', $spot->category ?? 'nature') == $value)>
-                                    {{ $label }}
-                                </option>
+                                <div class="category-chip"><input type="radio" id="category-{{ $value }}" name="category" value="{{ $value }}" @checked($selectedCategory === $value) required><label for="category-{{ $value }}"><i class="fas {{ $categoryIcons[$value] ?? 'fa-location-dot' }}"></i>{{ $label }}</label></div>
                             @endforeach
-                        </select>
+                        </div>
                         @error('category')
                             <div class="invalid-feedback d-block">{{ $message }}</div>
                         @enderror
                     </div>
 
-                    <div class="mb-3">
+                    <div class="mb-3 name-field">
                         <label for="name" class="form-label">Spot Name <span class="text-danger">*</span></label>
                         <input 
                             type="text" 
@@ -227,15 +307,22 @@
                                 >
                                 <div class="search-suggestions" id="search-suggestions"></div>
                             </div>
-                            <button type="button" onclick="searchLocation()" class="btn btn-primary mt-2">
+                            <button type="button" onclick="searchLocation()" class="btn btn-tourism mt-2" id="location-search-button">
                                 <i class="fas fa-search"></i> Search
                             </button>
                         </div>
                         <div class="form-text mt-2">You can search by municipality, barangay, landmark, or tourist spot name.</div>
+                        <div id="location-search-status" class="search-status text-muted mt-1" aria-live="polite"></div>
                     </div>
 
                     <!-- Google Map -->
                     <div id="map"></div>
+                    <div class="map-legend" aria-label="Map legend">
+                        <span class="map-legend-item"><span class="map-legend-dot spot"></span> Tourist spot</span>
+                        <span class="map-legend-item"><span class="map-legend-dot dining"></span> Dining</span>
+                        <span class="map-legend-item"><span class="map-legend-dot gas"></span> Gas station</span>
+                        <span class="map-legend-item"><span class="map-legend-dot radius"></span> 2 km facility radius</span>
+                    </div>
 
                     <input type="hidden" id="latitude" name="latitude" value="{{ old('latitude', $spot->latitude) }}" required>
                     <input type="hidden" id="longitude" name="longitude" value="{{ old('longitude', $spot->longitude) }}" required>
@@ -246,42 +333,54 @@
                         </div>
                     @endif
 
+                    <div class="mb-3 address-field">
+                        <label for="address" class="form-label">Address <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <input type="text" class="form-control @error('address') is-invalid @enderror" id="address" name="address" value="{{ old('address', $spot->address) }}" required>
+                            <button type="button" class="btn btn-outline-secondary" id="use-map-location"><i class="fas fa-location-crosshairs"></i> Use map location</button>
+                        </div>
+                        @error('address')
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
+                    </div>
+
                     <div class="mt-4">
                         <h6 class="mb-2"><i class="fas fa-location-dot"></i> Nearby Facilities (Exact Locations)</h6>
                         <div class="facility-tools">
                             <div class="row g-2">
                                 <div class="col-md-4">
                                     <label class="form-label">Facility Type</label>
-                                    <select id="facility-type" class="form-select">
+                                    <select id="facility-type" class="form-select" disabled>
+                                        <option value="" selected>Select Facility</option>
                                         <option value="dining">Dining</option>
                                         <option value="gas_station">Gas Station</option>
-                                        <option value="restroom">Restroom</option>
                                     </select>
                                 </div>
                                 <div class="col-md-5">
                                     <label class="form-label">Facility Name</label>
-                                    <input type="text" id="facility-name" class="form-control" placeholder="e.g., Bos Coffee">
+                                    <input type="text" id="facility-name" class="form-control" placeholder="Add Name" disabled>
                                 </div>
                                 <div class="col-md-3 d-flex align-items-end">
-                                    <button type="button" id="facility-add-btn" class="btn btn-outline-primary w-100">
-                                        Click map to add
+                                    <button type="button" id="facility-add-btn" class="btn btn-outline-primary w-100" disabled>
+                                        <i class="fas fa-plus"></i> Add
                                     </button>
                                 </div>
                             </div>
                             <div class="form-text mt-2" id="facility-hint">
-                                Select a type and name, then click the map to drop a marker.
+                                Select the main tourist spot location first.
                             </div>
                             <div class="form-text text-primary mt-1">
                                 Nearby facilities must stay within a 2 km radius of the main spot marker.
                             </div>
                         </div>
                         <div id="facility-list" class="mt-3"></div>
+                        <div id="facility-count" class="form-text text-primary mt-2">You can add multiple nearby facilities.</div>
                     </div>
 
                     <hr class="my-4">
 
                     <h5 class="mb-3"><i class="fas fa-info-circle"></i> Basic Information</h5>
-                    <div class="mb-3">
+                    <div class="mb-3 description-field">
                         <label for="description" class="form-label">Description <span class="text-danger">*</span></label>
                         <textarea class="form-control @error('description') is-invalid @enderror" id="description" name="description" rows="4" required>{{ old('description', $spot->description) }}</textarea>
                         @error('description')
@@ -289,27 +388,23 @@
                         @enderror
                     </div>
 
-                    <div class="mb-3">
-                        <label for="address" class="form-label">Address <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control @error('address') is-invalid @enderror" id="address" name="address" value="{{ old('address', $spot->address) }}" required>
-                        @error('address')
-                            <div class="invalid-feedback d-block">{{ $message }}</div>
-                        @enderror
-                    </div>
-
-                    <div class="mb-3">
+                    <div class="mb-3 images-field">
                         <label for="images" class="form-label">Spot Images</label>
                         @if($spotImages->isNotEmpty())
-                            <div class="row g-2 mb-2">
-                                @foreach($spotImages as $spotImage)
-                                    <div class="col-6 col-md-4 col-xl-3">
+                            <div class="row g-2 mb-2" id="existing-images">
+                                @foreach($spotImages as $imageIndex => $spotImage)
+                                    <div class="col-6 col-md-4 col-xl-3 existing-image-card" data-image-url="{{ $spotImage }}">
                                         <img src="{{ $spotImage }}" alt="{{ $spot->name }} image" class="img-fluid rounded" style="height: 120px; width: 100%; object-fit: cover;">
+                                        <button type="button" class="btn btn-sm btn-danger existing-image-remove" data-remove-image="{{ $spotImage }}" aria-label="Remove image"><i class="fas fa-times"></i></button>
                                     </div>
                                 @endforeach
                             </div>
-                            <div class="form-text mb-2">Uploading new images replaces the current gallery.</div>
+                            <div class="form-text mb-2">Current gallery. Remove individual images or add new photos below (maximum 5 total).</div>
                         @endif
-                        <input type="file" class="form-control @error('images') is-invalid @enderror" id="images" name="images[]" accept="image/*" multiple>
+                        <label for="images" class="dropzone d-block"><i class="fas fa-cloud-arrow-up d-block mb-2"></i><strong>Drag & drop photos here or click to browse</strong><small class="d-block text-muted mt-1">New photos are added to the current gallery.</small></label>
+                        <input type="file" class="d-none @error('images') is-invalid @enderror" id="images" name="images[]" accept="image/*" multiple>
+                        <div id="upload-previews" class="upload-previews"></div>
+                        <div id="remove-images-container"></div>
                         @error('images')
                             <div class="invalid-feedback d-block">{{ $message }}</div>
                         @enderror
@@ -373,22 +468,25 @@
                         </div>
                     </div>
 
-                    <div class="mb-4">
-                        @php
-                            $normalizedStatus = old('status', in_array($spot->status, ['active', 'open']) ? 'open' : 'closed');
-                        @endphp
+                    <div class="mb-4 status-field">
                         <label for="status" class="form-label">Status <span class="text-danger">*</span></label>
                         <select class="form-select @error('status') is-invalid @enderror" id="status" name="status" required>
                             <option value="open" @if($normalizedStatus == 'open') selected @endif>Open</option>
                             <option value="closed" @if($normalizedStatus == 'closed') selected @endif>Closed</option>
+                            <option value="under_maintenance" @if($normalizedStatus == 'under_maintenance') selected @endif>Under Maintenance</option>
+                            <option value="seasonal" @if($normalizedStatus == 'seasonal') selected @endif>Seasonal</option>
                         </select>
                         @error('status')
                             <div class="invalid-feedback d-block">{{ $message }}</div>
                         @enderror
+                        <div class="status-reason mt-2" id="status-reason-wrap">
+                            <label for="status_reason" class="form-label">Status reason/note <span class="text-muted small">(optional)</span></label>
+                            <input type="text" class="form-control" id="status_reason" name="status_reason" value="{{ $statusReason }}" placeholder="e.g. Closed for renovation until Dec 2026">
+                        </div>
                     </div>
 
                     <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="btn btn-tourism">
                             <i class="fas fa-save"></i> Update Spot
                         </button>
                         <a href="{{ $cancelUrl }}" class="btn btn-secondary">
@@ -400,19 +498,6 @@
         </div>
     </div>
 
-    <div class="col-lg-4">
-        <div class="card">
-            <div class="card-header bg-white border-bottom p-4">
-                <h5 class="m-0"><i class="fas fa-info-circle"></i> Spot Details</h5>
-            </div>
-            <div class="card-body small">
-                <p><strong>Last Updated:</strong> {{ $spot->updated_at->format('M d, Y H:i') }}</p>
-                <p><strong>Created:</strong> {{ $spot->created_at->format('M d, Y H:i') }}</p>
-                <p><strong>Total Reviews:</strong> {{ $spot->reviews->count() }}</p>
-                <p><strong>Average Rating:</strong> {{ number_format($spot->getAverageRating(), 1) }}/5</p>
-            </div>
-        </div>
-    </div>
 </div>
 
 <script>
@@ -420,6 +505,7 @@
     let searchTimeout;
     let facilityMarkers = [];
     let pendingFacility = null;
+    let pendingFacilityMarker = null;
     let placesService, autocompleteService;
     let googleGeocoder = null;
     let facilityRadiusOverlay = null;
@@ -432,13 +518,11 @@
     const facilityColors = {
         dining: '#ff6b35',
         gas_station: '#0d6efd',
-        restroom: '#20c997'
     };
 
     const facilityLabels = {
         dining: 'Dining',
         gas_station: 'Gas Station',
-        restroom: 'Restroom'
     };
 
     const initialFacilities = @json($initialFacilities);
@@ -504,6 +588,11 @@
         };
     }
 
+    function isLocationWithinMunicipality(lat, lng) {
+        const bounds = getDistrictBounds();
+        return lat >= bounds.south && lat <= bounds.north && lng >= bounds.west && lng <= bounds.east;
+    }
+
     function getResultSearchText(result) {
         return normalizeSearchText(
             result.search_text
@@ -564,17 +653,19 @@
 
     function buildLocalSuggestions(query) {
         const normalizedQuery = normalizeSearchText(query);
-        if (normalizedQuery.length < 3) {
+        if (normalizedQuery.length < 1) {
             return [];
         }
 
-        const tokens = normalizedQuery.split(/\s+/).filter((token) => token.length >= 2);
+        const tokens = normalizedQuery.split(/\s+/).filter((token) => token.length >= 1);
         const barangayResults = [];
 
         getAllBarangays().forEach(({ barangay, municipalityName }) => {
             const barangayLower = normalizeSearchText(barangay);
             const municipalityLower = normalizeSearchText(municipalityName);
-            const matchesQuery = barangayLower.includes(normalizedQuery)
+            const matchesQuery = barangayLower.startsWith(normalizedQuery)
+                || barangayLower.includes(normalizedQuery)
+                || municipalityLower.startsWith(normalizedQuery)
                 || municipalityLower.includes(normalizedQuery)
                 || tokens.some((token) => barangayLower.includes(token) || municipalityLower.includes(token));
 
@@ -665,7 +756,26 @@
             });
         }
 
-        return Promise.resolve(null);
+        const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=ph&q=${encodeURIComponent(buildSearchQuery(normalizedQuery))}`;
+        return fetch(url, { headers: { Accept: 'application/json' } })
+            .then((response) => response.json())
+            .then((results) => {
+                const first = Array.isArray(results) ? results[0] : null;
+                if (!first || !Number.isFinite(Number(first.lat)) || !Number.isFinite(Number(first.lon))) {
+                    return null;
+                }
+
+                return {
+                    geometry: {
+                        location: {
+                            lat: () => Number(first.lat),
+                            lng: () => Number(first.lon)
+                        }
+                    },
+                    formatted_address: first.display_name || normalizedQuery
+                };
+            })
+            .catch(() => null);
     }
 
     function updateMarkerLabel() {
@@ -677,6 +787,16 @@
             color: '#1f2937',
             fontSize: '12px',
             fontWeight: '600'
+        });
+    }
+
+    function syncAddressFromCoordinates(lat, lng) {
+        if (!googleGeocoder) return;
+        googleGeocoder.geocode({ location: { lat: Number(lat), lng: Number(lng) } }, function(results, status) {
+            if (status === 'OK' && results?.[0]?.formatted_address) {
+                const addressInput = document.getElementById('address');
+                if (addressInput) addressInput.value = results[0].formatted_address;
+            }
         });
     }
 
@@ -695,6 +815,7 @@
                 const newLat = marker.getPosition().lat();
                 const newLng = marker.getPosition().lng();
                 updateCoordinates(newLat, newLng);
+                syncAddressFromCoordinates(newLat, newLng);
                 updateMarkerLabel();
                 refreshFacilityRadiusOverlay();
             });
@@ -705,8 +826,11 @@
     }
 
     function getCurrentSpotCoordinates() {
-        const latInput = Number(document.getElementById('latitude')?.value);
-        const lngInput = Number(document.getElementById('longitude')?.value);
+        const latValue = document.getElementById('latitude')?.value?.trim();
+        const lngValue = document.getElementById('longitude')?.value?.trim();
+        if (!latValue || !lngValue) return null;
+        const latInput = Number(latValue);
+        const lngInput = Number(lngValue);
         if (Number.isFinite(latInput) && Number.isFinite(lngInput)) {
             return { lat: latInput, lng: lngInput };
         }
@@ -785,6 +909,18 @@
     function updateCoordinates(lat, lng) {
         document.getElementById('latitude').value = lat.toFixed(6);
         document.getElementById('longitude').value = lng.toFixed(6);
+        updateFacilityControlsState();
+    }
+
+    function updateFacilityControlsState() {
+        const hasLocation = Boolean(getCurrentSpotCoordinates());
+        const typeSelect = document.getElementById('facility-type');
+        const nameInput = document.getElementById('facility-name');
+        const addButton = document.getElementById('facility-add-btn');
+        [typeSelect, nameInput, addButton].forEach((control) => { if (control) control.disabled = !hasLocation; });
+        if (hasLocation && nameInput?.placeholder === 'Add Name') {
+            setFacilityHint('Choose a facility type, then click its location on the map.');
+        }
     }
 
     function buildSearchQuery(query) {
@@ -856,13 +992,15 @@
                 position: { lat: {{ $spot->latitude }}, lng: {{ $spot->longitude }} },
                 map: map,
                 title: '{{ $spot->name }}',
-                draggable: true
+                draggable: true,
+                icon: { path: google.maps.SymbolPath.CIRCLE, scale: 10, fillColor: '#dc2626', fillOpacity: .95, strokeColor: '#fff', strokeWeight: 2 }
             });
 
             marker.addListener('dragend', function() {
                 const lat = marker.getPosition().lat();
                 const lng = marker.getPosition().lng();
                 updateCoordinates(lat, lng);
+                syncAddressFromCoordinates(lat, lng);
                 updateMarkerLabel();
                 refreshFacilityRadiusOverlay();
             });
@@ -877,25 +1015,26 @@
             const lng = e.latLng.lng();
 
             if (pendingFacility) {
-                if (addFacilityMarker(pendingFacility.type, pendingFacility.name, lat, lng)) {
-                    pendingFacility = null;
-                    document.getElementById('facility-name').value = '';
-                    setFacilityHint('Select a type and name, then click the map to drop a marker.');
-                }
+                setPendingFacilityLocation(lat, lng);
                 return;
             }
 
             updateCoordinates(lat, lng);
             ensureMarker(lat, lng);
+            syncAddressFromCoordinates(lat, lng);
         });
     }
 
     function searchLocationAPI(query) {
         const normalizedQuery = String(query ?? '').trim();
-        if (normalizedQuery.length < 3) return;
+        if (normalizedQuery.length < 1) {
+            setSearchStatus('Type a location to search.');
+            return;
+        }
+        setSearchStatus('Searching...', true);
 
         const localResults = buildLocalSuggestions(normalizedQuery);
-        const tokens = normalizeSearchText(normalizedQuery).split(/\s+/).filter((token) => token.length >= 2);
+        const tokens = normalizeSearchText(normalizedQuery).split(/\s+/).filter((token) => token.length >= 1);
 
         autocompleteService.getPlacePredictions(makeAutocompleteRequest(normalizedQuery, true), function(predictions, status) {
             const googleResults = (status === google.maps.places.PlacesServiceStatus.OK && Array.isArray(predictions))
@@ -916,6 +1055,7 @@
 
             if (combined.length > 0) {
                 displaySuggestions(combined.slice(0, 10));
+                setSearchStatus(`${combined.length} location result${combined.length === 1 ? '' : 's'} found.`);
                 return;
             }
 
@@ -934,8 +1074,17 @@
                 } else {
                     displaySuggestions(localResults);
                 }
+                setSearchStatus((fallbackPredictions?.length || localResults.length) ? 'Select a location result.' : 'No results found. Try a nearby landmark or barangay.');
             });
         });
+    }
+
+    function setSearchStatus(message, loading = false) {
+        const status = document.getElementById('location-search-status');
+        if (!status) return;
+        status.innerHTML = loading
+            ? '<i class="fas fa-spinner fa-spin me-1"></i>' + escapeHtml(message)
+            : escapeHtml(message || '');
     }
 
     function displaySuggestions(results) {
@@ -980,6 +1129,10 @@
                 map.setCenter({ lat: lat, lng: lng });
                 map.setZoom(16);
                 ensureMarker(lat, lng);
+                const addressInput = document.getElementById('address');
+                if (addressInput && place.formatted_address) addressInput.value = place.formatted_address;
+                const addressPreview = document.getElementById('resolved-address-preview');
+                if (addressPreview && place.formatted_address) addressPreview.textContent = place.formatted_address;
                 document.getElementById('location-search').value = result.municipalityName
                     ? `${result.name}, ${result.municipalityName}`
                     : `${result.name}${selectedMunicipality ? `, ${selectedMunicipality}` : ''}`;
@@ -1006,6 +1159,10 @@
                 map.setCenter({ lat: lat, lng: lng });
                 map.setZoom(17);
                 ensureMarker(lat, lng);
+                const addressInput = document.getElementById('address');
+                if (addressInput) addressInput.value = place.formatted_address || result.description || '';
+                const addressPreview = document.getElementById('resolved-address-preview');
+                if (addressPreview) addressPreview.textContent = place.formatted_address || result.description || '';
             }
         });
     }
@@ -1027,25 +1184,74 @@
     });
 
     document.addEventListener('DOMContentLoaded', function() {
-        const categorySelect = document.getElementById('category');
+        const categoryInputs = document.querySelectorAll('input[name="category"]');
         const scheduleSection = document.getElementById('schedule-section');
         const scheduleInputs = scheduleSection
             ? scheduleSection.querySelectorAll('input, select, textarea')
             : [];
 
         function toggleScheduleFields() {
-            if (!categorySelect || !scheduleSection) return;
-            const isPark = categorySelect.value === 'parks';
+            if (!scheduleSection) return;
+            const selectedCategory = document.querySelector('input[name="category"]:checked');
+            const isPark = selectedCategory?.value === 'parks';
             scheduleSection.classList.toggle('d-none', !isPark);
             scheduleInputs.forEach((input) => {
                 input.disabled = !isPark;
             });
         }
 
-        if (categorySelect && scheduleSection) {
-            categorySelect.addEventListener('change', toggleScheduleFields);
+        if (scheduleSection) {
+            categoryInputs.forEach((input) => input.addEventListener('change', toggleScheduleFields));
             toggleScheduleFields();
         }
+
+        const imageInput = document.getElementById('images');
+        const dropzone = document.querySelector('.dropzone');
+        const previewContainer = document.getElementById('upload-previews');
+        const removeImagesContainer = document.getElementById('remove-images-container');
+        function renderImagePreviews(files) {
+            if (!previewContainer) return;
+            previewContainer.innerHTML = '';
+            const remainingSlots = Math.max(0, 5 - document.querySelectorAll('.existing-image-card:not(.d-none)').length);
+            Array.from(files).slice(0, remainingSlots).forEach((file, index) => {
+                if (!file.type.startsWith('image/')) return;
+                const reader = new FileReader();
+                reader.onload = function (event) {
+                    const preview = document.createElement('div');
+                    preview.className = 'upload-preview';
+                    preview.innerHTML = `<img src="${event.target.result}" alt="Selected image ${index + 1}">${index === 0 ? '<span class="badge bg-dark cover-badge">Cover Image</span>' : ''}`;
+                    previewContainer.appendChild(preview);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+        imageInput?.addEventListener('change', () => renderImagePreviews(imageInput.files));
+        document.querySelectorAll('[data-remove-image]').forEach((button) => {
+            button.addEventListener('click', () => {
+                const imageCard = button.closest('.existing-image-card');
+                const imageUrl = button.dataset.removeImage;
+                if (!imageCard || !imageUrl) return;
+                imageCard.classList.add('d-none');
+                if (removeImagesContainer) {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'remove_images[]';
+                    input.value = imageUrl;
+                    removeImagesContainer.appendChild(input);
+                }
+                if (imageInput) renderImagePreviews(imageInput.files);
+            });
+        });
+        dropzone?.addEventListener('dragover', (event) => { event.preventDefault(); dropzone.classList.add('dragover'); });
+        dropzone?.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+        dropzone?.addEventListener('drop', (event) => {
+            event.preventDefault();
+            dropzone.classList.remove('dragover');
+            if (imageInput && event.dataTransfer.files.length) {
+                imageInput.files = event.dataTransfer.files;
+                renderImagePreviews(imageInput.files);
+            }
+        });
 
         const municipalitySelect = document.getElementById('municipality_id');
         if (municipalitySelect) {
@@ -1058,12 +1264,25 @@
         const searchInput = document.getElementById('location-search');
         const nameInput = document.getElementById('name');
         const form = document.getElementById('tourist-spot-form');
+        const useMapLocationButton = document.getElementById('use-map-location');
+        useMapLocationButton?.addEventListener('click', () => {
+            const center = getCurrentSpotCoordinates();
+            if (center) syncAddressFromCoordinates(center.lat, center.lng);
+        });
+
+        const statusSelect = document.getElementById('status');
+        const statusReasonWrap = document.getElementById('status-reason-wrap');
+        function toggleStatusReason() {
+            statusReasonWrap?.classList.toggle('show', ['closed', 'under_maintenance', 'seasonal'].includes(statusSelect?.value));
+        }
+        statusSelect?.addEventListener('change', toggleStatusReason);
+        toggleStatusReason();
 
         searchInput.addEventListener('input', function(e) {
             clearTimeout(searchTimeout);
             const query = e.target.value;
 
-            if (query.length >= 3) {
+            if (query.length >= 1) {
                 searchTimeout = setTimeout(() => {
                     searchLocationAPI(query);
                 }, 500);
@@ -1090,8 +1309,16 @@
         }
 
         if (form) {
-            form.addEventListener('submit', function() {
+            form.addEventListener('submit', function(event) {
                 if (form.dataset.submitting === 'true') {
+                    return;
+                }
+
+                const lat = Number(document.getElementById('latitude')?.value);
+                const lng = Number(document.getElementById('longitude')?.value);
+                if (Number.isFinite(lat) && Number.isFinite(lng) && !isLocationWithinMunicipality(lat, lng)) {
+                    event.preventDefault();
+                    alert('The selected location is outside the assigned municipality. Please move the main marker inside the municipality map area.');
                     return;
                 }
 
@@ -1146,6 +1373,41 @@
         renderFacilityList();
         setFacilityHint(`Facility added within ${(radiusStatus.distanceMeters / 1000).toFixed(2)} km of the main spot marker.`, 'primary');
         return true;
+    }
+
+    function setPendingFacilityLocation(lat, lng) {
+        const radiusStatus = getFacilityRadiusStatus(Number(lat), Number(lng));
+        pendingFacility.lat = Number(lat);
+        pendingFacility.lng = Number(lng);
+        if (!radiusStatus.allowed) {
+            setFacilityHint(radiusStatus.message, 'danger');
+            const addButton = document.getElementById('facility-add-btn');
+            if (addButton) addButton.disabled = true;
+            return;
+        }
+        setFacilityHint('Preview location set. Click the map to move it or press Add to save.', 'primary');
+        const addButton = document.getElementById('facility-add-btn');
+        if (addButton) addButton.disabled = false;
+        document.getElementById('facility-name')?.focus();
+        if (!pendingFacilityMarker) {
+            pendingFacilityMarker = new google.maps.Marker({
+                map,
+                draggable: true,
+                title: 'Pending facility location',
+                icon: { path: google.maps.SymbolPath.CIRCLE, scale: 9, fillColor: '#dc2626', fillOpacity: .75, strokeColor: '#fff', strokeWeight: 2 }
+            });
+            pendingFacilityMarker.addListener('dragend', () => {
+                const position = pendingFacilityMarker.getPosition();
+                if (position) setPendingFacilityLocation(position.lat(), position.lng());
+            });
+        }
+        pendingFacilityMarker.setPosition({ lat: Number(lat), lng: Number(lng) });
+        pendingFacilityMarker.setMap(map);
+    }
+
+    function clearPendingFacilityLocation() {
+        if (pendingFacilityMarker) pendingFacilityMarker.setMap(null);
+        pendingFacilityMarker = null;
     }
 
     function refreshFacilityMarkers() {
@@ -1203,6 +1465,10 @@
                    '<button type="button" class="btn btn-sm btn-outline-danger ms-2" data-remove-index="' + index + '">' +
                    'Remove</button></div>';
         }).join('');
+        const count = document.getElementById('facility-count');
+        if (count) count.textContent = facilities.length
+            ? facilities.length + ' nearby facilit' + (facilities.length === 1 ? 'y' : 'ies') + ' added. You can add more.'
+            : 'You can add multiple nearby facilities.';
     }
 
     document.addEventListener('DOMContentLoaded', function() {
@@ -1210,6 +1476,16 @@
         const typeSelect = document.getElementById('facility-type');
         const nameInput = document.getElementById('facility-name');
         const list = document.getElementById('facility-list');
+        updateFacilityControlsState();
+
+        typeSelect?.addEventListener('change', function() {
+            if (!getCurrentSpotCoordinates()) {
+                setFacilityHint('Select the main spot location first, then choose a facility type.', 'danger');
+                return;
+            }
+            pendingFacility = { type: typeSelect.value };
+            setFacilityHint('Click the map to choose the ' + facilityLabels[typeSelect.value] + ' location.', 'primary');
+        });
 
         if (addButton) {
             addButton.addEventListener('click', function() {
@@ -1219,13 +1495,31 @@
                 }
                 const type = typeSelect ? typeSelect.value : 'dining';
                 const name = nameInput ? nameInput.value.trim() : '';
-                if (!name) {
-                    setFacilityHint('Enter a facility name before placing it on the map.', 'danger');
-                    if (nameInput) nameInput.focus();
+                if (!type) {
+                    setFacilityHint('Select a facility type first.', 'danger');
+                    if (typeSelect) typeSelect.focus();
                     return;
                 }
-                pendingFacility = { type, name };
-                setFacilityHint('Click the map to place "' + name + '" (' + facilityLabels[type] + ').', 'primary');
+                if (pendingFacility?.lat !== undefined && pendingFacility?.lng !== undefined) {
+                    if (!name) {
+                        setFacilityHint('Enter the facility name before pressing Add.', 'danger');
+                        if (nameInput) nameInput.focus();
+                        return;
+                    }
+                    const radiusStatus = getFacilityRadiusStatus(pendingFacility.lat, pendingFacility.lng);
+                    if (!radiusStatus.allowed) return setFacilityHint(radiusStatus.message, 'danger');
+                    addFacilityMarker(pendingFacility.type, name, pendingFacility.lat, pendingFacility.lng);
+                    clearPendingFacilityLocation();
+                    pendingFacility = null;
+                    typeSelect.value = '';
+                    nameInput.value = '';
+                    addButton.textContent = 'Add';
+                    setFacilityHint('Choose another facility type, click its map location, enter its name, then press Add.', 'muted');
+                    return;
+                }
+                pendingFacility = { type };
+                addButton.textContent = 'Add';
+                setFacilityHint('Click the map to choose the ' + facilityLabels[type] + ' location.', 'primary');
             });
         }
 
@@ -1235,6 +1529,7 @@
                 if (!target) return;
                 const index = Number(target.getAttribute('data-remove-index'));
                 if (Number.isNaN(index)) return;
+                if (facilities.length >= 3 && !window.confirm('Remove this facility from the saved nearby facilities?')) return;
                 facilities.splice(index, 1);
                 updateFacilityInput();
                 refreshFacilityMarkers();

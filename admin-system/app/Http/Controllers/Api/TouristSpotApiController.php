@@ -155,27 +155,32 @@ class TouristSpotApiController extends Controller
                 ], 404);
             }
 
-            $imageInputs = $request->file('images');
-            if ($imageInputs === null) {
-                $imageInputs = $request->file('image');
+            $mediaInputs = $request->file('media');
+            if ($mediaInputs === null) {
+                $mediaInputs = $request->file('images') ?? $request->file('image');
             }
 
-            if ($imageInputs !== null && !is_array($imageInputs)) {
-                $imageInputs = [$imageInputs];
+            if ($mediaInputs !== null && !is_array($mediaInputs)) {
+                $mediaInputs = [$mediaInputs];
             }
 
             $imagePaths = [];
-            foreach (($imageInputs ?? []) as $image) {
-                if (!$image || !$image->isValid()) {
+            $media = [];
+            foreach (($mediaInputs ?? []) as $uploadedMedia) {
+                if (!$uploadedMedia || !$uploadedMedia->isValid()) {
                     continue;
                 }
 
-                Validator::make(['image' => $image], [
-                    'image' => 'image|mimes:jpeg,png,jpg,gif|max:10240',
+                Validator::make(['media' => $uploadedMedia], [
+                    'media' => 'file|mimes:jpeg,png,jpg,gif,webp,mp4,mov,webm|max:51200',
                 ])->validate();
 
-                $path = $image->store('reviews', 'public');
-                $imagePaths[] = $path;
+                $path = $uploadedMedia->store('reviews', 'public');
+                $type = str_starts_with((string) $uploadedMedia->getMimeType(), 'video/') ? 'video' : 'image';
+                $media[] = ['path' => $path, 'type' => $type];
+                if ($type === 'image') {
+                    $imagePaths[] = $path;
+                }
             }
 
             $reviewData = [
@@ -192,6 +197,9 @@ class TouristSpotApiController extends Controller
                 } elseif (Schema::hasColumn('reviews', 'image_path')) {
                     $reviewData['image_path'] = $imagePaths[0];
                 }
+            }
+            if (!empty($media) && Schema::hasColumn('reviews', 'media')) {
+                $reviewData['media'] = $media;
             }
 
             $review = $spot->reviews()->create($reviewData);
@@ -545,6 +553,14 @@ class TouristSpotApiController extends Controller
             $images = [$review->image_path];
         }
 
+        $media = $review->media ?? [];
+        if (empty($media)) {
+            $media = collect($images ?? [])->map(fn ($path) => [
+                'path' => $path,
+                'type' => 'image',
+            ])->values()->all();
+        }
+
         $user = $review->relationLoaded('user') ? $review->user : null;
 
         return [
@@ -554,6 +570,7 @@ class TouristSpotApiController extends Controller
             'rating' => $review->rating,
             'comment' => $review->comment,
             'images' => $images ?? [],
+            'media' => $media,
             'status' => $review->status,
             'created_at' => optional($review->created_at)->toIso8601String(),
             'updated_at' => optional($review->updated_at)->toIso8601String(),
@@ -595,6 +612,7 @@ class TouristSpotApiController extends Controller
             'nearby_gas_stations' => $spot->nearby_gas_stations,
             'nearby_facilities' => $spot->nearby_facilities,
             'status' => $spot->status,
+            'status_reason' => $spot->status_reason,
             'verification_status' => $spot->verification_status,
             'is_favorited' => in_array((int) $spot->id, $favoriteSpotIds, true),
             'municipality' => $spot->municipality ? [

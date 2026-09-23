@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:tourist_spot_app/controllers/app_providers.dart';
+import 'package:tourist_spot_app/config/theme/app_theme.dart';
 import 'package:tourist_spot_app/models/municipality_model.dart';
 import 'package:tourist_spot_app/views/widgets/cached_image_widget.dart';
 
@@ -47,7 +48,7 @@ class _MunicipalityLandingScreenState
           Icon(
             Icons.location_on,
             size: 60.sp,
-            color: const Color(0xFFFF6B35),
+            color: AppTheme.primaryColor,
           ),
           SizedBox(height: 20.h),
           Text(
@@ -56,7 +57,7 @@ class _MunicipalityLandingScreenState
           ),
           SizedBox(height: 20.h),
           const CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFF6B35)),
+            valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
           ),
         ],
       ),
@@ -69,12 +70,12 @@ class _MunicipalityLandingScreenState
         SliverAppBar(
           pinned: true,
           elevation: 0,
-          backgroundColor: const Color(0xFFFF6B35),
+          backgroundColor: AppTheme.primaryColor,
           expandedHeight: 200.h,
           flexibleSpace: FlexibleSpaceBar(
             background: Container(
               decoration: const BoxDecoration(
-                color: Color(0xFFFF6B35),
+                color: AppTheme.primaryColor,
               ),
               child: Stack(
                 children: [
@@ -183,12 +184,12 @@ class _MunicipalityLandingScreenState
         SliverAppBar(
           pinned: true,
           elevation: 0,
-          backgroundColor: const Color(0xFFFF6B35),
+          backgroundColor: AppTheme.primaryColor,
           expandedHeight: 200.h,
           flexibleSpace: FlexibleSpaceBar(
             background: Container(
               decoration: const BoxDecoration(
-                color: Color(0xFFFF6B35),
+                color: AppTheme.primaryColor,
               ),
               child: Stack(
                 children: [
@@ -322,7 +323,7 @@ class _MunicipalityLandingScreenState
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12.r),
-            borderSide: const BorderSide(color: Color(0xFFFF6B35)),
+            borderSide: const BorderSide(color: AppTheme.primaryColor),
           ),
           contentPadding: EdgeInsets.symmetric(
             horizontal: 12.w,

@@ -11,6 +11,7 @@ import 'package:tourist_spot_app/models/auth_user_model.dart';
 import 'package:tourist_spot_app/models/tourist_spot_model.dart';
 import 'package:tourist_spot_app/controllers/app_providers.dart';
 import 'package:tourist_spot_app/views/widgets/cached_image_widget.dart';
+import 'package:tourist_spot_app/config/theme/app_theme.dart';
 
 enum _SpotCategoryFilter { all, beach, parks, falls, nature, resort, favorites }
 
@@ -60,7 +61,7 @@ class _TouristSpotsListScreenState
           ),
         ),
         elevation: 0,
-        backgroundColor: const Color(0xFFFF6B35),
+        backgroundColor: AppTheme.primaryColor,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
@@ -101,7 +102,7 @@ class _TouristSpotsListScreenState
           Icon(
             Icons.location_on,
             size: 60.sp,
-            color: const Color(0xFFFF6B35),
+            color: AppTheme.primaryColor,
           ),
           SizedBox(height: 20.h),
           Text(
@@ -110,7 +111,7 @@ class _TouristSpotsListScreenState
           ),
           SizedBox(height: 20.h),
           const CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFF6B35)),
+            valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
           ),
           const SizedBox(height: 10),
           Text(
@@ -180,7 +181,7 @@ class _TouristSpotsListScreenState
                         icon: const Icon(Icons.refresh),
                         label: Text('Retry', style: GoogleFonts.roboto()),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFFF6B35),
+                          backgroundColor: AppTheme.primaryColor,
                           padding: EdgeInsets.symmetric(vertical: 12.h),
                         ),
                       ),
@@ -413,7 +414,7 @@ class _TouristSpotsListScreenState
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12.r),
-            borderSide: const BorderSide(color: Color(0xFFFF6B35)),
+            borderSide: const BorderSide(color: AppTheme.primaryColor),
           ),
           contentPadding: EdgeInsets.symmetric(
             horizontal: 12.w,
@@ -437,7 +438,7 @@ class _TouristSpotsListScreenState
         Icons.arrow_drop_down,
         color: _selectedCategory == _SpotCategoryFilter.all
             ? Colors.grey[700]
-            : const Color(0xFFFF6B35),
+            : AppTheme.primaryColor,
       ),
       itemBuilder: (context) {
         return _SpotCategoryFilter.values
@@ -459,7 +460,7 @@ class _TouristSpotsListScreenState
                       const Icon(
                         Icons.check,
                         size: 18,
-                        color: Color(0xFFFF6B35),
+                        color: AppTheme.primaryColor,
                       ),
                   ],
                 ),

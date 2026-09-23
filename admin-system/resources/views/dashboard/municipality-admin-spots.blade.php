@@ -7,8 +7,9 @@
 <style>
     .filters-card {
         border: 1px solid #e6e9ef;
-        border-radius: 16px;
+        border-radius: 10px;
         background: linear-gradient(135deg, #ffffff 0%, #f8fbff 100%);
+        margin-bottom: 1rem !important;
     }
     .search-input-group {
         position: relative;
@@ -49,23 +50,33 @@
     }
     .spot-card {
         border: 1px solid #eef1f6;
-        border-radius: 14px;
+        border-radius: 10px;
         overflow: hidden;
         background: #fff;
         transition: transform 0.15s ease, box-shadow 0.15s ease;
+        color: inherit;
+        text-decoration: none;
     }
-    .spot-card:hover {
+    a.spot-card {
+        display: flex;
+    }
+    .spot-card:hover,
+    .spot-card:focus-visible {
         transform: translateY(-2px);
         box-shadow: 0 10px 18px rgba(0, 0, 0, 0.06);
     }
+    .spot-card:focus-visible {
+        outline: 3px solid rgba(15, 118, 110, 0.3);
+        outline-offset: 2px;
+    }
     .spot-image {
         width: 100%;
-        height: 160px;
+        height: 140px;
         object-fit: cover;
         background: #f2f4f8;
     }
     .spot-image-placeholder {
-        height: 160px;
+        height: 140px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -91,10 +102,38 @@
         font-size: 0.8rem;
         font-weight: 600;
     }
+    .pending-spots-modal .modal-body {
+        background: #f8fafc;
+        padding: 1rem;
+    }
+    .pending-spots-modal .spot-card {
+        height: 100%;
+    }
+    .pending-spots-modal .spot-card .spot-image,
+    .pending-spots-modal .spot-card .spot-image-placeholder {
+        height: 135px;
+    }
+    .spot-card h6 {
+        line-height: 1.25;
+    }
+    @media (max-width: 575.98px) {
+        .filters-card .card-body {
+            padding: 1rem !important;
+        }
+        .search-control-row {
+            gap: .4rem;
+        }
+        .search-control-row .search-input-group {
+            flex-basis: 100%;
+        }
+        .spot-card .p-3 {
+            padding: .85rem !important;
+        }
+    }
 </style>
 
-<div class="card filters-card mb-4">
-    <div class="card-body p-3 p-md-4">
+<div class="card filters-card">
+    <div class="card-body p-3">
         <form method="GET" action="{{ route('municipality-admin.tourist-spots') }}">
             <div class="row g-2 align-items-end filters-row">
                 <div class="col-12 col-lg-8">
@@ -140,7 +179,7 @@
                 @if($searchTerm !== '')
                     <span class="badge bg-light text-dark border filter-badge">
                         Search: {{ $searchTerm }}
-                    </button>
+                    </span>
                 @endif
                 @if($selectedCategory !== 'all')
                     <span class="badge bg-light text-dark border filter-badge">
@@ -152,17 +191,71 @@
     </div>
 </div>
 
-<div class="d-flex justify-content-end mb-4">
-    <a href="{{ route('tourist_spots.create') }}" class="btn btn-primary">
-        <i class="fas fa-plus"></i> Add Tourist Spot
-    </a>
+@if(auth()->user()->hasPermission('manage_spots'))
+    <div class="d-flex justify-content-end gap-2 mb-3">
+        <button type="button" class="btn btn-outline-warning" data-bs-toggle="modal" data-bs-target="#pendingSpotsModal">
+            <i class="fas fa-clock"></i> Pending <span class="badge bg-warning text-dark ms-1">{{ $pendingSpots->count() }}</span>
+        </button>
+        <a href="{{ route('tourist_spots.create') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Add Tourist Spot
+        </a>
+    </div>
+@endif
+
+<div class="modal fade pending-spots-modal" id="pendingSpotsModal" tabindex="-1" aria-labelledby="pendingSpotsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header py-2 px-3">
+                <h5 class="modal-title" id="pendingSpotsModalLabel"><i class="fas fa-clock text-warning me-2"></i>Pending Tourist Spots</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                @if($pendingSpots->count() > 0)
+                    <div class="row g-2">
+                        @foreach($pendingSpots as $pendingSpot)
+                            <div class="col-12 col-md-6 col-xl-4">
+                                <a href="{{ route('tourist_spots.show', $pendingSpot->id) }}" class="spot-card d-flex flex-column" aria-label="View {{ $pendingSpot->name }}">
+                                    @if($pendingSpot->image_url)
+                                        <img
+                                            src="{{ preg_match('#^https?://#i', $pendingSpot->image_url) ? $pendingSpot->image_url : url($pendingSpot->image_url) }}"
+                                            alt="{{ $pendingSpot->name }}"
+                                            class="spot-image"
+                                        >
+                                    @else
+                                        <div class="spot-image-placeholder">No image available</div>
+                                    @endif
+                                    <div class="p-3 d-flex flex-column h-100">
+                                        <div class="d-flex justify-content-between align-items-start gap-2">
+                                            <div class="me-2">
+                                                <h6 class="mb-1">{{ $pendingSpot->name }}</h6>
+                                                <div class="spot-meta">{{ Str::limit($pendingSpot->address, 70) }}</div>
+                                            </div>
+                                            <span class="badge spot-badge bg-light text-dark border">{{ ucfirst($pendingSpot->category ?? 'nature') }}</span>
+                                        </div>
+                                        <div class="mt-2 d-flex flex-wrap gap-2">
+                                            <span class="badge spot-badge spot-municipality">{{ $pendingSpot->municipality->name ?? 'Unknown Municipality' }}</span>
+                                            <span class="badge spot-badge bg-warning text-dark">Pending Approval</span>
+                                        </div>
+                                        <div class="mt-2 text-muted small">Created {{ $pendingSpot->created_at->format('M d, Y') }}</div>
+                                        <p class="small text-muted mt-2 mb-0">{{ Str::limit($pendingSpot->description, 120) }}</p>
+                                    </div>
+                                </a>
+                            </div>
+                        @endforeach
+                    </div>
+                @else
+                    <div class="text-center text-muted py-4">No pending tourist spots.</div>
+                @endif
+            </div>
+        </div>
+    </div>
 </div>
 
 @if($spots->count() > 0)
     <div class="row g-3">
         @foreach($spots as $spot)
             <div class="col-12 col-md-6 col-xl-4">
-                <div class="spot-card h-100 d-flex flex-column">
+                <a href="{{ route('tourist_spots.show', $spot->id) }}" class="spot-card h-100 d-flex flex-column" aria-label="View {{ $spot->name }}">
                     @if($spot->image_url)
                         <img
                             src="{{ preg_match('#^https?://#i', $spot->image_url) ? $spot->image_url : url($spot->image_url) }}"
@@ -200,24 +293,8 @@
                             Reviews: {{ $spot->reviews_count }} | Created {{ $spot->created_at->format('M d, Y') }}
                         </div>
 
-                        <div class="mt-auto pt-3 d-flex gap-2">
-                            <a href="{{ route('tourist_spots.show', $spot->id) }}" class="btn btn-sm btn-info" title="View">
-                                <i class="fas fa-eye"></i> View
-                            </a>
-                            <a href="{{ route('tourist_spots.edit', $spot->id) }}" class="btn btn-sm btn-warning" title="Edit">
-                                <i class="fas fa-edit"></i> Edit
-                            </a>
-                            <form action="{{ route('tourist_spots.destroy', $spot->id) }}" method="POST" onsubmit="return confirm('Are you sure?');">
-                                @csrf
-                                @method('DELETE')
-                                <input type="hidden" name="return_to" value="{{ route('municipality-admin.tourist-spots') }}">
-                                <button type="submit" class="btn btn-sm btn-danger" title="Delete">
-                                    <i class="fas fa-trash"></i> Delete
-                                </button>
-                            </form>
-                        </div>
                     </div>
-                </div>
+                </a>
             </div>
         @endforeach
     </div>
