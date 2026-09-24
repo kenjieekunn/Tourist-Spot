@@ -3,8 +3,11 @@ Options -Indexes
 <IfModule mod_rewrite.c>
     RewriteEngine On
 
-    # Support Hostinger domains whose document root is the repository root.
-    # The Laravel front controller remains inside web/public.
-    RewriteCond %{REQUEST_URI} !^/web/public/
-    RewriteRule ^(.*)$ web/public/$1 [L]
+    # Serve public Laravel assets from the nested public directory.
+    RewriteRule ^(build|css|js|images|storage|favicon\.ico)(/.*)?$ web/public/$1$2 [L]
+
+    # Send application routes through the repository-level Laravel front controller.
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ index.php [L]
 </IfModule>
