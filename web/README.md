@@ -338,6 +338,10 @@ For Hostinger, point the domain document root to `web/public`. If the domain
 must point to the repository root, the root `.htaccess` forwards requests to
 this Laravel public directory.
 
+When using Git deployment with `public_html` as the root, run
+`bash hostinger-build.sh` after each deployment. It installs `vendor/`, clears
+and rebuilds Laravel caches, links storage, and runs safe forward migrations.
+
 ## 🛠️ Common Commands
 
 ```bash
