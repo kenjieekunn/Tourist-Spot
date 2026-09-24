@@ -11,6 +11,19 @@ admin-system/storage/framework/sessions/
 admin-system/storage/framework/views/
 admin-system/storage/logs/
 
+# Laravel web application secrets, runtime files, and local database backups
+web/.env
+web/.phpunit.result.cache
+web/backups/
+web/vendor/
+web/bootstrap/cache/*.php
+web/storage/framework/cache/
+web/storage/framework/sessions/
+web/storage/framework/views/
+web/storage/logs/
+web/public/storage
+web/public/storage-legacy/
+
 # Flutter build artifacts
 flutter-app/.dart_tool/
 flutter-app/build/

@@ -916,28 +916,64 @@ class _TouristSpotDetailScreenState
   }
 
   Widget _buildDescriptionSection() {
+    final description = widget.spot.description.trim();
+    final paragraphs = description.isEmpty
+        ? const <String>[]
+        : description.split(RegExp(r'\n\s*\n'));
+
     return Container(
-      padding: EdgeInsets.all(16.w),
-      color: Colors.white,
+      margin: EdgeInsets.only(top: 8.h),
+      padding: EdgeInsets.fromLTRB(16.w, 18.h, 16.w, 20.h),
+      color: const Color(0xfff8fafc),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Description',
-            style: GoogleFonts.roboto(
-              fontSize: 16.sp,
-              fontWeight: FontWeight.bold,
-            ),
+          Row(
+            children: [
+              Container(
+                width: 4.w,
+                height: 22.h,
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryColor,
+                  borderRadius: BorderRadius.circular(4.r),
+                ),
+              ),
+              SizedBox(width: 10.w),
+              Text(
+                'Description',
+                style: GoogleFonts.roboto(
+                  fontSize: 17.sp,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xff173f43),
+                ),
+              ),
+            ],
           ),
-          SizedBox(height: 10.h),
-          Text(
-            widget.spot.description,
-            style: GoogleFonts.roboto(
-              fontSize: 13.sp,
-              color: Colors.grey[700],
-              height: 1.5,
+          SizedBox(height: 12.h),
+          if (paragraphs.isEmpty)
+            Text(
+              'No description available.',
+              style: GoogleFonts.roboto(
+                fontSize: 14.sp,
+                color: Colors.grey[600],
+                fontStyle: FontStyle.italic,
+              ),
+            )
+          else
+            ...paragraphs.map(
+              (paragraph) => Padding(
+                padding: EdgeInsets.only(bottom: 10.h),
+                child: Text(
+                  paragraph.trim(),
+                  textAlign: TextAlign.left,
+                  style: GoogleFonts.roboto(
+                    fontSize: 14.sp,
+                    color: const Color(0xff4b5563),
+                    height: 1.65,
+                  ),
+                ),
+              ),
             ),
-          ),
         ],
       ),
     );
