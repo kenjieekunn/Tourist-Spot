@@ -3,6 +3,10 @@ Options -Indexes
 <IfModule mod_rewrite.c>
     RewriteEngine On
 
+    # Never expose environment, database, logs, or maintenance scripts.
+    RewriteRule ^(?:\.env|composer\.(?:json|lock)|artisan|bootstrap|config|routes|database|vendor)(?:/|$) - [F,L]
+    RewriteRule ^(?:setup|check_|fix_|update_superadmin_password|verify_admins|insert_spots) [^/]*\.php$ - [F,L]
+
     # Serve public Laravel assets from the nested public directory.
     RewriteRule ^(build|css|js|images|storage|favicon\.ico)(/.*)?$ web/public/$1$2 [L]
 

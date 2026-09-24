@@ -36,8 +36,6 @@ class ApiTokenAuth
             ], 401);
         }
 
-        // Authenticate user for this request
-        auth()->setUser($user);
         $request->setUserResolver(function () use ($user) {
             return $user;
         });
