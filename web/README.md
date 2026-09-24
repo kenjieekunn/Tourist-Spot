@@ -320,9 +320,9 @@ Key environmental variables to configure:
 
 ```
 APP_NAME=Tourist Spot Admin System
-APP_ENV=local
-APP_DEBUG=true
-APP_URL=http://localhost:8000
+APP_ENV=production
+APP_DEBUG=false
+APP_URL=https://your-domain.com
 
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
@@ -331,8 +331,12 @@ DB_DATABASE=tourist_spot_db
 DB_USERNAME=root
 DB_PASSWORD=
 
-API_BASE_URL=http://localhost:8000/api
+API_BASE_URL=https://your-domain.com/api
 ```
+
+For Hostinger, point the domain document root to `web/public`. If the domain
+must point to the repository root, the root `.htaccess` forwards requests to
+this Laravel public directory.
 
 ## 🛠️ Common Commands
 

@@ -1,4 +1,5 @@
 <IfModule mod_rewrite.c>
+    Options -Indexes
     RewriteEngine On
 
     # Forward all requests to the public/ directory for Laravel

@@ -35,15 +35,21 @@ Complete guide for deploying the web-based admin system and Flutter mobile appli
    # Using FileZilla or command line
    sftp user@your-domain.com
    cd public_html
-   put -r admin-system/* .
+   put -r tourist-spot/* .
    ```
+
+   For Hostinger, set the domain's document root to `public_html/web/public`.
+   This is the Laravel public directory and contains `index.php`. If the
+   document root must remain `public_html`, keep the repository root `.htaccess`
+   file so requests are forwarded to `web/public`.
 
 3. **Install Dependencies**
    ```bash
    # SSH into server
    ssh user@your-domain.com
    cd public_html
-   composer install --no-dev
+   cd web
+   composer install --no-dev --optimize-autoloader
    ```
 
 4. **Configure Environment**
@@ -55,13 +61,14 @@ Complete guide for deploying the web-based admin system and Flutter mobile appli
 5. **Set Permissions**
    ```bash
    chmod -R 755 storage bootstrap/cache
-   chmod -R 777 storage/app/spot-images
+   chmod -R 775 storage/app/public
    ```
 
 6. **Run Migrations**
    ```bash
+   php artisan storage:link
    php artisan migrate --force
-   php artisan db:seed
+   php artisan optimize
    ```
 
 ---

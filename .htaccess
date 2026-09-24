@@ -1,0 +1,10 @@
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Support Hostinger domains whose document root is the repository root.
+    # The Laravel front controller remains inside web/public.
+    RewriteCond %{REQUEST_URI} !^/web/public/
+    RewriteRule ^(.*)$ web/public/$1 [L]
+</IfModule>
