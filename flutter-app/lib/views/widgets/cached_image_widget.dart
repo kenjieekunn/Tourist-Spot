@@ -1,7 +1,6 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:tourist_spot_app/services/image_cache_service.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:tourist_spot_app/config/theme/app_theme.dart';
 
 class CachedImageWidget extends StatefulWidget {
@@ -27,83 +26,20 @@ class CachedImageWidget extends StatefulWidget {
 }
 
 class _CachedImageWidgetState extends State<CachedImageWidget> {
-  late Future<File?> _imageFuture;
-  final ImageCacheService _cacheService = ImageCacheService();
-  bool _initialized = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _initializeCache();
-  }
-
-  Future<void> _initializeCache() async {
-    await _cacheService.initialize();
-    if (mounted) {
-      setState(() {
-        _imageFuture = _cacheService.getImageFile(widget.imageUrl);
-        _initialized = true;
-      });
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    if (!_initialized) {
-      return _buildLoadingWidget();
-    }
-
-    return FutureBuilder<File?>(
-      future: _imageFuture,
-      builder: (context, snapshot) {
-        Widget imageWidget;
-
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          imageWidget = _buildLoadingWidget();
-        } else if (snapshot.hasError || snapshot.data == null) {
-          // Try to load from network as fallback
-          imageWidget = _buildNetworkImage();
-        } else {
-          // Load from cached file
-          imageWidget = Image.file(
-            snapshot.data!,
-            fit: widget.fit,
-            errorBuilder: (context, error, stackTrace) => _buildNetworkImage(),
-          );
-        }
-
-        if (widget.borderRadius != null) {
-          imageWidget = ClipRRect(
-            borderRadius: widget.borderRadius!,
-            child: imageWidget,
-          );
-        }
-
-        return SizedBox(
-          width: widget.width,
-          height: widget.height,
-          child: imageWidget,
-        );
-      },
-    );
-  }
-
-  Widget _buildNetworkImage() {
-    return Image.network(
-      widget.imageUrl,
+    final imageWidget = CachedNetworkImage(
+      imageUrl: widget.imageUrl,
       fit: widget.fit,
-      errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
-      loadingBuilder: (context, child, loadingProgress) {
-        if (loadingProgress == null) return child;
-        return Center(
-          child: CircularProgressIndicator(
-            value: loadingProgress.expectedTotalBytes != null
-                ? loadingProgress.cumulativeBytesLoaded /
-                    loadingProgress.expectedTotalBytes!
-                : null,
-          ),
-        );
-      },
+      placeholder: (context, url) => _buildLoadingWidget(),
+      errorWidget: (context, url, error) => _buildPlaceholder(),
+    );
+    return SizedBox(
+      width: widget.width,
+      height: widget.height,
+      child: widget.borderRadius == null
+          ? imageWidget
+          : ClipRRect(borderRadius: widget.borderRadius!, child: imageWidget),
     );
   }
 

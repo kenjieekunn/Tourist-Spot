@@ -134,12 +134,14 @@ class ApiService {
   Future<Response> uploadFile(String endpoint, String filePath) async {
     try {
       await _ensureInitialized();
+      await _syncAuthTokenFromPrefs();
       FormData formData = FormData.fromMap({
         'file': await MultipartFile.fromFile(filePath),
       });
       return await _dio.post(endpoint, data: formData);
     } catch (e) {
       await _ensureInitialized(forceDiscover: true);
+      await _syncAuthTokenFromPrefs();
       FormData formData = FormData.fromMap({
         'file': await MultipartFile.fromFile(filePath),
       });
@@ -236,7 +238,10 @@ class ApiService {
     } catch (e) {
       final cached = await _readListCache(_touristSpotsCacheKey);
       if (cached != null) {
-        return cached.map((s) => TouristSpot.fromJson(s)).toList();
+        return cached
+            .map((s) => TouristSpot.fromJson(s))
+            .where((spot) => spot.isVerified && spot.isOpen)
+            .toList();
       }
       throw Exception('Failed to fetch tourist spots: $e');
     }
@@ -275,6 +280,7 @@ class ApiService {
             nearbyGasStations: spot.nearbyGasStations,
             nearbyFacilities: spot.nearbyFacilities,
             status: spot.status,
+            statusReason: spot.statusReason,
             verificationStatus: spot.verificationStatus,
             isFavorited: true,
             municipality: spot.municipality,
@@ -293,7 +299,10 @@ class ApiService {
       final cached =
           await _readListCache(_municipalitySpotsCacheKey(municipalityId));
       if (cached != null) {
-        return cached.map((s) => TouristSpot.fromJson(s)).toList();
+        return cached
+            .map((s) => TouristSpot.fromJson(s))
+            .where((spot) => spot.isVerified && spot.isOpen)
+            .toList();
       }
       throw Exception('Cannot fetch spots. Ensure Laravel API running: $e');
     }
@@ -400,14 +409,6 @@ class ApiService {
       throw Exception('Failed to submit review: ${e.message}');
     } catch (e) {
       throw Exception('Failed to submit review: $e');
-    }
-  }
-
-  Future<Map<String, dynamic>> uploadReviewImage(String filePath) async {
-    try {
-      return (await uploadFile('reviews/upload-image', filePath)).data;
-    } catch (e) {
-      throw Exception('Failed to upload image: $e');
     }
   }
 

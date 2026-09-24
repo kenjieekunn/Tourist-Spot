@@ -9,6 +9,8 @@ class ReverbService extends ChangeNotifier {
   Function(Map<String, dynamic>)? onSpotChanged;
 
   void connect() {
+    if (ApiConstants.reverbUrl.isEmpty) return;
+
     try {
       final url = ApiConstants.reverbUrl;
       _channel = WebSocketChannel.connect(Uri.parse(url));

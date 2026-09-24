@@ -1,17 +1,19 @@
 class ApiConstants {
-  // Base API URL - Local XAMPP dev server for real-time sync with admin system
+  // Base API URL for the Laravel application.
   // Override at runtime:
-  // flutter run --dart-define=API_BASE_URL=http://<YOUR-PC-IP>/tourist-spot-system/admin-system/public/api/v1/
+  // flutter run --dart-define=API_BASE_URL=http://<YOUR-PC-IP>/tourist-spot/web/public/api/v1/
   static const String envBaseUrl =
       String.fromEnvironment('API_BASE_URL', defaultValue: '');
+  static const String envReverbUrl =
+      String.fromEnvironment('REVERB_URL', defaultValue: '');
   static const bool useAndroidEmulator =
       bool.fromEnvironment('USE_ANDROID_EMULATOR', defaultValue: false);
   static const String androidEmulatorUrl =
-      'http://10.0.2.2/tourist-spot-system/admin-system/public/api/v1/';
+      'http://10.0.2.2/tourist-spot/web/public/api/v1/';
   static const String localNetworkUrl =
-      'http://192.168.100.188/tourist-spot-system/admin-system/public/api/v1/';
+      'http://192.168.100.188/tourist-spot/web/public/api/v1/';
   static const String webLocalhostUrl =
-      'http://localhost/tourist-spot-system/admin-system/public/api/v1/';
+      'http://localhost/tourist-spot/web/public/api/v1/';
 
   static String get baseUrl {
     if (envBaseUrl.isNotEmpty) return envBaseUrl;
@@ -26,6 +28,8 @@ class ApiConstants {
 
   static String get adminLoginUrl => '$adminBaseUrl/login';
   static String get adminDashboardUrl => '$adminBaseUrl/dashboard';
+
+  static String get reverbUrl => envReverbUrl;
 
   // Google Maps Directions API Key
   // Provide via: flutter run --dart-define=MAPS_API_KEY=YOUR_KEY
