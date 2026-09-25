@@ -42,6 +42,12 @@
     .report-signoff p { margin: .55rem 0; }
     .report-footer { border-top: 1px solid #9ca3af; color: #4b5563; font-size: .75rem; margin: 1.5rem; padding-top: .5rem; text-align: center; }
     .report-preview-empty { border: 1px dashed #9bd2c7; border-radius: 10px; color: #55736e; padding: 4rem 1rem; text-align: center; }
+    .report-filter-grid { row-gap: 1rem; }
+    @media (min-width: 992px) {
+        .report-filter-grid { display: grid; grid-template-columns: 1.25fr 1.05fr 1.2fr .9fr .75fr .75fr 1.2fr; gap: 1rem; align-items: end; }
+        .report-filter-grid > [class*="col-"] { padding-left: 0; padding-right: 0; width: auto; }
+        .report-filter-grid .form-check { white-space: nowrap; }
+    }
     @media print {
         @page { size: A4 portrait; margin: 10mm; }
         html, body { background: #fff !important; margin: 0 !important; padding: 0 !important; }
@@ -63,7 +69,7 @@
 <div class="reports-page">
     <div class="report-controls card mb-4">
         <div class="card-body">
-            <form method="GET" action="{{ route('super-admin.reports') }}" class="row g-3 align-items-end" id="reportForm">
+            <form method="GET" action="{{ route('super-admin.reports') }}" class="row g-3 align-items-end report-filter-grid" id="reportForm">
                 <input type="hidden" name="generated" value="1">
                 <div class="col-12 col-md-3"><label for="spotName" class="form-label">Tourist Spot Name</label><input type="search" name="spot_name" id="spotName" value="{{ $spotName }}" class="form-control" placeholder="Search spot name"></div>
                 <div class="col-12 col-md-3"><label for="reportType" class="form-label">Report Type</label><select name="report_type" id="reportType" class="form-select"><option value="management" @selected($reportType === 'management')>Management Report</option><option value="verification" @selected($reportType === 'verification')>Verification Report</option><option value="reviews" @selected($reportType === 'reviews')>Reviews Report</option></select></div>
