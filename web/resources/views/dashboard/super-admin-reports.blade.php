@@ -43,11 +43,16 @@
     .report-footer { border-top: 1px solid #9ca3af; color: #4b5563; font-size: .75rem; margin: 1.5rem; padding-top: .5rem; text-align: center; }
     .report-preview-empty { border: 1px dashed #9bd2c7; border-radius: 10px; color: #55736e; padding: 4rem 1rem; text-align: center; }
     @media print {
-        @page { size: A4 portrait; margin: 12mm; }
-        .sidebar, .report-controls, .main-col > header, .main-col > .alert { display: none !important; }
-        .main-col, .main-content { margin-left: 0 !important; padding: 0 !important; }
-        body { background: #fff !important; }
-        .official-report { box-shadow: none !important; margin: 0 !important; }
+        @page { size: A4 portrait; margin: 10mm; }
+        html, body { background: #fff !important; margin: 0 !important; padding: 0 !important; }
+        body * { visibility: hidden !important; }
+        #official-report, #official-report * { visibility: visible !important; }
+        #official-report { left: 0 !important; position: absolute !important; top: 0 !important; }
+        .sidebar, .report-controls, .navbar-custom, .main-col > header, .main-col > .alert, .sidebar-overlay, .sidebar-toggle { display: none !important; }
+        .main-col, .main-content, .reports-page { margin: 0 !important; padding: 0 !important; width: 100% !important; }
+        .official-report { border: 0 !important; border-radius: 0 !important; box-shadow: none !important; margin: 0 !important; width: 100% !important; }
+        .official-report-header { padding: .5rem 0 1rem; }
+        .report-section-title, .report-summary, .report-detail-table, .report-chart, .report-signoff, .report-footer { margin-left: 0; margin-right: 0; }
         .report-footer { bottom: 0; left: 0; margin: 0; position: fixed; right: 0; }
         .report-page-number::after { content: 'Page ' counter(page) ' of ' counter(pages); }
         .municipality-divider { page-break-after: avoid; }
