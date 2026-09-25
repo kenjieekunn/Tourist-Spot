@@ -45,6 +45,7 @@
     .report-signoff { display: flex; gap: 3rem; margin: 2rem 1.5rem 1.5rem; page-break-inside: avoid; }
     .report-signoff div { flex: 1; }
     .report-signoff p { margin: .55rem 0; }
+    .report-signature-value { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 2px; }
     .report-footer { border-top: 1px solid #9ca3af; color: #4b5563; font-size: .75rem; margin: 1.5rem; padding-top: .5rem; text-align: center; }
     .report-preview-empty { border: 1px dashed #9bd2c7; border-radius: 10px; color: #55736e; padding: 4rem 1rem; text-align: center; }
     .report-filter-grid { row-gap: 1rem; }
@@ -112,8 +113,8 @@
                 <div class="report-section-title">Review Summary</div><table class="report-summary"><tbody><tr><td>Total Reviews</td><td>{{ $reportReviews->count() }}</td></tr><tr><td>Approved Reviews</td><td>{{ $reportReviews->where('status', 'approved')->count() }}</td></tr><tr><td>Pending Reviews</td><td>{{ $reportReviews->where('status', 'pending')->count() }}</td></tr></tbody></table><div class="report-section-title">Review Details</div><table class="report-detail-table"><thead><tr><th>No.</th><th>Tourist Spot</th><th>Municipality</th><th>Reviewer</th><th>Date</th><th>Status</th></tr></thead><tbody>@forelse($reportReviews as $review)<tr><td>{{ $loop->iteration }}</td><td>{{ $review->touristSpot?->name ?? 'Unknown Spot' }}</td><td>{{ $review->touristSpot?->municipality?->name ?? 'Unknown Municipality' }}</td><td>{{ $review->user_name ?: 'Visitor' }}</td><td>{{ optional($review->created_at)->format('M d, Y') }}</td><td>{{ ucfirst($review->status ?? 'pending') }}</td></tr>@empty<tr><td colspan="6" class="text-center py-4">No reviews found</td></tr>@endforelse</tbody></table>
             @endif
 
-            <div class="report-signoff"><div><p>Prepared by: ____________________________________</p><p>Provincial Tourism Officer</p><p>Date: __________________________________________</p></div><div><p>Approved by: ____________________________________</p><p>Provincial Tourism Officer / Approving Authority</p><p>Date: __________________________________________</p></div></div>
-            <footer class="report-footer">{{ $reportTitle }} | 2nd District of Pangasinan | <span class="report-page-number"></span></footer>
+            <div class="report-signoff"><div><p>Prepared by: <span class="report-signature-value">Provincial Tourism and Cultural Affairs Office</span></p><p>Date: <span class="report-signature-value">{{ now()->format('F j, Y') }}</span></p></div><div><p>Approved by: ____________________________________</p><p>Provincial Tourism Officer / Approving Authority</p><p>Date: __________________________________________</p></div></div>
+            <footer class="report-footer"><span class="report-page-number"></span></footer>
         </div>
     @endif
 </div>
