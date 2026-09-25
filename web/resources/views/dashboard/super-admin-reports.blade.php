@@ -19,6 +19,11 @@
     .report-stat .stat-icon { color: var(--tourism-teal); font-size: 1.15rem; }
     .official-report { color: #1f2937; background: #fff; }
     .official-report-header { border-bottom: 3px solid #0f766e; padding: 1.5rem; text-align: center; }
+    .official-report-branding { align-items: center; display: grid; grid-template-columns: 1fr minmax(0, 3fr) 1fr; gap: 1rem; }
+    .report-logo { height: 78px; object-fit: contain; width: 78px; }
+    .report-logo:first-child { justify-self: start; }
+    .report-logo:last-child { justify-self: end; }
+    .official-report-copy { min-width: 0; }
     .report-mark { color: #0f766e; font-size: 2rem; }
     .official-report-header h1, .official-report-header h2, .official-report-header p { margin: 0; }
     .official-report-header h1 { color: #173f43; font-size: 1.35rem; letter-spacing: .04em; text-transform: uppercase; }
@@ -94,7 +99,7 @@
     @else
         <div class="report-controls d-flex justify-content-end mb-3"><button type="button" class="btn btn-tourism" onclick="printReport()"><i class="fas fa-print me-1"></i> Print / Export PDF</button></div>
         <div id="official-report" class="card official-report">
-            <header class="official-report-header"><div class="report-mark"><i class="fas {{ $reportIcon }}"></i></div><p>REPUBLIC OF THE PHILIPPINES</p><p>PROVINCE OF PANGASINAN</p><p>TOURISM OFFICE / TOURISM SYSTEM</p><h1>{{ $reportTitle }}</h1><h2>2nd District of Pangasinan</h2><p class="report-period">Report Period: {{ $reportPeriod }}</p>@if($spotName)<p class="report-period">Tourist Spot: {{ $spotName }}</p>@endif<p>Generated: {{ now()->format('F j, Y') }}</p></header>
+            <header class="official-report-header"><div class="official-report-branding"><img class="report-logo" src="{{ asset('assets/report-logos/provincialtourismlogo.png') }}" alt="Provincial Tourism logo"><div class="official-report-copy"><div class="report-mark"><i class="fas {{ $reportIcon }}"></i></div><p>REPUBLIC OF THE PHILIPPINES</p><p>PROVINCE OF PANGASINAN</p><p>TOURISM OFFICE / TOURISM SYSTEM</p><h1>{{ $reportTitle }}</h1><h2>2nd District of Pangasinan</h2><p class="report-period">Report Period: {{ $reportPeriod }}</p>@if($spotName)<p class="report-period">Tourist Spot: {{ $spotName }}</p>@endif<p>Generated: {{ now()->format('F j, Y') }}</p></div><img class="report-logo" src="{{ asset('assets/report-logos/pangasinanlogo.png') }}" alt="Pangasinan logo"></div></header>
 
             @if($reportType === 'management')
                 <div class="report-section-title">Summary</div><table class="report-summary"><tbody><tr><td>Total Tourist Spots</td><td>{{ $totalSpots }}</td></tr><tr><td>Verified</td><td>{{ $verifiedSpots }}</td></tr><tr><td>Pending Verification</td><td>{{ $pendingSpots }}</td></tr><tr><td>Active</td><td>{{ $activeSpots }}</td></tr><tr><td>Municipalities with 0 spots</td><td>{{ $emptyMunicipalities }}</td></tr></tbody></table>
