@@ -719,20 +719,8 @@
                 marker = new google.maps.Marker({
                     position: { lat, lng },
                     map,
-                    draggable: true,
+                    draggable: false,
                     title: getSpotLabel()
-                });
-
-                marker.addListener('dragend', function() {
-                    const position = marker.getPosition();
-                    if (!position) {
-                        return;
-                    }
-
-                    updateCoordinates(position.lat(), position.lng());
-                    updateMarkerLabel();
-                    refreshFacilityRadiusOverlay();
-                    syncAddressForCoordinates(position.lat(), position.lng());
                 });
             }
 
