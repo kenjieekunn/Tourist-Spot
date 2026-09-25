@@ -20,7 +20,8 @@ class ApiBaseUrlResolver {
     }
 
     final candidates = <String>[];
-    // Always include the configured local network URL as a fallback candidate.
+    // Prefer the deployed API for release builds, then try the local network for development.
+    candidates.add(ApiConstants.productionUrl);
     candidates.add(ApiConstants.localNetworkUrl);
 
     for (final candidate in candidates.toSet()) {
@@ -30,7 +31,7 @@ class ApiBaseUrlResolver {
       }
     }
 
-    return ApiConstants.localNetworkUrl;
+    return ApiConstants.productionUrl;
   }
 
   static Future<bool> _isReachable(String baseUrl) async {

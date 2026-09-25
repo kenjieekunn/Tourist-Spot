@@ -1,3 +1,14 @@
+String? _versionMunicipalityImageUrl(dynamic rawUrl, dynamic updatedAt) {
+  final url = rawUrl?.toString().trim();
+  final version = updatedAt?.toString().trim();
+  if (url == null || url.isEmpty || version == null || version.isEmpty) {
+    return url;
+  }
+
+  final separator = url.contains('?') ? '&' : '?';
+  return '$url${separator}v=${Uri.encodeComponent(version)}';
+}
+
 class Municipality {
   final int id;
   final String name;
@@ -22,7 +33,10 @@ class Municipality {
       id: int.parse(json['id'].toString()),
       name: json['name']?.toString() ?? '',
       description: json['description'],
-      imageUrl: json['image_url'] ?? json['image_path'],
+      imageUrl: _versionMunicipalityImageUrl(
+        json['image_url'] ?? json['image_path'],
+        json['updated_at'],
+      ),
       latitude: double.parse(json['latitude'].toString()),
       longitude: double.parse(json['longitude'].toString()),
       touristSpotsCount: json['tourist_spots_count'] != null

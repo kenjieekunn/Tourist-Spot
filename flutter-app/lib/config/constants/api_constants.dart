@@ -1,6 +1,6 @@
 class ApiConstants {
   // Base API URL for the Laravel application.
-  // Override at runtime:
+  // Override at runtime for local development:
   // flutter run --dart-define=API_BASE_URL=http://<YOUR-PC-IP>/tourist-spot/web/public/api/v1/
   static const String envBaseUrl =
       String.fromEnvironment('API_BASE_URL', defaultValue: '');
@@ -14,10 +14,12 @@ class ApiConstants {
       'http://192.168.100.188/tourist-spot/web/public/api/v1/';
   static const String webLocalhostUrl =
       'http://localhost/tourist-spot/web/public/api/v1/';
+  static const String productionUrl =
+      'https://district2touristspot.com/api/v1/';
 
   static String get baseUrl {
     if (envBaseUrl.isNotEmpty) return envBaseUrl;
-    return localNetworkUrl;
+    return productionUrl;
   }
 
   // Admin web URLs (login/dashboard)

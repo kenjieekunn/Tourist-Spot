@@ -1,5 +1,16 @@
 import 'dart:convert';
 
+String? _versionImageUrl(dynamic rawUrl, dynamic updatedAt) {
+  final url = rawUrl?.toString().trim();
+  final version = updatedAt?.toString().trim();
+  if (url == null || url.isEmpty || version == null || version.isEmpty) {
+    return url;
+  }
+
+  final separator = url.contains('?') ? '&' : '?';
+  return '$url${separator}v=${Uri.encodeComponent(version)}';
+}
+
 class TouristSpot {
   final int id;
   final String name;
@@ -106,7 +117,7 @@ class TouristSpot {
       entranceFee: json['entrance_fee'] != null
           ? double.tryParse(json['entrance_fee'].toString())
           : null,
-      imageUrl: json['image_url']?.toString(),
+      imageUrl: _versionImageUrl(json['image_url'], json['updated_at']),
       nearbyDining: json['nearby_dining']?.toString(),
       nearbyGasStations: json['nearby_gas_stations']?.toString(),
       nearbyFacilities: nearbyFacilities,

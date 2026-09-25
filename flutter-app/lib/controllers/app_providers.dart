@@ -40,15 +40,15 @@ final touristSpotsByMunicipalityStreamProvider =
 });
 
 // Legacy (manual refresh only)
-final touristSpotsByMunicipalityProvider =
-    FutureProvider.family<List<TouristSpot>, int>((ref, municipalityId) async {
+final touristSpotsByMunicipalityProvider = FutureProvider.autoDispose
+    .family<List<TouristSpot>, int>((ref, municipalityId) async {
   final apiService = ref.watch(apiServiceProvider);
   return apiService.getTouristSpotsByMunicipality(municipalityId);
 });
 
 // Single Tourist Spot Provider
 final touristSpotProvider =
-    FutureProvider.family<TouristSpot, int>((ref, spotId) async {
+    FutureProvider.autoDispose.family<TouristSpot, int>((ref, spotId) async {
   final apiService = ref.watch(apiServiceProvider);
   return apiService.getTouristSpot(spotId);
 });
@@ -62,14 +62,15 @@ final selectedMunicipalityProvider =
     StateProvider<Municipality?>((ref) => null);
 
 // User Reviews Provider
-final userReviewsProvider =
-    FutureProvider.family<List<Map<String, dynamic>>, int>((ref, spotId) async {
+final userReviewsProvider = FutureProvider.autoDispose
+    .family<List<Map<String, dynamic>>, int>((ref, spotId) async {
   final apiService = ref.watch(apiServiceProvider);
   return apiService.getReviews(spotId);
 });
 
 // Municipalities Provider
-final municipalitiesProvider = FutureProvider<List<Municipality>>((ref) async {
+final municipalitiesProvider =
+    FutureProvider.autoDispose<List<Municipality>>((ref) async {
   final apiService = ref.watch(apiServiceProvider);
   return apiService.getMunicipalities();
 });
