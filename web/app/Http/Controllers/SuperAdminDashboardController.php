@@ -195,13 +195,20 @@ class SuperAdminDashboardController extends Controller
         try {
             $hasVerificationStatus = Schema::hasColumn('tourist_spots', 'verification_status');
 
-            $pendingQuery = $hasVerificationStatus
-                ? TouristSpot::with('municipality', 'creator')
-                    ->withCount('reviews')
-                    ->where('verification_status', 'pending')
-                : TouristSpot::with('municipality', 'creator')
-                    ->withCount('reviews')
-                    ->where('status', 'inactive');
+            $pendingQuery = TouristSpot::with('municipality', 'creator')
+                ->withCount('reviews');
+
+            if ($hasVerificationStatus) {
+                $pendingQuery->where(function ($query) {
+                    $query->where('verification_status', 'pending')
+                        ->orWhere(function ($legacyQuery) {
+                            $legacyQuery->whereNull('verification_status')
+                                ->whereIn('status', ['pending', 'inactive']);
+                        });
+                });
+            } else {
+                $pendingQuery->whereIn('status', ['pending', 'inactive']);
+            }
 
             $pendingSpots = $pendingQuery
                 ->orderByDesc('created_at')
