@@ -8,7 +8,7 @@ Options -Indexes
     RewriteRule ^(?:setup|check_|fix_|update_superadmin_password|verify_admins|insert_spots) [^/]*\.php$ - [F,L]
 
     # Serve public Laravel assets from the nested public directory.
-    RewriteRule ^(build|css|js|images|storage|favicon\.ico)(/.*)?$ web/public/$1$2 [L]
+    RewriteRule ^(assets|build|css|js|images|storage|favicon\.ico)(/.*)?$ web/public/$1$2 [L]
 
     # Send application routes through the repository-level Laravel front controller.
     RewriteCond %{REQUEST_FILENAME} !-f
