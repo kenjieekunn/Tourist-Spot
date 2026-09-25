@@ -809,6 +809,7 @@ class TouristSpotController extends Controller
                 $subtitleParts = array_filter([$spot->address ?? null, $municipalityName ?: null]);
                 $commonSubtitle = implode(' • ', $subtitleParts);
                 $baseSearchText = strtolower(trim(implode(' ', array_filter([
+                    $spot->name,
                     $spot->address,
                     $municipalityName,
                     $spot->category ?? null,

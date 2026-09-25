@@ -4,8 +4,6 @@
 @section('header', '')
 
 @section('content')
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 @if(env('GOOGLE_MAPS_API_KEY'))
 <script src="https://maps.googleapis.com/maps/api/js?key={{ env('GOOGLE_MAPS_API_KEY') }}&libraries=places"></script>
 @endif
@@ -512,8 +510,12 @@
         return selectedMunicipality || assignedMunicipalityName || '';
     }
 
-    function getAllBarangays() {
-        return Object.entries(barangays).flatMap(([municipalityName, barangayList]) => {
+    function getAllBarangays(municipalityName = '') {
+        const selectedMunicipality = normalizeSearchText(municipalityName);
+
+        return Object.entries(barangays).filter(([name]) => {
+            return !selectedMunicipality || normalizeSearchText(name) === selectedMunicipality;
+        }).flatMap(([municipalityName, barangayList]) => {
             if (!Array.isArray(barangayList)) {
                 return [];
             }
@@ -714,15 +716,7 @@
             return;
         }
 
-        if (marker) {
-            marker.setLatLng([lat, lng]);
-        } else {
-            marker = L.marker([lat, lng], { riseOnHover: true }).addTo(map);
-        }
-
-        updateMarkerLabel();
-        refreshFacilityRadiusOverlay();
-        resetFacilityRadiusControl();
+        return;
     }
 
     function getCurrentSpotCoordinates() {
@@ -799,18 +793,7 @@
             return;
         }
 
-        if (facilityRadiusOverlay && typeof facilityRadiusOverlay.remove === 'function') {
-            facilityRadiusOverlay.remove();
-        }
-
-        facilityRadiusOverlay = L.circle([center.lat, center.lng], {
-            radius: FACILITY_RADIUS_METERS,
-            color: '#0d6efd',
-            weight: 2,
-            opacity: 0.45,
-            fillColor: '#0d6efd',
-            fillOpacity: 0.10
-        }).addTo(map);
+        return;
     }
 
     function getFacilityRadiusStatus(lat, lng) {
@@ -945,64 +928,9 @@
                 syncAddressForCoordinates(lat, lng);
             });
         } else {
-            map = L.map('map', { scrollWheelZoom: false }).setView([districtCenter.lat, districtCenter.lng], 11);
-
-            const streetLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-                attribution: '© OpenStreetMap contributors © CARTO',
-                subdomains: 'abcd',
-                maxZoom: 20
-            });
-
-            const imageryLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-                attribution: 'Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community',
-                maxZoom: 20
-            });
-
-            const labelLayer = L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
-                attribution: 'Tiles © Esri',
-                maxZoom: 20
-            });
-
-            streetLayer.addTo(map);
-            labelLayer.addTo(map);
-
-            L.control.layers(
-                {
-                    'Detailed Streets': streetLayer,
-                    'Satellite': imageryLayer
-                },
-                {
-                    'Labels': labelLayer
-                }
-            ).addTo(map);
-            facilityMarkers = [];
-            refreshFacilityMarkers();
-
-            const districtBounds = L.latLngBounds(
-                [bounds.south, bounds.west],
-                [bounds.north, bounds.east]
-            );
-            map.fitBounds(districtBounds, { padding: [20, 20] });
-
-            // Click on map to add marker
-            map.on('click', function(e) {
-                const lat = e.latlng.lat;
-                const lng = e.latlng.lng;
-
-                if (!isLocationWithinMunicipality(lat, lng)) {
-                    alert('The selected location must be inside the assigned municipality.');
-                    return;
-                }
-
-                if (pendingFacility) {
-                    setPendingFacilityLocation(lat, lng);
-                    return;
-                }
-
-                updateCoordinates(lat, lng);
-                ensureMarker(lat, lng);
-                syncAddressForCoordinates(lat, lng);
-            });
+            const mapElement = document.getElementById('map');
+            mapElement.innerHTML = '<div class="alert alert-warning m-3">Google Maps is unavailable. Please configure a valid Google Maps API key with Maps JavaScript API and Places API enabled.</div>';
+            mapElement.setAttribute('aria-label', 'Google Maps unavailable');
         }
 
         const nameInput = document.getElementById('name');
@@ -1130,7 +1058,7 @@
         const tokens = normalizedQuery.split(/\s+/).filter((token) => token.length >= 1);
         const barangayResults = [];
 
-        getAllBarangays().forEach(({ barangay, municipalityName }) => {
+        getAllBarangays(getSelectedMunicipalityName()).forEach(({ barangay, municipalityName }) => {
             const barangayLower = normalizeSearchText(barangay);
             const municipalityLower = normalizeSearchText(municipalityName);
             const matchesQuery = barangayLower.startsWith(normalizedQuery)
@@ -1237,7 +1165,7 @@
         if (!normalizedQuery) return null;
 
         const selectedMunicipality = normalizeSearchText(getSelectedMunicipalityName());
-        const match = getAllBarangays().find(({ barangay, municipalityName }) => {
+        const match = getAllBarangays(getSelectedMunicipalityName()).find(({ barangay, municipalityName }) => {
             return normalizeSearchText(barangay) === normalizedQuery
                 && (!selectedMunicipality || normalizeSearchText(municipalityName) === selectedMunicipality);
         });
@@ -1495,6 +1423,7 @@
         const searchInput = document.getElementById('location-search');
         const nameInput = document.getElementById('name');
         const form = document.getElementById('tourist-spot-form');
+        const municipalitySelect = document.getElementById('municipality_id');
         
         searchInput.addEventListener('input', function(e) {
             clearTimeout(searchTimeout);
@@ -1506,6 +1435,13 @@
                 }, 500); // Debounce search by 500ms
             } else {
                 document.getElementById('search-suggestions').classList.remove('show');
+            }
+        });
+
+        municipalitySelect?.addEventListener('change', function() {
+            const query = searchInput.value.trim();
+            if (query) {
+                searchLocationAPI(query);
             }
         });
         
@@ -1680,10 +1616,6 @@
             }
             pendingFacilityMarker.setPosition({ lat: Number(lat), lng: Number(lng) });
             pendingFacilityMarker.setMap(map);
-        } else if (map) {
-            if (pendingFacilityMarker) pendingFacilityMarker.remove();
-            pendingFacilityMarker = L.marker([lat, lng], { draggable: true }).addTo(map);
-            pendingFacilityMarker.on('dragend', (event) => { const position = event.target.getLatLng(); setPendingFacilityLocation(position.lat, position.lng); });
         }
     }
 
@@ -1730,31 +1662,7 @@
             return;
         }
 
-        if (!map) return;
-        if (!facilityMarkers.length) {
-            facilityMarkers = [];
-        }
-        facilityMarkers.forEach((facilityMarker) => {
-            if (typeof facilityMarker.remove === 'function') {
-                facilityMarker.remove();
-            } else if (typeof map.removeLayer === 'function') {
-                map.removeLayer(facilityMarker);
-            }
-        });
-        facilityMarkers = [];
-        facilities.forEach((facility) => {
-            const color = facilityColors[facility.type] || '#6c757d';
-            const marker = L.circleMarker([facility.latitude, facility.longitude], {
-                radius: 6,
-                color: '#ffffff',
-                weight: 2,
-                fillColor: color,
-                fillOpacity: 0.9
-            });
-            marker.bindPopup(`<strong>${escapeHtml(facility.name)}</strong><br>${facilityLabels[facility.type] || 'Facility'}`);
-            marker.addTo(map);
-            facilityMarkers.push(marker);
-        });
+        return;
     }
 
     function renderFacilityList() {
