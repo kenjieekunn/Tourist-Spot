@@ -29,7 +29,7 @@
 @endsection
 
 @section('content')
-<script src="https://maps.googleapis.com/maps/api/js?key={{ env('GOOGLE_MAPS_API_KEY') }}"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key={{ config('services.google_maps.key') }}"></script>
 <style>
     .verification-image-gallery {
         padding: 0.75rem;

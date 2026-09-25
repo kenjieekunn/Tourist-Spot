@@ -4,8 +4,8 @@
 @section('header', '')
 
 @section('content')
-@if(env('GOOGLE_MAPS_API_KEY'))
-<script src="https://maps.googleapis.com/maps/api/js?key={{ env('GOOGLE_MAPS_API_KEY') }}&libraries=places"></script>
+@if(config('services.google_maps.key'))
+<script src="https://maps.googleapis.com/maps/api/js?key={{ config('services.google_maps.key') }}&libraries=places"></script>
 @endif
 
 <style>
