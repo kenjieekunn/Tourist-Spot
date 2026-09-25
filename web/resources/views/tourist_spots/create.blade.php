@@ -568,6 +568,32 @@
         return fallbackToNominatim();
     }
 
+    function geocodeSearchSuggestion(query) {
+        return geocodeLocationQuery(query).then((result) => {
+            const location = result?.geometry?.location;
+            if (!location) {
+                return null;
+            }
+
+            const latitude = Number(typeof location.lat === 'function' ? location.lat() : location.lat);
+            const longitude = Number(typeof location.lng === 'function' ? location.lng() : location.lng);
+            if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+                return null;
+            }
+
+            return {
+                type: 'geocoded',
+                name: result.formatted_address || query,
+                subtitle: result.formatted_address || query,
+                latitude,
+                longitude,
+                source: googleGeocoder ? 'Google Geocoder' : 'Location search',
+                sourcePriority: 2,
+                search_text: `${result.formatted_address || query} ${query}`
+            };
+        }).catch(() => null);
+    }
+
     function extractBarangayFromAddress(address, municipalityName) {
         if (!address || !municipalityName || !barangays[municipalityName]) {
             return null;
@@ -1206,7 +1232,13 @@
                 return;
             }
 
-            return searchNominatimSuggestions(normalizedQuery).then((nominatimResults) => {
+            return geocodeSearchSuggestion(normalizedQuery).then((geocodedResult) => {
+                if (geocodedResult) {
+                    displaySuggestions(dedupeSuggestions([...localResults, geocodedResult]).slice(0, 10));
+                    return;
+                }
+
+                return searchNominatimSuggestions(normalizedQuery).then((nominatimResults) => {
                 const combined = dedupeSuggestions([...localResults, ...nominatimResults]);
                 combined.sort((a, b) => scoreSuggestion(b, normalizeSearchText(normalizedQuery), tokens) - scoreSuggestion(a, normalizeSearchText(normalizedQuery), tokens));
                 if (combined.length > 0) {
@@ -1215,6 +1247,7 @@
                 }
 
                 displaySuggestions(buildLocalSuggestions(normalizedQuery));
+                });
             });
         }).catch((error) => {
             console.error('Search error:', error);
