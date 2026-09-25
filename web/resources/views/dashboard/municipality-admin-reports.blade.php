@@ -121,26 +121,26 @@
     @media print {
         @page {
             size: A4 portrait;
-            margin: 12mm;
+            margin: 10mm;
         }
+        html, body { background: #fff !important; margin: 0 !important; padding: 0 !important; }
+        body * { visibility: hidden !important; }
+        .official-report, .official-report * { visibility: visible !important; }
+        .official-report { left: 0 !important; position: absolute !important; top: 0 !important; width: 100% !important; }
         .sidebar,
         .report-controls,
         .report-print-button,
+        .navbar-custom,
         .main-col > header,
-        .main-col > .alert {
+        .main-col > .alert,
+        .sidebar-overlay,
+        .sidebar-toggle {
             display: none !important;
         }
         .main-col,
-        .main-content {
-            padding: 0 !important;
-        }
-        body {
-            background: #fff !important;
-        }
-        .official-report {
-            box-shadow: none !important;
-            margin: 0 !important;
-        }
+        .main-content,
+        .reports-page { margin: 0 !important; padding: 0 !important; width: 100% !important; }
+        .official-report { border: 0 !important; border-radius: 0 !important; box-shadow: none !important; margin: 0 !important; }
         .report-footer {
             bottom: 0;
             left: 0;

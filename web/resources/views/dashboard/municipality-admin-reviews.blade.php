@@ -31,11 +31,14 @@
     .reviews-report-signoff p { margin: 0.65rem 0; }
     .reviews-report-footer { border-top: 1px solid #9ca3af; color: #4b5563; font-size: 0.75rem; margin: 1.5rem; padding-top: 0.5rem; text-align: center; }
     @media print {
-        @page { size: A4 portrait; margin: 12mm; }
-        .sidebar, .review-controls, .main-col > header, .main-col > .alert { display: none !important; }
-        .main-col, .main-content { padding: 0 !important; }
-        body { background: #fff !important; }
-        .reviews-report { box-shadow: none !important; margin: 0 !important; }
+        @page { size: A4 portrait; margin: 10mm; }
+        html, body { background: #fff !important; margin: 0 !important; padding: 0 !important; }
+        body * { visibility: hidden !important; }
+        .reviews-report, .reviews-report * { visibility: visible !important; }
+        .reviews-report { left: 0 !important; position: absolute !important; top: 0 !important; width: 100% !important; }
+        .sidebar, .review-controls, .navbar-custom, .main-col > header, .main-col > .alert, .sidebar-overlay, .sidebar-toggle { display: none !important; }
+        .main-col, .main-content { margin: 0 !important; padding: 0 !important; width: 100% !important; }
+        .reviews-report { border: 0 !important; border-radius: 0 !important; box-shadow: none !important; margin: 0 !important; }
         .reviews-report-footer { bottom: 0; left: 0; margin: 0; position: fixed; right: 0; }
         .reviews-report-page-number::after { content: 'Page ' counter(page) ' of ' counter(pages); }
     }
