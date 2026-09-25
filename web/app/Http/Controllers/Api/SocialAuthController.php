@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 class SocialAuthController extends Controller
@@ -149,17 +150,22 @@ class SocialAuthController extends Controller
             $username = $this->generateUniqueUsername($data['name']);
             $email = $data['email'] ?? $data['provider_id'] . '@' . $data['provider'] . '.local';
 
-            $user = User::create([
+            $userData = [
                 'name' => $data['name'],
                 'email' => $email,
-                'username' => $username,
                 'password' => bcrypt(Str::random(32)), // random password, never used for social auth
                 'role' => 'user',
                 'is_active' => true,
                 'auth_provider' => $data['provider'],
                 'provider_id' => $data['provider_id'],
                 'profile_image_path' => $data['profile_image_url'] ?? null,
-            ]);
+            ];
+
+            if (Schema::hasColumn('users', 'username')) {
+                $userData['username'] = $username;
+            }
+
+            $user = User::create($userData);
         } else {
             // Update profile info on re-login
             $user->update([
@@ -192,6 +198,10 @@ class SocialAuthController extends Controller
 
     private function generateUniqueUsername(string $name): string
     {
+        if (!Schema::hasColumn('users', 'username')) {
+            return Str::slug($name, '_') ?: 'user';
+        }
+
         $base = Str::slug($name, '_');
         $base = $base !== '' ? $base : 'user';
         $username = $base;

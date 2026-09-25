@@ -9,6 +9,10 @@ use App\Http\Controllers\TouristSpotController;
 use App\Http\Controllers\MunicipalityController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\MunicipalityStaffController;
+use App\Http\Controllers\LandingPageController;
+
+// Public tourism landing page
+Route::get('/', [LandingPageController::class, 'index'])->name('home');
 
 // Auth Routes
 Route::get('/register', [AuthController::class, 'register'])->name('register');
@@ -21,7 +25,6 @@ Route::post('/login', [AuthController::class, 'login'])->name('login');
 Route::middleware(['auth'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-    Route::get('/', [DashboardController::class, 'index'])->name('home');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // Super Admin Routes

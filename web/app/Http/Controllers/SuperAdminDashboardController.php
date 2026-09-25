@@ -229,16 +229,22 @@ class SuperAdminDashboardController extends Controller
                 $status = 'all';
             }
 
+            $hasUsernameColumn = Schema::hasColumn('users', 'username');
+
             $admins = User::where('role', 'municipality-admin')
                 ->with(['municipality' => fn ($query) => $query->withCount(['touristSpots', 'staffAccounts'])])
-                ->when($search !== '', function ($query) use ($search) {
-                    $query->where(function ($adminQuery) use ($search) {
+                ->when($search !== '', function ($query) use ($search, $hasUsernameColumn) {
+                    $query->where(function ($adminQuery) use ($search, $hasUsernameColumn) {
                         $adminQuery->where('name', 'like', '%' . $search . '%')
-                            ->orWhere('email', 'like', '%' . $search . '%')
-                            ->orWhere('username', 'like', '%' . $search . '%')
-                            ->orWhereHas('municipality', function ($municipalityQuery) use ($search) {
-                                $municipalityQuery->where('name', 'like', '%' . $search . '%');
-                            });
+                            ->orWhere('email', 'like', '%' . $search . '%');
+
+                        if ($hasUsernameColumn) {
+                            $adminQuery->orWhere('username', 'like', '%' . $search . '%');
+                        }
+
+                        $adminQuery->orWhereHas('municipality', function ($municipalityQuery) use ($search) {
+                            $municipalityQuery->where('name', 'like', '%' . $search . '%');
+                        });
                     });
                 })
                 ->when($status === 'active', fn ($query) => $query->where('is_active', true))
@@ -571,12 +577,20 @@ class SuperAdminDashboardController extends Controller
 
     private function ensureLoginIsAvailable(string $username, string $email, ?int $ignoreId = null): void
     {
-        $query = User::where(function ($builder) use ($username, $email) {
-            $builder->where('email', $email)->orWhere('username', $username);
+        $hasUsernameColumn = Schema::hasColumn('users', 'username');
+
+        $query = User::where(function ($builder) use ($username, $email, $hasUsernameColumn) {
+            $builder->where('email', $email);
+
+            if ($hasUsernameColumn) {
+                $builder->orWhere('username', $username);
+            }
         });
+
         if ($ignoreId) {
             $query->where('id', '!=', $ignoreId);
         }
+
         if ($query->exists()) {
             throw ValidationException::withMessages(['login' => 'That email/username is already in use.']);
         }

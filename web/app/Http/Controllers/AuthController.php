@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
+use Illuminate\Database\QueryException;
 
 class AuthController extends Controller
 {
@@ -30,22 +31,34 @@ class AuthController extends Controller
         ]);
 
         $loginValue = Str::lower(trim((string) $validated['login']));
-        $userQuery = User::query()
-            ->where('is_active', true)
-            ->where(function ($query) use ($loginValue) {
-                if (filter_var($loginValue, FILTER_VALIDATE_EMAIL)) {
-                    $query->where('email', $loginValue);
-                    return;
-                }
 
-                $query->where('email', $loginValue . '@tourist-spots.com');
+        try {
+            $userQuery = User::query()
+                ->where('is_active', true)
+                ->where(function ($query) use ($loginValue) {
+                    if (filter_var($loginValue, FILTER_VALIDATE_EMAIL)) {
+                        $query->where('email', $loginValue);
+                        return;
+                    }
 
-                if (Schema::hasColumn('users', 'username')) {
-                    $query->orWhere('username', $loginValue);
-                }
-            });
+                    $query->where('email', $loginValue . '@tourist-spots.com');
 
-        $user = $userQuery->first();
+                    if (Schema::hasColumn('users', 'username')) {
+                        $query->orWhere('username', $loginValue);
+                    }
+                });
+
+            $user = $userQuery->first();
+        } catch (QueryException $exception) {
+            \Log::error('Login unavailable because the database connection failed.', [
+                'login' => $loginValue,
+                'message' => $exception->getMessage(),
+            ]);
+
+            return back()->withErrors([
+                'login' => 'Login is temporarily unavailable. Please start the database service and try again.',
+            ])->onlyInput('login');
+        }
         if ($user && Hash::check($validated['password'], $user->password)) {
             if (Schema::hasColumn('users', 'last_login_at')) {
                 $user->forceFill(['last_login_at' => now()])->save();
@@ -101,20 +114,29 @@ class AuthController extends Controller
             'password' => 'required|string|min:8|confirmed',
         ]);
 
-        User::create([
+        $userData = [
             'name' => $validated['name'],
             'email' => $validated['email'],
-            'username' => $this->generateUniqueUsername($validated['email']),
             'password' => Hash::make($validated['password']),
             'role' => 'user',
             'is_active' => true,
-        ]);
+        ];
+
+        if (Schema::hasColumn('users', 'username')) {
+            $userData['username'] = $this->generateUniqueUsername($validated['email']);
+        }
+
+        User::create($userData);
 
         return redirect()->route('login.form')->with('success', 'Registration successful! Please log in.');
     }
 
     private function generateUniqueUsername(string $email): string
     {
+        if (!Schema::hasColumn('users', 'username')) {
+            return Str::slug(explode('@', $email)[0], '_') ?: 'user';
+        }
+
         $baseUsername = Str::slug(explode('@', $email)[0], '_');
         $baseUsername = $baseUsername !== '' ? $baseUsername : 'user';
 

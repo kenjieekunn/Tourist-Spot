@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Municipality;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 class AdminSeeder extends Seeder
@@ -15,16 +16,23 @@ class AdminSeeder extends Seeder
      */
     public function run(): void
     {
+        $hasUsernameColumn = Schema::hasColumn('users', 'username');
+
+        $superAdminData = [
+            'name' => 'Super Administrator',
+            'password' => Hash::make('superadmin@123'),
+            'role' => 'super-admin',
+            'municipality_id' => null,
+            'is_active' => true,
+        ];
+
+        if ($hasUsernameColumn) {
+            $superAdminData['username'] = 'superadmin@gmail.com';
+        }
+
         User::updateOrCreate(
             ['email' => 'superadmin@gmail.com'],
-            [
-                'name' => 'Super Administrator',
-                'username' => 'superadmin@gmail.com',
-                'password' => Hash::make('superadmin@123'),
-                'role' => 'super-admin',
-                'municipality_id' => null,
-                'is_active' => true,
-            ]
+            $superAdminData
         );
 
         $municipalities = [
@@ -48,16 +56,21 @@ class AdminSeeder extends Seeder
                 $adminUsername = Str::slug($municipalityName . ' admin', '_');
                 $adminEmail = $adminUsername . '@tourist-spots.com';
 
+                $municipalityAdminData = [
+                    'name' => $municipalityName . ' Admin',
+                    'password' => Hash::make('MuniAdmin@123'),
+                    'role' => 'municipality-admin',
+                    'municipality_id' => $municipality->id,
+                    'is_active' => true,
+                ];
+
+                if ($hasUsernameColumn) {
+                    $municipalityAdminData['username'] = $adminUsername;
+                }
+
                 User::updateOrCreate(
                     ['email' => $adminEmail],
-                    [
-                        'name' => $municipalityName . ' Admin',
-                        'username' => $adminUsername,
-                        'password' => Hash::make('MuniAdmin@123'),
-                        'role' => 'municipality-admin',
-                        'municipality_id' => $municipality->id,
-                        'is_active' => true,
-                    ]
+                    $municipalityAdminData
                 );
 
                 $this->command->line("Created/Updated: {$adminEmail} for {$municipalityName}");
