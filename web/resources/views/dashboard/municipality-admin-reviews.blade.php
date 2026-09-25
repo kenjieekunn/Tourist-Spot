@@ -4,9 +4,17 @@
 @section('header', '')
 
 @section('content')
+@php
+    $municipalityLogoName = strtolower(preg_replace('/[^a-z0-9]/i', '', $municipality->name)) . 'logo.png';
+@endphp
 <style>
     .reviews-report { color: #1f2937; background: #fff; }
     .reviews-report-header { border-bottom: 3px solid #164e63; padding: 1.5rem; text-align: center; }
+    .reviews-report-branding { align-items: center; display: grid; grid-template-columns: 1fr minmax(0, 3fr) 1fr; gap: 1rem; }
+    .reviews-report-logo { height: 78px; object-fit: contain; width: 78px; }
+    .reviews-report-logo:first-child { justify-self: start; }
+    .reviews-report-logo:last-child { justify-self: end; }
+    .reviews-report-copy { min-width: 0; }
     .reviews-report-header h1, .reviews-report-header h2, .reviews-report-header p { margin: 0; }
     .reviews-report-header h1 { color: #123b4a; font-size: 1.35rem; text-transform: uppercase; }
     .reviews-report-header h2 { font-size: 1.1rem; margin-top: 0.45rem; text-transform: uppercase; }
@@ -53,11 +61,17 @@
 
 <div class="card reviews-report mb-4">
     <header class="reviews-report-header">
-        <div class="reviews-report-mark"><i class="fas fa-comments"></i></div>
-        <p>REPUBLIC OF THE PHILIPPINES</p><p>PROVINCE OF PANGASINAN</p><p>TOURISM OFFICE / TOURISM SYSTEM</p>
-        <h1>Tourist Feedback and Reviews Report</h1>
-        <h2>{{ $municipality->name }} | 2nd District of Pangasinan</h2>
-        <p class="reviews-report-period">Report Period: {{ $reportPeriod }}</p><p>Generated: {{ now()->format('F j, Y') }}</p>
+        <div class="reviews-report-branding">
+            <img class="reviews-report-logo" src="{{ asset('assets/report-logos/' . $municipalityLogoName) }}" alt="{{ $municipality->name }} logo">
+            <div class="reviews-report-copy">
+                <div class="reviews-report-mark"><i class="fas fa-comments"></i></div>
+                <p>REPUBLIC OF THE PHILIPPINES</p><p>PROVINCE OF PANGASINAN</p><p>TOURISM OFFICE / TOURISM SYSTEM</p>
+                <h1>Tourist Feedback and Reviews Report</h1>
+                <h2>{{ $municipality->name }} | 2nd District of Pangasinan</h2>
+                <p class="reviews-report-period">Report Period: {{ $reportPeriod }}</p>
+            </div>
+            <img class="reviews-report-logo" src="{{ asset('assets/report-logos/pangasinanlogo.png') }}" alt="Pangasinan logo">
+        </div>
     </header>
     <div class="reviews-report-title">Summary</div>
     <table class="reviews-report-summary"><tbody>
@@ -82,7 +96,7 @@
         @endforelse
     </tbody></table>
     <div class="reviews-report-signoff"><p>Prepared by: ____________________________________</p><p>Position: Municipal Tourism Officer</p><p>Date Printed: ___________________________________</p></div>
-    <footer class="reviews-report-footer">Tourist Feedback and Reviews Report | {{ $municipality->name }} | <span class="reviews-report-page-number"></span></footer>
+    <footer class="reviews-report-footer"><span class="reviews-report-page-number"></span></footer>
 </div>
 
 @endsection

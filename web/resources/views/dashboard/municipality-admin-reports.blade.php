@@ -4,6 +4,9 @@
 @section('header', '')
 
 @section('content')
+@php
+    $municipalityLogoName = strtolower(preg_replace('/[^a-z0-9]/i', '', $municipality->name)) . 'logo.png';
+@endphp
 <style>
     .reports-page { --tourism-teal: #0f766e; --tourism-green: #3f7d42; --tourism-ink: #173f43; }
     .reports-page .card { border: 1px solid #dce9e5; border-radius: 10px; box-shadow: 0 8px 24px rgba(23, 63, 67, .06); }
@@ -21,6 +24,11 @@
         padding: 1.5rem 1.5rem 1rem;
         text-align: center;
     }
+    .official-report-branding { align-items: center; display: grid; grid-template-columns: 1fr minmax(0, 3fr) 1fr; gap: 1rem; }
+    .report-logo { height: 78px; object-fit: contain; width: 78px; }
+    .report-logo:first-child { justify-self: start; }
+    .report-logo:last-child { justify-self: end; }
+    .official-report-copy { min-width: 0; }
     .report-mark {
         color: #0f766e;
         font-size: 2rem;
@@ -176,15 +184,20 @@
 
 <div class="card official-report">
     <header class="official-report-header">
-        <div class="report-mark"><i class="fas fa-map-location-dot"></i></div>
-        <p>REPUBLIC OF THE PHILIPPINES</p>
-        <p>PROVINCE OF PANGASINAN</p>
-        <p>TOURISM OFFICE / TOURISM SYSTEM</p>
-        <h1>Tourist Spot Inventory Report</h1>
-        <h2>2nd District of Pangasinan</h2>
-        <p>Municipality: {{ $municipality->name }}</p>
-        <p class="report-period">Report Period: {{ $reportPeriod }}</p>
-        <p>Generated: {{ now()->format('F j, Y') }}</p>
+        <div class="official-report-branding">
+            <img class="report-logo" src="{{ asset('assets/report-logos/' . $municipalityLogoName) }}" alt="{{ $municipality->name }} logo">
+            <div class="official-report-copy">
+                <div class="report-mark"><i class="fas fa-map-location-dot"></i></div>
+                <p>REPUBLIC OF THE PHILIPPINES</p>
+                <p>PROVINCE OF PANGASINAN</p>
+                <p>TOURISM OFFICE / TOURISM SYSTEM</p>
+                <h1>Tourist Spot Inventory Report</h1>
+                <h2>2nd District of Pangasinan</h2>
+                <p>Municipality: {{ $municipality->name }}</p>
+                <p class="report-period">Report Period: {{ $reportPeriod }}</p>
+            </div>
+            <img class="report-logo" src="{{ asset('assets/report-logos/pangasinanlogo.png') }}" alt="Pangasinan logo">
+        </div>
     </header>
 
     <div class="report-section-title">Summary</div>
@@ -239,7 +252,7 @@
         <p>Position: Municipal Tourism Officer</p>
         <p>Date Printed: ___________________________________</p>
     </div>
-    <footer class="report-footer">Tourist Spot Inventory Report | {{ $municipality->name }} | <span class="report-page-number"></span></footer>
+    <footer class="report-footer"><span class="report-page-number"></span></footer>
 </div>
 </div>
 @endsection
