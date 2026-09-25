@@ -338,6 +338,7 @@ class SuperAdminDashboardController extends Controller
             }
             $hasGeneratedReport = request()->boolean('generated');
             $municipalityId = (int) request()->query('municipality_id', 0);
+            $spotName = trim((string) request()->query('spot_name', ''));
             $status = (string) request()->query('status', 'all');
             if (!in_array($status, ['all', 'pending', 'approved'], true)) {
                 $status = 'all';
@@ -380,6 +381,7 @@ class SuperAdminDashboardController extends Controller
 
             $touristSpotsQuery
                 ->when($municipalityId > 0, fn ($query) => $query->where('municipality_id', $municipalityId))
+                ->when($spotName !== '', fn ($query) => $query->where('name', 'like', '%' . $spotName . '%'))
                 ->when($status !== 'all' && $hasVerificationStatus, fn ($query) => $query->where('verification_status', $status))
                 ->when($status !== 'all' && !$hasVerificationStatus, function ($query) use ($status) {
                     $query->whereIn('status', $status === 'approved' ? ['open', 'active'] : ['inactive']);
@@ -396,6 +398,7 @@ class SuperAdminDashboardController extends Controller
             $reportReviews = Review::with(['touristSpot.municipality'])
                 ->latest('created_at')
                 ->when($municipalityId > 0, fn ($query) => $query->whereHas('touristSpot', fn ($spotQuery) => $spotQuery->where('municipality_id', $municipalityId)))
+                ->when($spotName !== '', fn ($query) => $query->whereHas('touristSpot', fn ($spotQuery) => $spotQuery->where('name', 'like', '%' . $spotName . '%')))
                 ->when($status !== 'all', fn ($query) => $query->where('status', $status === 'approved' ? 'approved' : 'pending'))
                 ->when($periodStart, fn ($query) => $query->where('created_at', '>=', $periodStart))
                 ->when($periodEnd, fn ($query) => $query->where('created_at', '<=', $periodEnd))
@@ -418,6 +421,7 @@ class SuperAdminDashboardController extends Controller
                 'hasVerificationStatus' => $hasVerificationStatus,
                 'reportType' => $reportType,
                 'municipalityId' => $municipalityId,
+                'spotName' => $spotName,
                 'status' => $status,
                 'dateFrom' => $dateFrom,
                 'dateTo' => $dateTo,
