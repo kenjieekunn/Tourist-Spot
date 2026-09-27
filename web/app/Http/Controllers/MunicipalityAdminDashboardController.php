@@ -60,6 +60,9 @@ class MunicipalityAdminDashboardController extends Controller
                     $query->where('municipality_id', $municipality->id);
                 })
                 ->count(),
+            'totalStaff' => $user->isMunicipalityAdmin() && $user->hasPermission('manage_staff')
+                ? $municipality->staffAccounts()->count()
+                : 0,
             'recentSpots' => TouristSpot::where('municipality_id', $municipality->id)
                 ->latest('created_at')
                 ->take(8)

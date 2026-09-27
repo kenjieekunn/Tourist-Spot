@@ -11,6 +11,12 @@
         background: linear-gradient(135deg, #ffffff 0%, #f8fbff 100%);
         margin-bottom: 1rem !important;
     }
+    .filters-card .filter-submit,
+    .spot-action-button { background: #0f766e; border-color: #0f766e; color: #fff; }
+    .filters-card .filter-submit:hover,
+    .filters-card .filter-submit:focus-visible,
+    .spot-action-button:hover,
+    .spot-action-button:focus-visible { background: #115e59; border-color: #115e59; color: #fff; }
     .search-input-group {
         position: relative;
     }
@@ -157,33 +163,25 @@
     <div class="card-body p-3">
         <form method="GET" action="{{ route('municipality-admin.tourist-spots') }}">
             <div class="row g-2 align-items-end filters-row">
-                <div class="col-12 col-lg-8">
+                <div class="col-12 col-lg-5">
                     <label for="spot-search" class="filter-label">Search Spots</label>
-                    <div class="search-control-row">
-                        <div class="search-input-group">
-                            <input
-                                type="text"
-                                class="form-control form-control-sm pe-5"
-                                id="spot-search"
-                                name="q"
-                                value="{{ $searchTerm }}"
-                                placeholder="Search by name, address, or description"
-                                autocomplete="off"
-                            >
-                            <button type="button" class="search-clear-btn" id="spot-search-clear" aria-label="Clear search">
-                                <i class="fas fa-times"></i>
-                            </button>
-                        </div>
-                        <button type="submit" class="btn btn-primary btn-sm">
-                            <i class="fas fa-search"></i> Search
+                    <div class="search-input-group">
+                        <input
+                            type="text"
+                            class="form-control form-control-sm pe-5"
+                            id="spot-search"
+                            name="q"
+                            value="{{ $searchTerm }}"
+                            placeholder="Search by name, address, or description"
+                            autocomplete="off"
+                        >
+                        <button type="button" class="search-clear-btn" id="spot-search-clear" aria-label="Clear search">
+                            <i class="fas fa-times"></i>
                         </button>
-                        <a href="{{ route('municipality-admin.tourist-spots') }}" class="btn btn-outline-secondary btn-sm">
-                            Reset
-                        </a>
                     </div>
                 </div>
-                <div class="col-12 col-lg-4">
-                    <label for="category-filter" class="filter-label">Category Filter</label>
+                <div class="col-12 col-md-8 col-lg-5">
+                    <label for="category-filter" class="filter-label">Category</label>
                     <select class="form-select form-select-sm" id="category-filter" name="category">
                         @foreach($spotCategories as $value => $label)
                             <option value="{{ $value }}" @selected($selectedCategory === $value)>
@@ -191,6 +189,11 @@
                             </option>
                         @endforeach
                     </select>
+                </div>
+                <div class="col-12 col-md-4 col-lg-2">
+                    <button type="submit" class="btn btn-sm filter-submit w-100">
+                        <i class="fas fa-search me-1" aria-hidden="true"></i>Search
+                    </button>
                 </div>
             </div>
         </form>
@@ -214,14 +217,35 @@
 
 @if(auth()->user()->hasPermission('manage_spots'))
     <div class="d-flex justify-content-end gap-2 mb-3">
-        <button type="button" class="btn btn-outline-warning" data-bs-toggle="modal" data-bs-target="#pendingSpotsModal">
+        <button type="button" class="btn btn-sm spot-action-button" data-bs-toggle="modal" data-bs-target="#pendingSpotsModal">
             <i class="fas fa-clock"></i> Pending <span class="badge bg-warning text-dark ms-1">{{ $pendingSpots->count() }}</span>
         </button>
-        <a href="{{ route('tourist_spots.create') }}" class="btn btn-primary">
+        <button type="button" class="btn btn-sm spot-action-button" data-bs-toggle="modal" data-bs-target="#addTouristSpotModal">
             <i class="fas fa-plus"></i> Add Tourist Spot
-        </a>
+        </button>
     </div>
 @endif
+
+<div class="modal fade" id="addTouristSpotModal" tabindex="-1" aria-labelledby="addTouristSpotModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h5 class="modal-title" id="addTouristSpotModalLabel">Add Tourist Spot</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0">
+                <iframe
+                    title="Add tourist spot form"
+                    data-create-spot-frame
+                    data-create-url="{{ route('tourist_spots.create', ['modal' => 1]) }}"
+                    src="about:blank"
+                    class="w-100 border-0"
+                    style="height: min(78vh, 900px); min-height: 34rem;"
+                ></iframe>
+            </div>
+        </div>
+    </div>
+</div>
 
 <div class="modal fade pending-spots-modal" id="pendingSpotsModal" tabindex="-1" aria-labelledby="pendingSpotsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-scrollable">
@@ -373,6 +397,37 @@
 @include('dashboard.partials.tourist-spot-preview-modal')
 
 <script>
+    (function () {
+        const modal = document.getElementById('addTouristSpotModal');
+        const frame = document.querySelector('[data-create-spot-frame]');
+        if (!modal || !frame) return;
+
+        let reloadOnClose = false;
+        const createPath = new URL(frame.dataset.createUrl, window.location.href).pathname;
+
+        modal.addEventListener('show.bs.modal', function () {
+            frame.src = frame.dataset.createUrl;
+        });
+        frame.addEventListener('load', function () {
+            try {
+                const frameUrl = new URL(frame.contentWindow.location.href);
+                if (frameUrl.href === 'about:blank') return;
+                if (frameUrl.pathname !== createPath) {
+                    reloadOnClose = true;
+                    bootstrap.Modal.getOrCreateInstance(modal).hide();
+                }
+            } catch (error) {
+                reloadOnClose = true;
+                bootstrap.Modal.getOrCreateInstance(modal).hide();
+            }
+        });
+        modal.addEventListener('hidden.bs.modal', function () {
+            frame.src = 'about:blank';
+            if (reloadOnClose) window.location.reload();
+            reloadOnClose = false;
+        });
+    })();
+
     (function () {
         const input = document.getElementById('spot-search');
         const clearBtn = document.getElementById('spot-search-clear');

@@ -40,8 +40,10 @@
     .stat-card .stat-value { color: #0f766e; }
     .stat-card.verified-card .stat-value { color: #3f7d42; }
     .stat-card.pending-card-stat .stat-value { color: #b7791f; }
+    .stat-card.staff-card .stat-value { color: #3976a8; }
     .stat-card.verified-card::before { background: #3f7d42; }
     .stat-card.pending-card-stat::before { background: #d69e2e; }
+    .stat-card.staff-card::before { background: #3976a8; }
     .btn-tourism { background: #0f766e; border-color: #0f766e; color: #fff; }
     .btn-tourism:hover { background: #115e59; border-color: #115e59; color: #fff; }
     .stat-card::before {
@@ -258,27 +260,36 @@
     </div>
 @endif
 
+@php($canManageStaff = auth()->user()->isMunicipalityAdmin() && auth()->user()->hasPermission('manage_staff'))
 @if(auth()->user()->hasPermission('manage_spots'))
 <!-- Statistics Row -->
 <div class="row mb-4">
-    <div class="col-12 col-md-6 col-xl-4">
+    <div class="col-12 col-md-6 {{ $canManageStaff ? 'col-xl-3' : 'col-xl-4' }}">
         <a href="{{ route('municipality-admin.tourist-spots') }}" class="stat-card h-100 w-100" aria-label="View all tourist spots">
             <div class="stat-value">{{ $totalSpots }}</div>
             <div class="stat-label">Total Tourist Spots</div>
         </a>
     </div>
-    <div class="col-12 col-md-6 col-xl-4">
+    <div class="col-12 col-md-6 {{ $canManageStaff ? 'col-xl-3' : 'col-xl-4' }}">
         <a href="{{ route('municipality-admin.tourist-spots', ['verification_status' => 'approved']) }}" class="stat-card verified-card h-100 w-100" aria-label="View verified tourist spots">
             <div class="stat-value">{{ $verifiedSpots }}</div>
             <div class="stat-label">Verified Spots</div>
         </a>
     </div>
-    <div class="col-12 col-md-6 col-xl-4">
+    <div class="col-12 col-md-6 {{ $canManageStaff ? 'col-xl-3' : 'col-xl-4' }}">
         <button type="button" class="stat-card pending-card-stat h-100 w-100 border-0" data-bs-toggle="modal" data-bs-target="#pendingVerificationModal" aria-label="View tourist spots pending verification">
             <div class="stat-value">{{ $pendingVerificationSpots }}</div>
             <div class="stat-label">Pending Verification</div>
         </button>
     </div>
+    @if($canManageStaff)
+        <div class="col-12 col-md-6 col-xl-3">
+            <a href="{{ route('municipality-admin.staff') }}" class="stat-card staff-card h-100 w-100" aria-label="Open staff accounts">
+                <div class="stat-value">{{ $totalStaff }}</div>
+                <div class="stat-label">Staff</div>
+            </a>
+        </div>
+    @endif
 </div>
 
 <div class="modal fade pending-verification-modal" id="pendingVerificationModal" tabindex="-1" aria-labelledby="pendingVerificationModalLabel" aria-hidden="true">
@@ -402,6 +413,17 @@
         </div>
     </div>
 </div>
+@endif
+
+@if($canManageStaff && !auth()->user()->hasPermission('manage_spots'))
+    <div class="row mb-4">
+        <div class="col-12 col-md-6 col-xl-3">
+            <a href="{{ route('municipality-admin.staff') }}" class="stat-card staff-card h-100 w-100" aria-label="Open staff accounts">
+                <div class="stat-value">{{ $totalStaff }}</div>
+                <div class="stat-label">Staff</div>
+            </a>
+        </div>
+    </div>
 @endif
 
 <!-- Pending Reviews -->

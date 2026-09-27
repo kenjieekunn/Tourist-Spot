@@ -184,29 +184,29 @@
 
 <!-- Statistics Row -->
 <div class="dashboard-shell">
-<div class="row g-3 mb-4">
-    <div class="col-sm-6 col-xl-3">
+<div class="row row-cols-1 row-cols-sm-2 row-cols-xl-4 row-cols-xxl-5 g-3 mb-4">
+    <div class="col">
         <a href="{{ route('super-admin.tourist-spots') }}" class="stat-card h-100 w-100" aria-label="View all tourist spots">
             <span class="stat-icon"><i class="fas fa-location-dot"></i></span>
             <div class="stat-value">{{ $totalSpots }}</div>
             <div class="stat-label">Total Tourist Spots</div>
         </a>
     </div>
-    <div class="col-sm-6 col-xl-3">
+    <div class="col">
         <a href="#dashboard-municipalities" class="stat-card h-100 w-100" aria-label="Scroll to dashboard municipalities">
             <span class="stat-icon"><i class="fas fa-map"></i></span>
             <div class="stat-value">{{ $totalMunicipalities }}</div>
             <div class="stat-label">Municipalities</div>
         </a>
     </div>
-    <div class="col-sm-6 col-xl-3">
+    <div class="col">
         <a href="{{ route('super-admin.admins') }}" class="stat-card h-100 w-100" aria-label="Manage municipality admins">
             <span class="stat-icon"><i class="fas fa-users"></i></span>
             <div class="stat-value">{{ $totalAdmins }}</div>
             <div class="stat-label">Municipality Admins</div>
         </a>
     </div>
-    <div class="col-sm-6 col-xl-3">
+    <div class="col">
         <button type="button" class="stat-card priority-stat {{ $pendingVerificationSpots > 0 ? 'has-pending' : '' }} pending-spots-trigger h-100 w-100 border-0" data-bs-toggle="modal" data-bs-target="#dashboardPendingSpotsModal" aria-label="View tourist spots pending verification">
             @if($pendingVerificationSpots > 0)
                 <span class="pending-action-cue"><i class="fas fa-circle-exclamation" aria-hidden="true"></i> Needs review</span>
@@ -215,6 +215,13 @@
             <div class="stat-value">{{ $pendingVerificationSpots }}</div>
             <div class="stat-label">Pending Spot Verification</div>
         </button>
+    </div>
+    <div class="col">
+        <a href="{{ route('super-admin.staff') }}" class="stat-card h-100 w-100" aria-label="View staff accounts">
+            <span class="stat-icon"><i class="fas fa-user-group" aria-hidden="true"></i></span>
+            <div class="stat-value">{{ $totalStaff }}</div>
+            <div class="stat-label">Staff</div>
+        </a>
     </div>
 </div>
 

@@ -66,6 +66,7 @@ class SuperAdminDashboardController extends Controller
                 'totalMunicipalities' => Municipality::count(),
                 'totalReviews' => Review::count(),
                 'totalAdmins' => User::where('role', 'municipality-admin')->count(),
+                'totalStaff' => User::where('role', 'municipality-staff')->count(),
                 'pendingReviews' => Review::where('status', 'pending')->count(),
                 'pendingVerificationSpots' => $pendingTouristSpots->count(),
                 'pendingTouristSpots' => $pendingTouristSpots,
@@ -85,6 +86,7 @@ class SuperAdminDashboardController extends Controller
                 'totalMunicipalities' => 0,
                 'totalReviews' => 0,
                 'totalAdmins' => 0,
+                'totalStaff' => 0,
                 'pendingReviews' => 0,
                 'pendingVerificationSpots' => 0,
                 'pendingTouristSpots' => collect(),
@@ -240,6 +242,17 @@ class SuperAdminDashboardController extends Controller
             Log::error('Super admin admins view error: ' . $e->getMessage());
             return redirect()->route('super-admin.dashboard')->with('error', 'Error loading admins. Please try again.');
         }
+    }
+
+    public function staffAccounts()
+    {
+        $staff = User::where('role', 'municipality-staff')
+            ->with('municipality')
+            ->orderBy('municipality_id')
+            ->orderBy('name')
+            ->get();
+
+        return view('dashboard.super-admin-staff', compact('staff'));
     }
 
     /**

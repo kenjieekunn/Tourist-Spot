@@ -35,6 +35,7 @@ Route::middleware(['auth', 'prevent.cache'])->group(function () {
         Route::post('/spots/{touristSpot}/reject', [SuperAdminDashboardController::class, 'rejectSpot'])->name('spots.reject');
         Route::post('/spots/{touristSpot}/request-revision', [SuperAdminDashboardController::class, 'requestSpotRevision'])->name('spots.request-revision');
         Route::get('/tourist-spots', [SuperAdminDashboardController::class, 'touristSpots'])->name('tourist-spots');
+        Route::get('/staff', [SuperAdminDashboardController::class, 'staffAccounts'])->name('staff');
         Route::get('/admins', [SuperAdminDashboardController::class, 'admins'])->name('admins');
         Route::get('/admins/create', [SuperAdminDashboardController::class, 'createAdmin'])->name('admins.create');
         Route::post('/admins', [SuperAdminDashboardController::class, 'storeAdmin'])->name('admins.store');

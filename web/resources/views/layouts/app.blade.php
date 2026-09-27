@@ -309,10 +309,17 @@
                 padding: 1rem !important;
             }
         }
+        body.modal-embedded { height: auto; min-height: 100vh; overflow-y: auto; }
+        body.modal-embedded > div { height: auto !important; min-height: 100vh; }
+        body.modal-embedded .sidebar,
+        body.modal-embedded .sidebar-overlay,
+        body.modal-embedded .navbar-custom { display: none !important; }
+        body.modal-embedded .main-col { width: 100%; margin-left: 0 !important; }
+        body.modal-embedded .main-content { min-height: 0; padding: 1rem !important; }
     </style>
     @yield('styles')
 </head>
-<body>
+<body class="{{ request()->boolean('modal') ? 'modal-embedded' : '' }}">
     <div style="display: flex; height: 100vh;">
         <div class="row g-0" style="flex: 1; display: flex;">
             <!-- Sidebar -->
