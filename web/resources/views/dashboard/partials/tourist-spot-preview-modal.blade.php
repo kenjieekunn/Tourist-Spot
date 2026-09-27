@@ -17,6 +17,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body" data-preview-content>
+                <div class="alert alert-success py-2 mb-3" data-preview-save-feedback role="status" hidden></div>
                 <div class="row g-4">
                     <div class="col-12 col-md-5" data-preview-media-column hidden>
                         <div data-preview-gallery hidden>
@@ -136,6 +137,7 @@
         const editSave = previewModal.querySelector('[data-edit-save]');
         const editFeedback = previewModal.querySelector('[data-edit-feedback]');
         const editSuccess = previewModal.querySelector('[data-edit-success]');
+        const previewSaveFeedback = previewModal.querySelector('[data-preview-save-feedback]');
         const editUrlTemplate = @json(route('tourist_spots.preview-edit', ['touristSpot' => '__SPOT_ID__']));
         const updateUrlTemplate = @json(route('tourist_spots.preview-update', ['touristSpot' => '__SPOT_ID__']));
 
@@ -525,7 +527,10 @@
                 renderEditImages();
                 previewModal.querySelector('[data-edit-images]').value = '';
                 previewModal.querySelector('[data-edit-image-selection]').textContent = '';
-                setEditFeedback(result.message || 'Changes saved.', true);
+                previewSaveFeedback.textContent = result.message || 'Changes saved.';
+                previewSaveFeedback.hidden = false;
+                setEditFeedback('');
+                setEditMode(false);
             } catch (error) {
                 setEditFeedback(error.message || 'Unable to save these changes.');
             } finally {
@@ -670,6 +675,8 @@
 
             activeTrigger = trigger;
             const data = trigger.dataset;
+            previewSaveFeedback.hidden = true;
+            previewSaveFeedback.textContent = '';
             const spotName = data.spotName || 'Tourist Spot Details';
             const spotLocation = [data.spotBarangay, data.spotMunicipality, 'Pangasinan'].filter(Boolean).join(', ');
             previewModal.querySelector('[data-preview-name]').textContent = spotLocation ? `${spotName} — ${spotLocation}` : spotName;
