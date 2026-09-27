@@ -287,17 +287,20 @@
         }
         .sidebar-account { border-top: 1px solid rgba(153, 246, 228, .22); padding: .9rem 0 1rem; color: #e6fffb; }
         .sidebar-account-icon { width: 2.35rem; height: 2.35rem; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; background: #2dd4bf; color: #134e4a; }
-        .super-admin-profile-menu { position: relative; flex: 0 0 auto; }
-        .super-admin-profile-trigger { padding: 0; border: 0; color: #134e4a; cursor: pointer; }
+        .super-admin-profile-menu { position: relative; display: flex; align-items: center; gap: .6rem; }
+        .super-admin-profile-trigger { flex: 0 0 auto; padding: .15rem; border: 0; border-radius: 50%; background: transparent; color: #e6fffb; cursor: pointer; }
+        .super-admin-profile-name { max-width: 9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .super-admin-profile-trigger:hover,
         .super-admin-profile-trigger:focus-visible { outline: 3px solid #99f6e4; outline-offset: 3px; }
-        .super-admin-profile-actions { display: none; position: absolute; z-index: 1040; bottom: calc(100% + .65rem); left: 0; width: max-content; min-width: 8rem; max-width: calc(100vw - 2rem); padding: .35rem; border: 1px solid #d9dde3; border-radius: .5rem; background: #fff; box-shadow: 0 8px 24px rgba(15,23,42,.18); }
+        .super-admin-profile-actions { display: none; position: absolute; z-index: 1040; bottom: calc(100% + .65rem); left: 0; width: max-content; min-width: 12rem; max-width: calc(100vw - 2rem); padding: .35rem; border: 1px solid #d9dde3; border-radius: .5rem; background: #fff; box-shadow: 0 8px 24px rgba(15,23,42,.18); }
         .super-admin-profile-actions::after { position: absolute; right: 1rem; bottom: -.4rem; width: .7rem; height: .7rem; border-right: 1px solid #d9dde3; border-bottom: 1px solid #d9dde3; background: #fff; content: ''; transform: rotate(45deg); }
-        .super-admin-profile-actions .profile-logout-button,
-        .super-admin-profile-actions .profile-logout-button:hover,
-        .super-admin-profile-actions .profile-logout-button:focus { border-color: transparent; background: transparent; box-shadow: none; color: #dc3545; }
-        .super-admin-profile-trigger:hover ~ .super-admin-profile-actions,
-        .super-admin-profile-menu:focus-within .super-admin-profile-actions,
+        .super-admin-profile-actions form { margin: 0; }
+        .super-admin-profile-action { align-items: center; border: 0; display: flex; gap: .55rem; padding: .55rem .65rem; text-align: left; }
+        .super-admin-profile-action:hover,
+        .super-admin-profile-action:focus-visible { background: #f1f5f4; }
+        .super-admin-profile-action.profile-logout-button { color: #dc3545; }
+        .super-admin-profile-action.profile-logout-button:hover,
+        .super-admin-profile-action.profile-logout-button:focus { color: #b02a37; }
         .super-admin-profile-menu.is-open .super-admin-profile-actions { display: block; }
         .sidebar-version { color: #8bb8b3; font-size: .7rem; letter-spacing: .04em; }
         @media (max-width: 768px) {
@@ -383,39 +386,26 @@
                 </nav>
                 <div class="sidebar-logout">
                     <hr style="border-color: #555;">
-                    @if($currentUser->isSuperAdmin())
-                        <div class="sidebar-account d-flex align-items-center gap-2">
-                            <div class="super-admin-profile-menu" data-profile-menu>
-                                <button type="button" class="sidebar-account-icon super-admin-profile-trigger" data-profile-toggle aria-expanded="false" aria-controls="superAdminProfileActions" aria-label="Show logout button">
-                                    <i class="fas fa-user-tie" aria-hidden="true"></i>
-                                </button>
-                                <div class="super-admin-profile-actions" id="superAdminProfileActions">
-                                    <form action="{{ route('logout') }}" method="POST">
-                                        @csrf
-                                        <button type="submit" class="btn btn-sm w-100 profile-logout-button"><i class="fas fa-sign-out-alt me-1"></i> Logout</button>
-                                    </form>
-                                </div>
+                    <div class="sidebar-account">
+                        <div class="super-admin-profile-menu" data-profile-menu>
+                            <button type="button" class="super-admin-profile-trigger d-flex align-items-center" data-profile-toggle aria-expanded="false" aria-haspopup="true" aria-controls="superAdminProfileActions" aria-label="Open admin profile menu">
+                                <span class="sidebar-account-icon"><i class="fas fa-user-tie" aria-hidden="true"></i></span>
+                            </button>
+                            <strong class="super-admin-profile-name">{{ $currentUser->name ?: 'Provincial Tourism Office' }}</strong>
+                            <div class="super-admin-profile-actions" id="superAdminProfileActions">
+                                @if($currentUser->isSuperAdmin() || $currentUser->isMunicipalityAdmin())
+                                    <button type="button" class="btn w-100 super-admin-profile-action" data-profile-close data-bs-toggle="modal" data-bs-target="#changeOwnPasswordModal" title="Change password"><i class="fas fa-key" aria-hidden="true"></i> Change Password</button>
+                                @endif
+                                <form action="{{ route('logout') }}" method="POST">
+                                    @csrf
+                                    <button type="submit" class="btn w-100 super-admin-profile-action profile-logout-button" title="Log out"><i class="fas fa-sign-out-alt" aria-hidden="true"></i> Logout</button>
+                                </form>
                             </div>
-                            <strong class="d-block text-truncate">{{ $currentUser->name ?: 'Provincial Tourism Office' }}</strong>
                         </div>
-                    @else
-                        <div class="sidebar-account d-flex align-items-center gap-2">
-                            <span class="sidebar-account-icon"><i class="fas fa-user-tie"></i></span>
-                            <div class="min-w-0"><strong class="d-block text-truncate">{{ $currentUser->name ?: 'Provincial Tourism Office' }}</strong></div>
-                        </div>
-                        <div class="d-flex flex-wrap gap-2 mt-2">
-                            @if($currentUser->isMunicipalityAdmin())
-                                <button type="button" class="btn btn-sm btn-outline-light" data-bs-toggle="modal" data-bs-target="#changeOwnPasswordModal"><i class="fas fa-key me-1"></i> Change Password</button>
-                            @endif
-                            <form action="{{ route('logout') }}" method="POST">
-                                @csrf
-                                <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fas fa-sign-out-alt"></i> Logout</button>
-                            </form>
-                        </div>
-                    @endif
+                    </div>
                 </div>
             </div>
-            @if($currentUser->isMunicipalityAdmin())
+            @if($currentUser->isSuperAdmin() || $currentUser->isMunicipalityAdmin())
                 <div class="modal fade" id="changeOwnPasswordModal" tabindex="-1" aria-labelledby="changeOwnPasswordModalLabel" aria-hidden="true" data-open-on-load="{{ $errors->any() && old('_password_change') ? 'true' : 'false' }}">
                     <div class="modal-dialog modal-dialog-centered">
                         <div class="modal-content">
@@ -522,6 +512,9 @@
 
                 profileToggle.addEventListener('click', function () {
                     setProfileOpen(!profileMenu.classList.contains('is-open'));
+                });
+                profileMenu.addEventListener('click', function (event) {
+                    if (event.target.closest('[data-profile-close]')) setProfileOpen(false);
                 });
                 document.addEventListener('click', function (event) {
                     if (!profileMenu.contains(event.target)) setProfileOpen(false);
