@@ -358,14 +358,14 @@
                         <a class="nav-link municipality-nav-link dashboard-tab @if(Route::currentRouteName() == 'municipality-admin.dashboard') active @endif" href="{{ route('municipality-admin.dashboard') }}">
                             <i class="fas fa-dashboard"></i> Dashboard
                         </a>
+                        @if(auth()->user()->isMunicipalityAdmin() && auth()->user()->hasPermission('manage_staff'))
+                            <a class="nav-link municipality-nav-link @if(Route::currentRouteName() == 'municipality-admin.staff') active @endif" href="{{ route('municipality-admin.staff') }}">
+                                <i class="fas fa-users"></i> Staff Accounts
+                            </a>
+                        @endif
                         @if(auth()->user()->hasPermission('manage_spots'))
                             <a class="nav-link municipality-nav-link spots-tab @if(Route::currentRouteName() == 'municipality-admin.tourist-spots') active @endif" href="{{ route('municipality-admin.tourist-spots') }}">
                                 <i class="fas fa-map-location-dot"></i> Tourist Spots
-                            </a>
-                        @endif
-                        @if(auth()->user()->hasPermission('view_reports'))
-                            <a class="nav-link municipality-nav-link reports-tab @if(Route::currentRouteName() == 'municipality-admin.reports') active @endif" href="{{ route('municipality-admin.reports') }}">
-                                <i class="fas fa-chart-column"></i> Reports
                             </a>
                         @endif
                         @if(auth()->user()->hasPermission('manage_reviews'))
@@ -373,9 +373,9 @@
                                 <i class="fas fa-star"></i> Reviews
                             </a>
                         @endif
-                        @if(auth()->user()->isMunicipalityAdmin() && auth()->user()->hasPermission('manage_staff'))
-                            <a class="nav-link municipality-nav-link @if(Route::currentRouteName() == 'municipality-admin.staff') active @endif" href="{{ route('municipality-admin.staff') }}">
-                                <i class="fas fa-users"></i> Staff Accounts
+                        @if(auth()->user()->hasPermission('view_reports'))
+                            <a class="nav-link municipality-nav-link reports-tab @if(Route::currentRouteName() == 'municipality-admin.reports') active @endif" href="{{ route('municipality-admin.reports') }}">
+                                <i class="fas fa-chart-column"></i> Reports
                             </a>
                         @endif
                     @else

@@ -163,9 +163,6 @@
     }
     $selectedCategory = old('category', 'nature');
     $showScheduleFields = $selectedCategory === 'parks';
-    $cancelUrl = auth()->user()->isMunicipalityAdmin()
-        ? route('municipality-admin.tourist-spots')
-        : (auth()->user()->isSuperAdmin() ? route('super-admin.tourist-spots') : route('tourist_spots.index'));
 @endphp
 
 <div class="row justify-content-center">
@@ -275,7 +272,7 @@
                                 >
                                 <div class="search-suggestions" id="search-suggestions"></div>
                             </div>
-                            <button type="button" onclick="searchLocation()" class="btn btn-primary mt-2">
+                            <button type="button" onclick="searchLocation()" class="btn btn-success mt-2">
                                 <i class="fas fa-search"></i> Search
                             </button>
                         </div>
@@ -396,14 +393,13 @@
                         </div>
                     </div>
 
-                    <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-save"></i> Create Spot
-                        </button>
-                        <a href="{{ $cancelUrl }}" class="btn btn-secondary">
-                            <i class="fas fa-times"></i> Cancel
-                        </a>
-                    </div>
+                    @unless(request()->boolean('modal'))
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Create Spot
+                            </button>
+                        </div>
+                    @endunless
                 </form>
             </div>
         </div>

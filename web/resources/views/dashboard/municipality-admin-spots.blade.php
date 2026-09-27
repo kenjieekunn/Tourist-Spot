@@ -231,7 +231,10 @@
         <div class="modal-content">
             <div class="modal-header py-2">
                 <h5 class="modal-title" id="addTouristSpotModalLabel">Add Tourist Spot</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <div class="d-flex align-items-center gap-2">
+                    <button type="button" class="btn btn-success btn-sm" data-create-spot-submit disabled><i class="fas fa-save me-1" aria-hidden="true"></i>Create Spot</button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
             </div>
             <div class="modal-body p-0">
                 <iframe
@@ -400,29 +403,47 @@
     (function () {
         const modal = document.getElementById('addTouristSpotModal');
         const frame = document.querySelector('[data-create-spot-frame]');
-        if (!modal || !frame) return;
+        const submitButton = document.querySelector('[data-create-spot-submit]');
+        if (!modal || !frame || !submitButton) return;
 
         let reloadOnClose = false;
         const createPath = new URL(frame.dataset.createUrl, window.location.href).pathname;
 
         modal.addEventListener('show.bs.modal', function () {
+            submitButton.disabled = true;
             frame.src = frame.dataset.createUrl;
         });
         frame.addEventListener('load', function () {
             try {
                 const frameUrl = new URL(frame.contentWindow.location.href);
                 if (frameUrl.href === 'about:blank') return;
-                if (frameUrl.pathname !== createPath) {
-                    reloadOnClose = true;
-                    bootstrap.Modal.getOrCreateInstance(modal).hide();
+                if (frameUrl.pathname === createPath) {
+                    submitButton.disabled = !frame.contentDocument.getElementById('tourist-spot-form');
+                    submitButton.innerHTML = '<i class="fas fa-save me-1" aria-hidden="true"></i>Create Spot';
+                    return;
                 }
+                submitButton.disabled = true;
+                reloadOnClose = true;
+                bootstrap.Modal.getOrCreateInstance(modal).hide();
             } catch (error) {
+                submitButton.disabled = true;
                 reloadOnClose = true;
                 bootstrap.Modal.getOrCreateInstance(modal).hide();
             }
         });
+        submitButton.addEventListener('click', function () {
+            const form = frame.contentDocument?.getElementById('tourist-spot-form');
+            if (!form) return;
+            form.requestSubmit();
+            if (form.dataset.submitting === 'true') {
+                submitButton.disabled = true;
+                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-1" aria-hidden="true"></i>Creating';
+            }
+        });
         modal.addEventListener('hidden.bs.modal', function () {
             frame.src = 'about:blank';
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<i class="fas fa-save me-1" aria-hidden="true"></i>Create Spot';
             if (reloadOnClose) window.location.reload();
             reloadOnClose = false;
         });
