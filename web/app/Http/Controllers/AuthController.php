@@ -57,7 +57,7 @@ class AuthController extends Controller
             ]);
 
             return back()->withErrors([
-                'login' => 'Login is temporarily unavailable. Please start the database service and try again.',
+                'login' => 'Login is temporarily unavailable because the database connection failed. Please verify the deployed database settings or contact the site administrator.',
             ])->onlyInput('login');
         }
         if ($user && Hash::check($validated['password'], $user->password)) {
