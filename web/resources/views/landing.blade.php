@@ -25,6 +25,21 @@
         .nav-links a:hover { color: white; }
         .login-btn, .hero-primary, .download-btn { background: var(--orange); color: white; border: 0; font-weight: 700; border-radius: 7px; padding: 13px 23px; box-shadow: 0 10px 25px rgba(242,98,46,.2); transition: transform .2s, box-shadow .2s, background .2s; }
         .login-btn:hover, .hero-primary:hover, .download-btn:hover { background: #dc5122; color: white; transform: translateY(-2px); box-shadow: 0 13px 28px rgba(242,98,46,.34); }
+        .login-btn { cursor: pointer; font: inherit; }
+        .login-modal { width: min(440px, calc(100% - 32px)); max-height: calc(100% - 32px); overflow-y: auto; padding: 0; border: 1px solid var(--line); border-radius: 8px; color: var(--ink); background: white; box-shadow: 0 24px 80px rgba(4, 28, 31, .28); }
+        .login-modal::backdrop { background: rgba(4, 28, 31, .68); backdrop-filter: blur(3px); }
+        .login-modal-content { padding: 30px; }
+        .login-modal-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; margin-bottom: 24px; }
+        .login-modal-header h2 { margin: 0; font-size: 1.65rem; }
+        .login-modal-header p { color: var(--muted); margin: 5px 0 0; font-size: .9rem; }
+        .login-modal-close { flex: 0 0 36px; width: 36px; height: 36px; border: 1px solid var(--line); border-radius: 50%; color: var(--ink); background: white; cursor: pointer; font-size: 1.2rem; }
+        .login-modal label { display: block; margin-bottom: 7px; font-size: .88rem; font-weight: 700; }
+        .login-modal input { width: 100%; min-height: 46px; padding: 10px 12px; border: 1px solid #cbd9d3; border-radius: 5px; color: var(--ink); font: inherit; }
+        .login-modal input:focus { outline: 3px solid rgba(26, 92, 82, .16); border-color: var(--teal-mid); }
+        .login-modal-field { margin-bottom: 18px; }
+        .login-modal-error { padding: 12px 14px; margin-bottom: 18px; border: 1px solid #f0c4be; border-radius: 5px; color: #8f2d20; background: #fff2f0; font-size: .88rem; }
+        .login-modal-submit { width: 100%; min-height: 48px; border: 0; border-radius: 5px; color: white; background: var(--teal); font: inherit; font-weight: 700; cursor: pointer; }
+        .login-modal-submit:hover { background: var(--teal-mid); }
         .hero-content { padding: 116px 0 180px; max-width: 720px; }
         .eyebrow { color: #8de0c8; font-weight: 700; font-size: .76rem; letter-spacing: 2px; text-transform: uppercase; }
         h1, h2, h3 { font-family: Outfit, sans-serif; }
@@ -47,8 +62,11 @@
         .stat strong { color: var(--orange); font: 800 2rem Outfit, sans-serif; display: block; }
         .stat span { color: var(--muted); font-size: .8rem; }
         .municipalities { background: white; }
-        .municipality-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
-        .municipality-card { min-height: 320px; position: relative; overflow: hidden; border-radius: 8px; color: white; background: linear-gradient(135deg, var(--teal), var(--teal-mid)); }
+        .municipality-grid { display: grid; grid-auto-flow: column; grid-auto-columns: calc((100% - 54px) / 4); gap: 18px; overflow-x: auto; padding-bottom: 16px; scroll-snap-type: x mandatory; scrollbar-color: var(--teal-mid) #e7eeea; scrollbar-width: thin; }
+        .municipality-grid::-webkit-scrollbar { height: 8px; }
+        .municipality-grid::-webkit-scrollbar-track { background: #e7eeea; border-radius: 4px; }
+        .municipality-grid::-webkit-scrollbar-thumb { background: var(--teal-mid); border-radius: 4px; }
+        .municipality-card { min-height: 320px; position: relative; overflow: hidden; border-radius: 8px; color: white; background: linear-gradient(135deg, var(--teal), var(--teal-mid)); scroll-snap-align: start; }
         .municipality-card img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; transition: transform .5s; }
         .municipality-card:hover img { transform: scale(1.06); }
         .municipality-card::after { content: ''; position: absolute; inset: 25% 0 0; background: linear-gradient(transparent, rgba(4, 28, 31, .95)); }
@@ -72,8 +90,8 @@
         .download-meta, .download-note { color: #6c817b; font-size: .76rem; margin-top: 12px; }.download-note { max-width: 450px; line-height: 1.5; }
         .steps { background: white; }.step-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 42px; }.step { display: flex; gap: 16px; }.step-number { color: var(--orange); font: 800 1.7rem Outfit, sans-serif; }.step h3 { margin: 0 0 6px; font-size: 1.05rem; }.step p { color: var(--muted); margin: 0; font-size: .88rem; line-height: 1.5; }
         footer { color: rgba(255,255,255,.73); background: linear-gradient(120deg, var(--teal), #1a6a55); padding: 55px 0 28px; }.footer-main { display: flex; justify-content: space-between; gap: 30px; }.footer-brand { color: white; font: 700 1.05rem Outfit, sans-serif; }.footer-main p { font-size: .85rem; max-width: 315px; line-height: 1.6; }.footer-links { display: flex; gap: 16px; font-size: 1.05rem; }.footer-links a:hover { color: white; }.copyright { border-top: 1px solid rgba(255,255,255,.17); margin-top: 35px; padding-top: 20px; font-size: .77rem; }
-        @media (max-width: 800px) { .nav-links { display: none; }.hero { min-height: 660px; }.hero-content { padding-top: 80px; }.feature-grid, .municipality-grid { grid-template-columns: repeat(2, 1fr); }.app-layout { grid-template-columns: 1fr; gap: 55px; }.phone { transform: rotate(-3deg); }.section { padding: 70px 0; } }
-        @media (max-width: 520px) { .wrap { width: min(100% - 28px, 1160px); }.nav { height: 72px; }.brand { font-size: .9rem; }.login-btn { padding: 10px 15px; font-size: .8rem; }.hero-content { padding: 70px 0 145px; }.hero-actions { flex-wrap: wrap; }.section-heading { display: block; }.section-heading p { margin-top: 17px; }.feature-grid, .municipality-grid, .step-grid { grid-template-columns: 1fr; }.municipality-card { min-height: 270px; }.stats { gap: 20px; justify-content: space-between; }.stat strong { font-size: 1.55rem; }.footer-main { display: block; }.footer-links { margin-top: 24px; } }
+        @media (max-width: 800px) { .nav-links { display: none; }.hero { min-height: 660px; }.hero-content { padding-top: 80px; }.feature-grid { grid-template-columns: repeat(2, 1fr); }.municipality-grid { grid-auto-columns: calc((100% - 18px) / 2); }.app-layout { grid-template-columns: 1fr; gap: 55px; }.phone { transform: rotate(-3deg); }.section { padding: 70px 0; } }
+        @media (max-width: 520px) { .wrap { width: min(100% - 28px, 1160px); }.nav { height: 72px; }.brand { font-size: .9rem; }.login-btn { padding: 10px 15px; font-size: .8rem; }.hero-content { padding: 70px 0 145px; }.hero-actions { flex-wrap: wrap; }.section-heading { display: block; }.section-heading p { margin-top: 17px; }.feature-grid, .step-grid { grid-template-columns: 1fr; }.municipality-grid { grid-auto-columns: 85%; }.municipality-card { min-height: 270px; }.stats { gap: 20px; justify-content: space-between; }.stat strong { font-size: 1.55rem; }.footer-main { display: block; }.footer-links { margin-top: 24px; } }
     </style>
 </head>
 <body>
@@ -81,7 +99,7 @@
         <nav class="nav wrap" aria-label="Main navigation">
             <a class="brand" href="#home"><i class="fas fa-location-dot"></i><span>Pangasinan 2nd District</span></a>
             <div class="nav-links"><a href="#overview">About</a><a href="#municipalities">Municipalities</a><a href="#app">Download App</a></div>
-            <a class="login-btn" href="{{ route('login.form') }}">LOGIN</a>
+            <button class="login-btn" type="button" aria-haspopup="dialog" aria-controls="login-modal">LOGIN</button>
         </nav>
         <div class="hero-content wrap">
             <div class="eyebrow">Your local guide to meaningful journeys</div>
@@ -104,8 +122,8 @@
         </div></section>
 
         <section class="section municipalities" id="municipalities"><div class="wrap">
-            <div class="section-heading"><div><div class="eyebrow" style="color:var(--teal-mid)">Start somewhere beautiful</div><h2>Featured municipalities</h2></div><p>Four ways into the district, each with a different rhythm, view, and story.</p></div>
-            <div class="municipality-grid">
+            <div class="section-heading"><div><div class="eyebrow" style="color:var(--teal-mid)">Start somewhere beautiful</div><h2>Featured municipalities</h2></div><p>Explore all eight municipalities, each with a different rhythm, view, and story.</p></div>
+            <div class="municipality-grid" role="region" aria-label="Featured municipalities, scroll horizontally to see all eight" tabindex="0">
                 @forelse($featuredMunicipalities as $municipality)
                     <a class="municipality-card" href="{{ route('login.form') }}" aria-label="Explore {{ $municipality->name }}">
                         @if($municipality->image_url)<img src="{{ preg_match('#^https?://#i', $municipality->image_url) ? $municipality->image_url : url($municipality->image_url) }}" alt="{{ $municipality->name }}" loading="lazy">@endif
@@ -125,6 +143,42 @@
         <section class="section steps"><div class="wrap"><div class="section-heading"><div><div class="eyebrow" style="color:var(--teal-mid)">A simpler way to wander</div><h2>From curious to there.</h2></div></div><div class="step-grid"><div class="step"><div class="step-number">01</div><div><h3>Search and browse</h3><p>Find a spot or municipality that fits the day you want.</p></div></div><div class="step"><div class="step-number">02</div><div><h3>See the details</h3><p>Check photos, descriptions, ratings, and visitor reviews.</p></div></div><div class="step"><div class="step-number">03</div><div><h3>Get directions</h3><p>Choose your route and let the adventure begin.</p></div></div></div></div></section>
     </main>
 
+    <dialog class="login-modal" id="login-modal" aria-labelledby="login-modal-title" data-open-on-load="{{ $errors->any() ? 'true' : 'false' }}">
+        <div class="login-modal-content">
+            <div class="login-modal-header">
+                <div><h2 id="login-modal-title">Welcome back</h2><p>Sign in to the admin portal.</p></div>
+                <button class="login-modal-close" type="button" aria-label="Close login dialog" data-close-login>&times;</button>
+            </div>
+            @if($errors->any())
+                <div class="login-modal-error" role="alert">
+                    @foreach($errors->all() as $error)
+                        <div>{{ $error }}</div>
+                    @endforeach
+                </div>
+            @endif
+            <form action="{{ route('login') }}" method="POST">
+                @csrf
+                <div class="login-modal-field">
+                    <label for="login-modal-username">Email or username</label>
+                    <input id="login-modal-username" type="text" name="login" value="{{ old('login') }}" placeholder="superadmin or admin@example.com" autocomplete="username" required autofocus>
+                </div>
+                <div class="login-modal-field">
+                    <label for="login-modal-password">Password</label>
+                    <input id="login-modal-password" type="password" name="password" placeholder="Enter your password" autocomplete="current-password" required>
+                </div>
+                <button class="login-modal-submit" type="submit">Login</button>
+            </form>
+        </div>
+    </dialog>
     <footer><div class="wrap"><div class="footer-main"><div><div class="footer-brand"><i class="fas fa-location-dot me-2"></i>Pangasinan 2nd District</div><p>Helping visitors and locals discover the places that make our home special.</p></div><div><div class="footer-links"><a href="#home" aria-label="Home"><i class="fas fa-house"></i></a><a href="#overview" aria-label="About"><i class="fas fa-circle-info"></i></a><a href="mailto:tourism@pangasinan2nddistrict.gov.ph" aria-label="Email"><i class="fas fa-envelope"></i></a></div></div></div><div class="copyright">© {{ date('Y') }} 2nd District of Pangasinan Tourism Office · <a href="{{ route('login.form') }}">Admin portal</a></div></div></footer>
+    <script>
+        const loginModal = document.getElementById('login-modal');
+        document.querySelector('.login-btn').addEventListener('click', () => loginModal.showModal());
+        document.querySelector('[data-close-login]').addEventListener('click', () => loginModal.close());
+        loginModal.addEventListener('click', (event) => {
+            if (event.target === loginModal) loginModal.close();
+        });
+        if (loginModal.dataset.openOnLoad === 'true') loginModal.showModal();
+    </script>
 </body>
 </html>

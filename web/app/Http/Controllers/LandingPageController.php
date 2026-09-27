@@ -37,7 +37,7 @@ class LandingPageController extends Controller
 
         return view('landing', [
             'municipalities' => $municipalities,
-            'featuredMunicipalities' => $municipalities->take(4),
+            'featuredMunicipalities' => $municipalities,
             'totalSpots' => $totalSpots,
             'totalMunicipalities' => $municipalities->count(),
             'verifiedSpots' => $totalSpots,
