@@ -22,15 +22,19 @@
             <tbody>
                 @forelse($staff as $member)
                     <tr>
+                        @php($hasTemporaryCredential = $temporaryCredentialIds->contains((int) $member->id))
                         <td><strong>{{ $member->name }}</strong></td>
                         <td>{{ $member->email }}</td>
                         <td>{{ collect($member->permissions ?? [])->filter()->keys()->map(fn ($permission) => \Illuminate\Support\Str::headline($permission))->join(', ') ?: 'None' }}</td>
                         <td><span class="badge {{ $member->is_active ? 'bg-success' : 'bg-danger' }}">{{ $member->is_active ? 'Active' : 'Inactive' }}</span></td>
                         <td class="text-end">
+                            @if($hasTemporaryCredential)
+                                <button type="button" class="btn btn-sm btn-outline-success me-1" data-bs-toggle="modal" data-bs-target="#staffCredentialsModal" data-credentials-url="{{ route('municipality-admin.staff.credentials', $member) }}" aria-label="View temporary credentials for {{ $member->name }}" title="View temporary credentials"><i class="fas fa-key" aria-hidden="true"></i></button>
+                            @endif
                             <form action="{{ route('municipality-admin.staff.destroy', $member) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete the staff account for {{ addslashes($member->name) }}? This cannot be undone.');">
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit" class="btn btn-sm btn-outline-danger" aria-label="Delete {{ $member->name }}" title="Delete staff account"><i class="fas fa-trash-can me-1" aria-hidden="true"></i>Delete</button>
+                                <button type="submit" class="btn btn-sm btn-outline-danger" aria-label="Delete {{ $member->name }}" title="Delete staff account"><i class="fas fa-trash-can" aria-hidden="true"></i></button>
                             </form>
                         </td>
                     </tr>
@@ -39,6 +43,25 @@
                 @endforelse
             </tbody>
         </table>
+    </div>
+</div>
+
+<div class="modal fade" id="staffCredentialsModal" tabindex="-1" aria-labelledby="staffCredentialsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="staffCredentialsModalLabel">Temporary Staff Credentials</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning"><i class="fas fa-triangle-exclamation me-1" aria-hidden="true"></i>Share these details securely. They are hidden after the staff member changes the temporary password.</div>
+                <div class="alert alert-danger py-2" data-staff-credentials-error role="alert" hidden></div>
+                <div class="mb-3"><label for="staffCredentialName" class="form-label">Name</label><input class="form-control" id="staffCredentialName" readonly></div>
+                <div class="mb-3"><label for="staffCredentialEmail" class="form-label">Email</label><input class="form-control" id="staffCredentialEmail" readonly></div>
+                <div><label for="staffCredentialPassword" class="form-label">Temporary password</label><div class="input-group"><input class="form-control" id="staffCredentialPassword" readonly autocomplete="off"><button class="btn btn-success" type="button" data-copy-staff-credential aria-label="Copy temporary password"><i class="fas fa-copy" aria-hidden="true"></i></button></div></div>
+            </div>
+            <div class="modal-footer"><button type="button" class="btn btn-success" data-bs-dismiss="modal">Close</button></div>
+        </div>
     </div>
 </div>
 
@@ -105,6 +128,43 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        const staffCredentialsModal = document.getElementById('staffCredentialsModal');
+        const credentialsError = staffCredentialsModal?.querySelector('[data-staff-credentials-error]');
+        staffCredentialsModal?.addEventListener('show.bs.modal', async function (event) {
+            const trigger = event.relatedTarget;
+            if (!trigger) return;
+
+            credentialsError.hidden = true;
+            document.getElementById('staffCredentialName').value = '';
+            document.getElementById('staffCredentialEmail').value = '';
+            document.getElementById('staffCredentialPassword').value = 'Loading...';
+            try {
+                const response = await fetch(trigger.dataset.credentialsUrl, { headers: { Accept: 'application/json' } });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.message || 'Temporary credentials are no longer available.');
+                document.getElementById('staffCredentialName').value = result.name;
+                document.getElementById('staffCredentialEmail').value = result.email;
+                document.getElementById('staffCredentialPassword').value = result.password;
+            } catch (error) {
+                document.getElementById('staffCredentialPassword').value = '';
+                credentialsError.textContent = error.message || 'Unable to load temporary credentials.';
+                credentialsError.hidden = false;
+            }
+        });
+
+        staffCredentialsModal?.querySelector('[data-copy-staff-credential]')?.addEventListener('click', async function () {
+            const password = document.getElementById('staffCredentialPassword').value;
+            if (!password || password === 'Loading...') return;
+            try {
+                await navigator.clipboard.writeText(password);
+                this.innerHTML = '<i class="fas fa-check" aria-hidden="true"></i>';
+            } catch (error) {
+                const input = document.getElementById('staffCredentialPassword');
+                input.select();
+                document.execCommand('copy');
+            }
+        });
+
         const credentialsModal = document.getElementById('newStaffCredentialsModal');
         const createModal = document.getElementById('createStaffAccountModal');
         const createForm = document.getElementById('staff-create-modal-form');

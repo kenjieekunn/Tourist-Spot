@@ -29,9 +29,13 @@ class MunicipalityStaffController extends Controller
             ->with('municipality')
             ->orderBy('name')
             ->get();
+        $temporaryCredentialIds = AdminTempCredential::whereIn('user_id', $staff->modelKeys())
+            ->pluck('user_id')
+            ->map(fn ($id) => (int) $id);
 
         return view('dashboard.municipality-admin-staff', [
             'staff' => $staff,
+            'temporaryCredentialIds' => $temporaryCredentialIds,
             'permissions' => $this->availablePermissions($admin),
             'staffLimit' => $admin->max_staff_accounts,
         ]);
@@ -174,6 +178,21 @@ class MunicipalityStaffController extends Controller
         });
 
         return redirect()->route('municipality-admin.staff')->with('success', 'Staff account deleted successfully.');
+    }
+
+    public function credentials(User $staff)
+    {
+        $admin = $this->currentAdmin();
+        $this->ensureStaffBelongsToAdmin($staff, $admin);
+
+        $credential = AdminTempCredential::where('user_id', $staff->id)->first();
+        abort_unless($credential, 404, 'Temporary credentials are no longer available.');
+
+        return response()->json([
+            'name' => $staff->name,
+            'email' => $staff->email,
+            'password' => decrypt($credential->password),
+        ]);
     }
 
     private function ensureStaffBelongsToAdmin(User $staff, User $admin): void

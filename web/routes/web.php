@@ -54,6 +54,7 @@ Route::middleware(['auth', 'temporary-password', 'prevent.cache'])->group(functi
         Route::get('/reports', [MunicipalityAdminDashboardController::class, 'reports'])->name('reports');
         Route::get('/reviews', [MunicipalityAdminDashboardController::class, 'reviews'])->name('reviews');
         Route::get('/staff', [MunicipalityStaffController::class, 'index'])->name('staff');
+        Route::get('/staff/{staff}/credentials', [MunicipalityStaffController::class, 'credentials'])->name('staff.credentials');
         Route::get('/staff/create', [MunicipalityStaffController::class, 'create'])->name('staff.create');
         Route::post('/staff', [MunicipalityStaffController::class, 'store'])->name('staff.store');
         Route::get('/staff/{staff}/edit', [MunicipalityStaffController::class, 'edit'])->name('staff.edit');
