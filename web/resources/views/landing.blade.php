@@ -143,7 +143,7 @@
         <section class="section steps"><div class="wrap"><div class="section-heading"><div><div class="eyebrow" style="color:var(--teal-mid)">A simpler way to wander</div><h2>From curious to there.</h2></div></div><div class="step-grid"><div class="step"><div class="step-number">01</div><div><h3>Search and browse</h3><p>Find a spot or municipality that fits the day you want.</p></div></div><div class="step"><div class="step-number">02</div><div><h3>See the details</h3><p>Check photos, descriptions, ratings, and visitor reviews.</p></div></div><div class="step"><div class="step-number">03</div><div><h3>Get directions</h3><p>Choose your route and let the adventure begin.</p></div></div></div></div></section>
     </main>
 
-    <dialog class="login-modal" id="login-modal" aria-labelledby="login-modal-title" data-open-on-load="{{ $errors->any() ? 'true' : 'false' }}">
+    <dialog class="login-modal" id="login-modal" aria-labelledby="login-modal-title" data-open-on-load="{{ request()->boolean('login') || $errors->any() ? 'true' : 'false' }}">
         <div class="login-modal-content">
             <div class="login-modal-header">
                 <div><h2 id="login-modal-title">Welcome back</h2><p>Sign in to the admin portal.</p></div>

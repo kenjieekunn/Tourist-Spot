@@ -15,7 +15,7 @@ class AuthController extends Controller
 {
     public function showLoginForm()
     {
-        return view('auth.login');
+        return redirect()->route('home', ['login' => 1]);
     }
 
     public function login(Request $request)
@@ -99,7 +99,7 @@ class AuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('login.form');
+        return redirect()->route('home', ['login' => 1]);
     }
 
     public function updatePassword(Request $request)
