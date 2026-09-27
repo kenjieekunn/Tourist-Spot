@@ -138,7 +138,7 @@
                         @foreach($categorySpots as $spot)
                             <div class="col-12 col-md-6 col-xl-4">
                                 @php($verificationStatus = $spot->verification_status ? ucfirst($spot->verification_status) : 'Recorded')
-                                <button type="button" class="spot-card spot-card-trigger h-100 d-flex flex-column" data-spot-preview
+                                <button type="button" class="spot-card spot-card-trigger h-100 d-flex flex-column" data-spot-preview data-spot-id="{{ $spot->id }}"
                                     data-spot-name="{{ $spot->name }}"
                                     data-spot-municipality="{{ $municipality->name }}"
                                     data-spot-barangay="{{ $spot->barangay }}"

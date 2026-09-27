@@ -306,6 +306,112 @@ class TouristSpotController extends Controller
         ]);
     }
 
+    public function previewEdit(TouristSpot $touristSpot)
+    {
+        $this->authorizePreviewEditing($touristSpot);
+
+        $facilities = $touristSpot->nearby_facilities;
+        if (is_string($facilities)) {
+            $facilities = json_decode($facilities, true) ?? [];
+        }
+
+        return response()->json([
+            'description' => $touristSpot->description,
+            'images' => $touristSpot->image_urls,
+            'nearbyFacilities' => is_array($facilities) ? $facilities : [],
+            'latitude' => $touristSpot->latitude,
+            'longitude' => $touristSpot->longitude,
+        ]);
+    }
+
+    public function previewUpdate(Request $request, TouristSpot $touristSpot)
+    {
+        $this->authorizePreviewEditing($touristSpot);
+        $section = $request->validate([
+            'section' => ['required', 'in:description,images,facilities'],
+        ])['section'];
+
+        $updates = [];
+        if ($section === 'description') {
+            $updates['description'] = $request->validate([
+                'description' => ['required', 'string'],
+            ])['description'];
+        } elseif ($section === 'images') {
+            $request->validate([
+                'images' => ['sometimes', 'array', 'max:5'],
+                'images.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+                'remove_images' => ['sometimes', 'array'],
+                'remove_images.*' => ['string', 'max:2048'],
+            ]);
+
+            $existingImages = $touristSpot->image_urls;
+            $removedImages = array_values(array_intersect($existingImages, $request->input('remove_images', [])));
+            $remainingImages = array_values(array_diff($existingImages, $removedImages));
+            $newFiles = $request->file('images', []);
+            $newFiles = is_array($newFiles) ? array_filter($newFiles) : [$newFiles];
+
+            if (count($remainingImages) + count($newFiles) > 5) {
+                throw ValidationException::withMessages([
+                    'images' => 'A tourist spot can have a maximum of 5 images.',
+                ]);
+            }
+
+            $this->deleteStoredImages($removedImages);
+            $newImages = $this->storeImagesAndGetUrls($request, 'images', 'spot-images');
+            $updates['images'] = array_values(array_unique(array_merge($remainingImages, $newImages)));
+            $updates['image_url'] = $updates['images'][0] ?? null;
+        } else {
+            $payload = $request->validate([
+                'nearby_facilities' => ['required', 'json', 'max:20000'],
+            ])['nearby_facilities'];
+            $decodedFacilities = json_decode($payload, true);
+            $facilities = is_array($decodedFacilities) ? $this->normalizeFacilities($payload) : [];
+
+            if (!is_array($decodedFacilities) || count($facilities) !== count($decodedFacilities)) {
+                throw ValidationException::withMessages([
+                    'nearby_facilities' => 'Check each nearby facility name, type, and coordinates.',
+                ]);
+            }
+
+            $outsideRadius = $this->facilitiesOutsideRadius(
+                $facilities,
+                (float) $touristSpot->latitude,
+                (float) $touristSpot->longitude
+            );
+            if ($outsideRadius) {
+                throw ValidationException::withMessages([
+                    'nearby_facilities' => sprintf(
+                        'Nearby facility "%s" is %.2f km away and exceeds the 2 km radius.',
+                        $outsideRadius[0]['name'],
+                        $outsideRadius[0]['distance_km']
+                    ),
+                ]);
+            }
+
+            $updates['nearby_facilities'] = $facilities;
+        }
+
+        if (Schema::hasColumn('tourist_spots', 'edited_by')) {
+            $updates['edited_by'] = auth()->id();
+        }
+        if (Schema::hasColumn('tourist_spots', 'rejection_reason')
+            && str_starts_with((string) $touristSpot->rejection_reason, 'Revision requested:')) {
+            $updates['rejection_reason'] = null;
+        }
+
+        $touristSpot->update($updates);
+        $touristSpot->refresh();
+        $facilities = $touristSpot->nearby_facilities;
+
+        return response()->json([
+            'message' => 'Tourist spot updated successfully.',
+            'description' => $touristSpot->description,
+            'images' => $touristSpot->image_urls,
+            'nearbyFacilities' => is_array($facilities) ? $facilities : [],
+            'rejectionReason' => $touristSpot->rejection_reason,
+        ]);
+    }
+
     public function update(Request $request, TouristSpot $touristSpot)
     {
         $this->ensureSpotAccess($touristSpot);
@@ -963,5 +1069,17 @@ class TouristSpotController extends Controller
         }
 
         abort(403, 'Unauthorized access to this tourist spot.');
+    }
+
+    private function authorizePreviewEditing(TouristSpot $touristSpot): void
+    {
+        $this->ensureSpotAccess($touristSpot);
+
+        $user = auth()->user();
+        abort_unless(
+            $user && $user->hasPermission('manage_spots') && !$user->isSuperAdmin(),
+            403,
+            'You do not have permission to edit tourist spots.'
+        );
     }
 }

@@ -53,6 +53,13 @@ class SuperAdminDashboardController extends Controller
                 $pendingSpotsQuery->whereIn('status', ['pending', 'inactive']);
             }
             $pendingTouristSpots = $pendingSpotsQuery->latest('created_at')->get();
+            $categoryTotals = collect();
+            if (Schema::hasColumn('tourist_spots', 'category')) {
+                $categoryTotals = TouristSpot::query()
+                    ->selectRaw('category, COUNT(*) as total')
+                    ->groupBy('category')
+                    ->pluck('total', 'category');
+            }
 
             $dashboardData = [
                 'totalSpots' => TouristSpot::count(),
@@ -62,6 +69,12 @@ class SuperAdminDashboardController extends Controller
                 'pendingReviews' => Review::where('status', 'pending')->count(),
                 'pendingVerificationSpots' => $pendingTouristSpots->count(),
                 'pendingTouristSpots' => $pendingTouristSpots,
+                'spotCategoryCounts' => collect([
+                    ['label' => 'Beach', 'count' => (int) $categoryTotals->get('beach', 0)],
+                    ['label' => 'Parks', 'count' => (int) $categoryTotals->get('parks', 0)],
+                    ['label' => 'Falls', 'count' => (int) $categoryTotals->get('falls', 0)],
+                    ['label' => 'Nature', 'count' => (int) $categoryTotals->get('nature', 0)],
+                ]),
                 'municipalities' => $municipalityQuery->orderBy('name')->get(),
             ];
         } catch (\Exception $e) {
@@ -75,6 +88,12 @@ class SuperAdminDashboardController extends Controller
                 'pendingReviews' => 0,
                 'pendingVerificationSpots' => 0,
                 'pendingTouristSpots' => collect(),
+                'spotCategoryCounts' => collect([
+                    ['label' => 'Beach', 'count' => 0],
+                    ['label' => 'Parks', 'count' => 0],
+                    ['label' => 'Falls', 'count' => 0],
+                    ['label' => 'Nature', 'count' => 0],
+                ]),
                 'municipalities' => collect(),
             ];
         }

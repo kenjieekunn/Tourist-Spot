@@ -300,7 +300,26 @@
                         </div>
                         <div class="small text-muted mt-2">Added {{ optional($pendingSpot->created_at)->diffForHumans() }}</div>
                         <div class="d-flex gap-2 mt-2">
-                            <a href="{{ route('tourist_spots.show', $pendingSpot->id) }}" class="btn btn-sm btn-info"><i class="fas fa-eye"></i> View</a>
+                            <button type="button" class="btn btn-sm btn-info" data-spot-preview
+                                data-spot-id="{{ $pendingSpot->id }}"
+                                data-spot-revision-requested="{{ str_starts_with((string) ($pendingSpot->rejection_reason ?? ''), 'Revision requested:') ? 'true' : 'false' }}"
+                                data-spot-rejection-reason="{{ $pendingSpot->rejection_reason }}"
+                                data-spot-name="{{ $pendingSpot->name }}"
+                                data-spot-municipality="{{ $municipality->name }}"
+                                data-spot-barangay="{{ $pendingSpot->barangay }}"
+                                data-spot-category="{{ ucfirst($pendingSpot->category ?? 'nature') }}"
+                                data-spot-status="Pending"
+                                data-spot-description="{{ $pendingSpot->description }}"
+                                data-spot-address="{{ $pendingSpot->address }}"
+                                data-spot-hours="{{ $pendingSpot->opening_hours }}"
+                                data-spot-fee="{{ $pendingSpot->entrance_fee === null ? '' : ($pendingSpot->entrance_fee == 0 ? 'Free' : 'PHP ' . number_format($pendingSpot->entrance_fee, 2)) }}"
+                                data-spot-phone="{{ $pendingSpot->phone }}"
+                                data-spot-website="{{ $pendingSpot->website }}"
+                                data-spot-latitude="{{ $pendingSpot->latitude }}"
+                                data-spot-longitude="{{ $pendingSpot->longitude }}"
+                                data-spot-images="{{ json_encode($pendingSpot->image_urls) }}"
+                                data-spot-image="{{ $pendingSpot->primary_image_url }}"
+                                aria-label="View {{ $pendingSpot->name }} details"><i class="fas fa-eye"></i> View</button>
                             <a href="{{ route('tourist_spots.edit', $pendingSpot->id) }}" class="btn btn-sm btn-warning"><i class="fas fa-edit"></i> Edit</a>
                         </div>
                     </div>
@@ -368,6 +387,7 @@
                     <div class="pending-card {{ $spot->created_at && $spot->created_at->diffInDays(now()) >= 3 ? 'is-overdue' : '' }}">
                         <div class="d-flex justify-content-between align-items-start gap-3 mb-2 pending-card-header">
                             <div>
+                            @include('dashboard.partials.tourist-spot-preview-modal')
                                 <h6 class="mb-1">{{ $spot->name }}</h6>
                                 <small class="text-muted">Added {{ $spot->created_at->diffForHumans() }}</small>
                             </div>

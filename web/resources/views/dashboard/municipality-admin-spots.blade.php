@@ -57,8 +57,14 @@
         color: inherit;
         text-decoration: none;
     }
-    a.spot-card {
-        display: flex;
+    .spot-card-trigger {
+        width: 100%;
+        border: 0;
+        padding: 0;
+        color: inherit;
+        font: inherit;
+        text-align: left;
+        cursor: pointer;
     }
     .spot-card:hover,
     .spot-card:focus-visible {
@@ -230,7 +236,26 @@
                         @foreach($pendingSpots as $pendingSpot)
                             @php $pendingImages = collect($pendingSpot->image_urls ?? [])->filter()->values(); @endphp
                             <div class="col-12 col-md-6 col-xl-4">
-                                <a href="{{ route('tourist_spots.show', $pendingSpot->id) }}" class="spot-card d-flex flex-column" aria-label="View {{ $pendingSpot->name }}">
+                                <button type="button" class="spot-card spot-card-trigger d-flex flex-column" data-spot-preview
+                                    data-spot-id="{{ $pendingSpot->id }}"
+                                    data-spot-revision-requested="{{ str_starts_with((string) ($pendingSpot->rejection_reason ?? ''), 'Revision requested:') ? 'true' : 'false' }}"
+                                    data-spot-rejection-reason="{{ $pendingSpot->rejection_reason }}"
+                                    data-spot-name="{{ $pendingSpot->name }}"
+                                    data-spot-municipality="{{ $pendingSpot->municipality->name ?? 'Unknown Municipality' }}"
+                                    data-spot-barangay="{{ $pendingSpot->barangay }}"
+                                    data-spot-category="{{ ucfirst($pendingSpot->category ?? 'nature') }}"
+                                    data-spot-status="Pending"
+                                    data-spot-description="{{ $pendingSpot->description }}"
+                                    data-spot-address="{{ $pendingSpot->address }}"
+                                    data-spot-hours="{{ $pendingSpot->opening_hours }}"
+                                    data-spot-fee="{{ $pendingSpot->entrance_fee === null ? '' : ($pendingSpot->entrance_fee == 0 ? 'Free' : 'PHP ' . number_format($pendingSpot->entrance_fee, 2)) }}"
+                                    data-spot-phone="{{ $pendingSpot->phone }}"
+                                    data-spot-website="{{ $pendingSpot->website }}"
+                                    data-spot-latitude="{{ $pendingSpot->latitude }}"
+                                    data-spot-longitude="{{ $pendingSpot->longitude }}"
+                                    data-spot-images="{{ json_encode($pendingSpot->image_urls) }}"
+                                    data-spot-image="{{ $pendingSpot->primary_image_url }}"
+                                    aria-label="View {{ $pendingSpot->name }} details">
                                     @if($pendingImages->isNotEmpty())
                                         <div class="pending-spot-gallery {{ $pendingImages->count() === 1 ? 'single-image' : '' }}">
                                             @foreach($pendingImages as $image)
@@ -255,7 +280,7 @@
                                         <div class="mt-2 text-muted small">Created {{ $pendingSpot->created_at->format('M d, Y') }}</div>
                                         <p class="small text-muted mt-2 mb-0">{{ Str::limit($pendingSpot->description, 120) }}</p>
                                     </div>
-                                </a>
+                                </button>
                             </div>
                         @endforeach
                     </div>
@@ -271,7 +296,26 @@
     <div class="row g-3">
         @foreach($spots as $spot)
             <div class="col-12 col-md-6 col-xl-4">
-                <a href="{{ route('tourist_spots.show', $spot->id) }}" class="spot-card h-100 d-flex flex-column" aria-label="View {{ $spot->name }}">
+                <button type="button" class="spot-card spot-card-trigger h-100 d-flex flex-column" data-spot-preview
+                    data-spot-id="{{ $spot->id }}"
+                    data-spot-revision-requested="{{ str_starts_with((string) ($spot->rejection_reason ?? ''), 'Revision requested:') ? 'true' : 'false' }}"
+                    data-spot-rejection-reason="{{ $spot->rejection_reason }}"
+                    data-spot-name="{{ $spot->name }}"
+                    data-spot-municipality="{{ $spot->municipality->name ?? 'Unknown Municipality' }}"
+                    data-spot-barangay="{{ $spot->barangay }}"
+                    data-spot-category="{{ ucfirst($spot->category ?? 'nature') }}"
+                    data-spot-status="{{ ucfirst($spot->verification_status ?? 'Recorded') }}"
+                    data-spot-description="{{ $spot->description }}"
+                    data-spot-address="{{ $spot->address }}"
+                    data-spot-hours="{{ $spot->opening_hours }}"
+                    data-spot-fee="{{ $spot->entrance_fee === null ? '' : ($spot->entrance_fee == 0 ? 'Free' : 'PHP ' . number_format($spot->entrance_fee, 2)) }}"
+                    data-spot-phone="{{ $spot->phone }}"
+                    data-spot-website="{{ $spot->website }}"
+                    data-spot-latitude="{{ $spot->latitude }}"
+                    data-spot-longitude="{{ $spot->longitude }}"
+                    data-spot-images="{{ json_encode($spot->image_urls) }}"
+                    data-spot-image="{{ $spot->primary_image_url }}"
+                    aria-label="View {{ $spot->name }} details">
                     @if($spot->primary_image_url)
                         <img
                             src="{{ $spot->primary_image_url }}"
@@ -310,7 +354,7 @@
                         </div>
 
                     </div>
-                </a>
+                </button>
             </div>
         @endforeach
     </div>
@@ -325,6 +369,8 @@
         {{ $spots->links() }}
     </nav>
 @endif
+
+@include('dashboard.partials.tourist-spot-preview-modal')
 
 <script>
     (function () {
