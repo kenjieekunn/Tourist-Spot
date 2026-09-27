@@ -14,7 +14,6 @@ return Application::configure(basePath: dirname(__DIR__))
         
         // Register middleware aliases
         $middleware->alias([
-            'admin' => \App\Http\Middleware\EnsureAdmin::class,
             'superadmin' => \App\Http\Middleware\EnsureSuperAdmin::class,
             'municipalityadmin' => \App\Http\Middleware\EnsureMunicipalityAdmin::class,
             'prevent.cache' => \App\Http\Middleware\PreventAuthenticatedPageCache::class,
