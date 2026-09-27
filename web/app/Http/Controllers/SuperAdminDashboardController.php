@@ -53,29 +53,15 @@ class SuperAdminDashboardController extends Controller
                 $pendingSpotsQuery->whereIn('status', ['pending', 'inactive']);
             }
             $pendingTouristSpots = $pendingSpotsQuery->latest('created_at')->get();
-            $categoryTotals = collect();
-            if (Schema::hasColumn('tourist_spots', 'category')) {
-                $categoryTotals = TouristSpot::query()
-                    ->selectRaw('category, COUNT(*) as total')
-                    ->groupBy('category')
-                    ->pluck('total', 'category');
-            }
 
             $dashboardData = [
                 'totalSpots' => TouristSpot::count(),
                 'totalMunicipalities' => Municipality::count(),
                 'totalReviews' => Review::count(),
                 'totalAdmins' => User::where('role', 'municipality-admin')->count(),
-                'totalStaff' => User::where('role', 'municipality-staff')->count(),
                 'pendingReviews' => Review::where('status', 'pending')->count(),
                 'pendingVerificationSpots' => $pendingTouristSpots->count(),
                 'pendingTouristSpots' => $pendingTouristSpots,
-                'spotCategoryCounts' => collect([
-                    ['label' => 'Beach', 'count' => (int) $categoryTotals->get('beach', 0)],
-                    ['label' => 'Parks', 'count' => (int) $categoryTotals->get('parks', 0)],
-                    ['label' => 'Falls', 'count' => (int) $categoryTotals->get('falls', 0)],
-                    ['label' => 'Nature', 'count' => (int) $categoryTotals->get('nature', 0)],
-                ]),
                 'municipalities' => $municipalityQuery->orderBy('name')->get(),
             ];
         } catch (\Exception $e) {
@@ -86,16 +72,9 @@ class SuperAdminDashboardController extends Controller
                 'totalMunicipalities' => 0,
                 'totalReviews' => 0,
                 'totalAdmins' => 0,
-                'totalStaff' => 0,
                 'pendingReviews' => 0,
                 'pendingVerificationSpots' => 0,
                 'pendingTouristSpots' => collect(),
-                'spotCategoryCounts' => collect([
-                    ['label' => 'Beach', 'count' => 0],
-                    ['label' => 'Parks', 'count' => 0],
-                    ['label' => 'Falls', 'count' => 0],
-                    ['label' => 'Nature', 'count' => 0],
-                ]),
                 'municipalities' => collect(),
             ];
         }
@@ -242,17 +221,6 @@ class SuperAdminDashboardController extends Controller
             Log::error('Super admin admins view error: ' . $e->getMessage());
             return redirect()->route('super-admin.dashboard')->with('error', 'Error loading admins. Please try again.');
         }
-    }
-
-    public function staffAccounts()
-    {
-        $staff = User::where('role', 'municipality-staff')
-            ->with('municipality')
-            ->orderBy('municipality_id')
-            ->orderBy('name')
-            ->get();
-
-        return view('dashboard.super-admin-staff', compact('staff'));
     }
 
     /**

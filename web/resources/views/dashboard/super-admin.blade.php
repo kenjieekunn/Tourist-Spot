@@ -108,14 +108,6 @@
     .stat-card.priority-stat.has-pending .stat-icon { background: #ffe1dc; color: #b42318; }
     .stat-card.priority-stat.has-pending .stat-value { color: #b42318; }
     .pending-action-cue { position: absolute; top: .75rem; right: .75rem; display: inline-flex; align-items: center; gap: .35rem; border-radius: 999px; padding: .25rem .55rem; background: #b42318; color: #fff; font-size: .7rem; font-weight: 700; line-height: 1; }
-    .category-chart { border: 1px solid #d9dde3; border-radius: 12px; background: #fff; padding: 1.25rem; }
-    .category-chart-title { color: #173f43; font-size: 1rem; font-weight: 700; }
-    .category-chart-row { display: grid; grid-template-columns: 5rem minmax(0, 1fr) 2rem; align-items: center; gap: .75rem; }
-    .category-chart-label, .category-chart-value { color: #4b5563; font-size: .875rem; }
-    .category-chart-value { text-align: right; font-variant-numeric: tabular-nums; }
-    .category-chart-track { height: .65rem; overflow: hidden; border-radius: 999px; background: #edf0f2; }
-    .category-chart-bar { height: 100%; width: var(--bar-width); min-width: var(--bar-min-width, 0); border-radius: inherit; background: var(--bar-color); transition: width .35s ease; }
-    @media (max-width: 420px) { .category-chart-row { grid-template-columns: 4.25rem minmax(0, 1fr) 1.5rem; gap: .5rem; } }
     .stat-value { color: #0f766e; }
     .status-badge-active {
         background-color: #28a745;
@@ -184,7 +176,7 @@
 
 <!-- Statistics Row -->
 <div class="dashboard-shell">
-<div class="row row-cols-1 row-cols-sm-2 row-cols-xl-4 row-cols-xxl-5 g-3 mb-4">
+<div class="row g-3 mb-4">
     <div class="col">
         <a href="{{ route('super-admin.tourist-spots') }}" class="stat-card h-100 w-100" aria-label="View all tourist spots">
             <span class="stat-icon"><i class="fas fa-location-dot"></i></span>
@@ -216,34 +208,7 @@
             <div class="stat-label">Pending Spot Verification</div>
         </button>
     </div>
-    <div class="col">
-        <a href="{{ route('super-admin.staff') }}" class="stat-card h-100 w-100" aria-label="View staff accounts">
-            <span class="stat-icon"><i class="fas fa-user-group" aria-hidden="true"></i></span>
-            <div class="stat-value">{{ $totalStaff }}</div>
-            <div class="stat-label">Staff</div>
-        </a>
-    </div>
 </div>
-
-@php($categoryChartScale = max(1, (int) $spotCategoryCounts->max('count')))
-<section class="category-chart mb-4" aria-labelledby="category-chart-title">
-    <div class="d-flex justify-content-between align-items-baseline gap-3 mb-3">
-        <h2 class="category-chart-title mb-0" id="category-chart-title">Tourist Spots by Category</h2>
-        <span class="small text-muted">{{ $totalSpots }} total</span>
-    </div>
-    <div class="d-grid gap-3" role="img" aria-label="Bar chart of tourist spots by category">
-        @foreach($spotCategoryCounts as $categoryIndex => $category)
-            @php($barWidth = $category['count'] > 0 ? max(3, ($category['count'] / $categoryChartScale) * 100) : 0)
-            <div class="category-chart-row">
-                <span class="category-chart-label">{{ $category['label'] }}</span>
-                <div class="category-chart-track" aria-hidden="true">
-                    <div class="category-chart-bar" style="--bar-width: {{ $barWidth }}%; --bar-color: {{ ['#0f766e', '#3f7d42', '#e07a32', '#3976a8'][$categoryIndex] }};"></div>
-                </div>
-                <span class="category-chart-value">{{ $category['count'] }}</span>
-            </div>
-        @endforeach
-    </div>
-</section>
 
 <div class="row mt-4" id="dashboard-municipalities">
     <div class="col-12">

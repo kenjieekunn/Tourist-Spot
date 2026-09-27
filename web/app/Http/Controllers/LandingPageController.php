@@ -35,13 +35,17 @@ class LandingPageController extends Controller
             $totalReviews = 0;
         }
 
-        return view('landing', [
+        return response()->view('landing', [
             'municipalities' => $municipalities,
             'featuredMunicipalities' => $municipalities,
             'totalSpots' => $totalSpots,
             'totalMunicipalities' => $municipalities->count(),
             'verifiedSpots' => $totalSpots,
             'totalReviews' => $totalReviews,
+        ])->withHeaders([
+            'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+            'Pragma' => 'no-cache',
+            'Expires' => '0',
         ]);
     }
 }
