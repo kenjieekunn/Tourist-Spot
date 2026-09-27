@@ -104,6 +104,12 @@ class MunicipalityController extends Controller
             $municipality->update($validated);
         }
 
+        if ($request->boolean('return_to_dashboard')) {
+            return redirect()
+                ->to(route('super-admin.dashboard') . '#dashboard-municipalities')
+                ->with('success', 'Municipality image updated successfully!');
+        }
+
         return redirect()
             ->route('municipalities.edit', $municipality)
             ->with('success', 'Municipality updated successfully!');

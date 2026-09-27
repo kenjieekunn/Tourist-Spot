@@ -20,7 +20,7 @@
 </style>
 <details class="notification-menu">
     <summary class="notification-bell" aria-label="Open notifications" title="Notifications">
-        <i class="fas fa-bell"></i><span class="notification-count" data-notification-count>0</span>
+        <i class="fas fa-bell"></i><span class="notification-count" data-notification-count hidden></span>
     </summary>
     <div class="notification-panel">
         <div class="d-flex justify-content-between align-items-center mb-2"><strong>Notifications</strong></div>
@@ -28,7 +28,6 @@
         <a href="{{ route('reviews.index') }}" class="notification-item" data-notification="notifyTouristReview" data-count="{{ $pendingReviews }}"><i class="fas fa-star text-info me-2"></i><strong>{{ $pendingReviews }}</strong> new tourist review{{ $pendingReviews === 1 ? '' : 's' }} to review</a>
         <a href="{{ route('super-admin.tourist-spots') }}" class="notification-item" data-notification="notifyReportedSpot" data-count="0"><i class="fas fa-flag text-danger me-2"></i>No reported tourist spots</a>
         <a href="{{ route('reviews.index') }}" class="notification-item" data-notification="notifyReportedReview" data-count="0"><i class="fas fa-comment-slash text-danger me-2"></i>No reported reviews</a>
-        <a href="{{ route('super-admin.admins') }}" class="notification-item" data-notification="notifyAdminActivity" data-count="{{ $totalAdmins }}"><i class="fas fa-users text-success me-2"></i><strong>{{ $totalAdmins }}</strong> municipal admin account{{ $totalAdmins === 1 ? '' : 's' }} managed</a>
         <div class="notification-empty" data-notification-empty>No new notifications</div>
     </div>
 </details>
@@ -133,6 +132,9 @@
         transform: translateY(-2px);
         box-shadow: 0 10px 18px rgba(0, 0, 0, 0.06);
     }
+    .municipality-image-edit { position: absolute; right: .65rem; top: .65rem; z-index: 2; }
+    #municipalityImageModal [hidden] { display: none !important; }
+    #municipalityImagePreview { object-fit: cover; }
     .municipality-image {
         width: 100%;
         aspect-ratio: 16 / 9;
@@ -217,6 +219,7 @@
                         <div class="col-12 col-md-6 col-xl-3">
                             <div class="municipality-card h-100 d-flex flex-column position-relative">
                                 <a href="{{ route('municipalities.show', $municipality->id) }}" class="stretched-link" aria-label="View {{ $municipality->name }} municipality"></a>
+                                <button type="button" class="btn btn-light btn-sm municipality-image-edit shadow-sm" data-bs-toggle="modal" data-bs-target="#municipalityImageModal" data-update-url="{{ route('municipalities.update', $municipality) }}" data-name="{{ $municipality->name }}" data-description="{{ $municipality->description }}" data-active="{{ ($municipality->is_active ?? true) ? 1 : 0 }}" data-image-url="{{ $municipality->image_url ? (preg_match('#^https?://#i', $municipality->image_url) ? $municipality->image_url : url($municipality->image_url)) : '' }}" aria-label="Edit {{ $municipality->name }} image" title="Edit municipality image"><i class="fas fa-pen-to-square" aria-hidden="true"></i></button>
                                 @if($municipality->image_url)
                                     <img
                                         src="{{ preg_match('#^https?://#i', $municipality->image_url) ? $municipality->image_url : url($municipality->image_url) }}"
@@ -231,9 +234,6 @@
                                     <div class="d-flex justify-content-between align-items-start gap-3">
                                         <div class="me-2">
                                             <h6 class="mb-1">{{ $municipality->name }}</h6>
-                                            <div class="municipality-meta">
-                                                {{ $municipality->description ? \Illuminate\Support\Str::limit($municipality->description, 90) : 'No description available' }}
-                                            </div>
                                         </div>
                                         <span class="badge municipality-badge municipality-count-chip">
                                             {{ $municipality->tourist_spots_count }} spots
@@ -272,6 +272,42 @@
     </div>
 </div>
 
+</div>
+
+<div class="modal fade" id="municipalityImageModal" tabindex="-1" aria-labelledby="municipalityImageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form id="municipalityImageForm" method="POST" enctype="multipart/form-data">
+                @csrf
+                @method('PUT')
+                <input type="hidden" name="name" id="municipalityImageName">
+                <input type="hidden" name="description" id="municipalityImageDescription">
+                <input type="hidden" name="is_active" id="municipalityImageActive">
+                <input type="hidden" name="return_to_dashboard" value="1">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="municipalityImageModalLabel">Edit Municipality Image</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="ratio ratio-16x9 bg-light rounded overflow-hidden mb-3">
+                        <img id="municipalityImagePreview" class="w-100 h-100 object-fit-cover" alt="Municipality image preview" hidden>
+                        <div id="municipalityImagePlaceholder" class="d-flex align-items-center justify-content-center text-muted"><i class="fas fa-image me-2"></i>No image uploaded</div>
+                    </div>
+                    <label for="municipalityImageFile" class="form-label">Replace image</label>
+                    <input type="file" class="form-control" id="municipalityImageFile" name="image" accept="image/jpeg,image/png,image/webp">
+                    <div class="form-text">JPG, PNG, or WebP, maximum 2MB.</div>
+                    <div class="form-check mt-3" id="municipalityRemoveImageWrap" hidden>
+                        <input class="form-check-input" type="checkbox" name="remove_image" value="1" id="municipalityRemoveImage">
+                        <label class="form-check-label" for="municipalityRemoveImage">Remove current image</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save me-1"></i> Save Image</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 
 <div class="modal fade" id="dashboardPendingSpotsModal" tabindex="-1" aria-labelledby="dashboardPendingSpotsModalLabel" aria-hidden="true">
@@ -324,8 +360,41 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        const imageModal = document.getElementById('municipalityImageModal');
+        const imageForm = document.getElementById('municipalityImageForm');
+        const imagePreview = document.getElementById('municipalityImagePreview');
+        const imagePlaceholder = document.getElementById('municipalityImagePlaceholder');
+        const imageFile = document.getElementById('municipalityImageFile');
+        let previewObjectUrl = null;
+
+        imageModal.addEventListener('show.bs.modal', function (event) {
+            const trigger = event.relatedTarget;
+            imageForm.action = trigger.dataset.updateUrl;
+            document.getElementById('municipalityImageName').value = trigger.dataset.name;
+            document.getElementById('municipalityImageDescription').value = trigger.dataset.description;
+            document.getElementById('municipalityImageActive').value = trigger.dataset.active;
+            imageFile.value = '';
+            document.getElementById('municipalityRemoveImage').checked = false;
+            document.getElementById('municipalityRemoveImageWrap').hidden = !trigger.dataset.imageUrl;
+            imagePreview.src = trigger.dataset.imageUrl;
+            imagePreview.hidden = !trigger.dataset.imageUrl;
+            imagePlaceholder.hidden = Boolean(trigger.dataset.imageUrl);
+        });
+
+        imageFile.addEventListener('change', function () {
+            if (previewObjectUrl) URL.revokeObjectURL(previewObjectUrl);
+            if (!imageFile.files.length) return;
+            previewObjectUrl = URL.createObjectURL(imageFile.files[0]);
+            imagePreview.src = previewObjectUrl;
+            imagePreview.hidden = false;
+            imagePlaceholder.hidden = true;
+            document.getElementById('municipalityRemoveImage').checked = false;
+        });
+
         const preferences = JSON.parse(localStorage.getItem('touristSpotAdminPreferences') || '{}');
         const items = document.querySelectorAll('[data-notification]');
+        const spotSubmissionItem = document.querySelector('[data-notification="notifySpotSubmission"]');
+        const badge = document.querySelector('[data-notification-count]');
         let visibleCount = 0;
 
         items.forEach(function (item) {
@@ -335,7 +404,9 @@
             if (enabled && hasActivity) visibleCount += 1;
         });
 
-        document.querySelector('[data-notification-count]').textContent = visibleCount;
+        const spotSubmissionCount = preferences.notifySpotSubmission === false ? 0 : Number(spotSubmissionItem.dataset.count || 0);
+        badge.textContent = spotSubmissionCount;
+        badge.hidden = spotSubmissionCount === 0;
         document.querySelector('[data-notification-empty]').style.display = visibleCount ? 'none' : 'block';
     });
 </script>

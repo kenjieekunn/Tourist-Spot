@@ -127,7 +127,7 @@
                 @forelse($featuredMunicipalities as $municipality)
                     <a class="municipality-card" href="{{ route('login.form') }}" aria-label="Explore {{ $municipality->name }}">
                         @if($municipality->image_url)<img src="{{ preg_match('#^https?://#i', $municipality->image_url) ? $municipality->image_url : url($municipality->image_url) }}" alt="{{ $municipality->name }}" loading="lazy">@endif
-                        <div class="municipality-info"><small>Municipality in Pangasinan</small><h3>{{ $municipality->name }}</h3></div>
+                        <div class="municipality-info"><h3>{{ $municipality->name }}</h3></div>
                     </a>
                 @empty
                     <div class="feature" style="grid-column:1/-1">Municipality highlights are being prepared.</div>

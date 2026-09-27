@@ -48,12 +48,26 @@
     .report-signature-value { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 2px; }
     .report-footer { border-top: 1px solid #9ca3af; color: #4b5563; font-size: .75rem; margin: 1.5rem; padding-top: .5rem; text-align: center; }
     .report-preview-empty { border: 1px dashed #9bd2c7; border-radius: 10px; color: #55736e; padding: 4rem 1rem; text-align: center; }
-    .report-filter-grid { row-gap: 1rem; }
-    @media (min-width: 992px) {
-        .report-filter-grid { display: grid; grid-template-columns: 1.25fr 1.05fr 1.2fr .9fr .75fr .75fr 1.2fr; gap: 1rem; align-items: end; }
-        .report-filter-grid > [class*="col-"] { padding-left: 0; padding-right: 0; width: auto; }
-        .report-filter-grid .form-check { white-space: nowrap; }
-    }
+    .filter-section + .filter-section { border-top: 1px solid #e3ece8; margin-top: 1.25rem; padding-top: 1.25rem; }
+    .filter-section-title { color: var(--tourism-ink); font-size: .78rem; font-weight: 800; margin-bottom: .85rem; text-transform: uppercase; }
+    .filter-fields { display: grid; gap: 1rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .filter-field { min-width: 0; }
+    .date-range-control { border: 1px solid #ced4da; border-radius: .375rem; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); overflow: hidden; }
+    .date-range-control input { border: 0; border-radius: 0; min-width: 0; }
+    .date-range-control input:focus { box-shadow: inset 0 0 0 1px var(--tourism-teal); z-index: 1; }
+    .date-range-separator { align-items: center; background: #f4f8f6; color: #64736f; display: flex; padding: 0 .55rem; }
+    .date-presets { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .55rem; }
+    .date-preset { background: #f4f8f6; border: 1px solid #dce9e5; border-radius: 4px; color: #285b55; font-size: .75rem; padding: .25rem .5rem; }
+    .date-preset:hover, .date-preset:focus { background: #e4f2ed; border-color: #9bc9bd; }
+    .report-filter-actions { align-items: flex-end; display: flex; flex-direction: column; grid-column: 1 / -1; }
+    .report-filter-actions .form-check { align-self: flex-start; }
+    .report-filter-actions .btn { min-width: 190px; }
+    .active-filter-list { display: flex; flex-wrap: wrap; gap: .5rem; }
+    .active-filter-chip { align-items: center; background: #e9f5f1; border: 1px solid #c6e2d9; border-radius: 999px; color: #20564e; display: inline-flex; font-size: .82rem; gap: .5rem; max-width: 100%; padding: .3rem .4rem .3rem .75rem; }
+    .active-filter-chip span { overflow-wrap: anywhere; }
+    .active-filter-chip button { align-items: center; background: transparent; border: 0; border-radius: 50%; color: inherit; display: inline-flex; height: 1.35rem; justify-content: center; padding: 0; width: 1.35rem; }
+    .active-filter-chip button:hover, .active-filter-chip button:focus { background: #cde8de; }
+    @media (max-width: 575.98px) { .filter-fields { grid-template-columns: minmax(0, 1fr); } .report-filter-actions { align-items: stretch; } .report-filter-actions .btn { width: 100%; } }
     @media print {
         @page { size: A4 portrait; margin: 10mm; }
         html, body { background: #fff !important; margin: 0 !important; padding: 0 !important; }
@@ -75,25 +89,42 @@
 <div class="reports-page">
     <div class="report-controls card mb-4">
         <div class="card-body">
-            <form method="GET" action="{{ route('super-admin.reports') }}" class="row g-3 align-items-end report-filter-grid" id="reportForm">
+            <form method="GET" action="{{ route('super-admin.reports') }}" id="reportForm">
                 <input type="hidden" name="generated" value="1">
-                <div class="col-12 col-md-3"><label for="spotName" class="form-label">Tourist Spot Name</label><input type="search" name="spot_name" id="spotName" value="{{ $spotName }}" class="form-control" placeholder="Search spot name"></div>
-                <div class="col-12 col-md-3"><label for="reportType" class="form-label">Report Type</label><select name="report_type" id="reportType" class="form-select"><option value="management" @selected($reportType === 'management')>All Reports</option><option value="verification" @selected($reportType === 'verification')>Verification Report</option><option value="reviews" @selected($reportType === 'reviews')>Reviews Report</option></select></div>
-                <div class="col-12 col-md-3"><label for="municipalityId" class="form-label">Municipality</label><select name="municipality_id" id="municipalityId" class="form-select"><option value="0" @selected($municipalityId === 0)>All Municipalities</option>@foreach($municipalities as $municipality)<option value="{{ $municipality->id }}" @selected($municipalityId === $municipality->id)>{{ $municipality->name }}</option>@endforeach</select></div>
-                <div class="col-12 col-md-2"><label for="reportStatus" class="form-label">Status</label><select name="status" id="reportStatus" class="form-select"><option value="all" @selected($status === 'all')>All Statuses</option><option value="pending" @selected($status === 'pending')>Pending</option><option value="approved" @selected($status === 'approved')>Verified/Approved</option></select></div>
-                <div class="col-6 col-md-1"><label for="dateFrom" class="form-label">From</label><input type="date" name="date_from" id="dateFrom" value="{{ $dateFrom }}" class="form-control"></div>
-                <div class="col-6 col-md-1"><label for="dateTo" class="form-label">To</label><input type="date" name="date_to" id="dateTo" value="{{ $dateTo }}" class="form-control"></div>
-                <div class="col-12 col-md-2"><div class="form-check mb-2"><input class="form-check-input" type="checkbox" name="include_chart" value="1" id="includeChart" @checked(request()->boolean('include_chart'))><label class="form-check-label" for="includeChart">Include summary chart</label></div><button type="submit" class="btn btn-tourism w-100" id="generateReport"><i class="fas fa-file-lines me-1"></i> Generate Report</button></div>
+                <section class="filter-section" aria-labelledby="filterResultsTitle">
+                    <h2 class="filter-section-title" id="filterResultsTitle">Filter Results</h2>
+                    <div class="filter-fields">
+                        <div class="filter-field"><label for="spotName" class="form-label">Tourist Spot Name</label><input type="search" name="spot_name" id="spotName" value="{{ $spotName }}" class="form-control" placeholder="Search spot name"></div>
+                        <div class="filter-field"><label for="municipalitySearch" class="form-label">Municipality</label><input type="search" id="municipalitySearch" class="form-control" list="municipalityOptions" value="{{ optional($municipalities->firstWhere('id', $municipalityId))->name }}" placeholder="Type to search municipalities" autocomplete="off"><input type="hidden" name="municipality_id" id="municipalityId" value="{{ $municipalityId }}"><datalist id="municipalityOptions">@foreach($municipalities as $municipality)<option value="{{ $municipality->name }}" data-id="{{ $municipality->id }}"></option>@endforeach</datalist></div>
+                        <div class="filter-field"><label for="reportStatus" class="form-label">Status</label><select name="status" id="reportStatus" class="form-select"><option value="all" @selected($status === 'all')>All Statuses</option><option value="pending" @selected($status === 'pending')>Pending</option><option value="approved" @selected($status === 'approved')>Verified/Approved</option></select></div>
+                    </div>
+                </section>
+                <section class="filter-section" aria-labelledby="reportOptionsTitle">
+                    <h2 class="filter-section-title" id="reportOptionsTitle">Report Options</h2>
+                    <div class="filter-fields">
+                        <div class="filter-field"><label for="reportType" class="form-label">Report Type</label><select name="report_type" id="reportType" class="form-select"><option value="management" @selected($reportType === 'management')>All Reports</option><option value="verification" @selected($reportType === 'verification')>Verification Report</option><option value="reviews" @selected($reportType === 'reviews')>Reviews Report</option></select><div class="form-check mt-2"><input class="form-check-input" type="checkbox" name="include_chart" value="1" id="includeChart" @checked(request()->boolean('include_chart'))><label class="form-check-label" for="includeChart">Include summary chart</label></div></div>
+                        <div class="filter-field"><label class="form-label" for="dateFrom">Date Range</label><div class="date-range-control" role="group" aria-label="Date range"><input type="date" name="date_from" id="dateFrom" value="{{ $dateFrom }}" class="form-control" aria-label="Start date"><span class="date-range-separator" aria-hidden="true">to</span><input type="date" name="date_to" id="dateTo" value="{{ $dateTo }}" class="form-control" aria-label="End date"></div><div class="date-presets" aria-label="Date range presets"><button type="button" class="date-preset" data-date-preset="7">Last 7 days</button><button type="button" class="date-preset" data-date-preset="month">This month</button><button type="button" class="date-preset" data-date-preset="year">This year</button></div></div>
+                        <div class="filter-field report-filter-actions"><button type="submit" class="btn btn-tourism" id="generateReport"><i class="fas fa-file-lines me-1"></i> Generate Report</button></div>
+                    </div>
+                </section>
             </form>
         </div>
     </div>
 
-    <div class="row g-3 mb-4 report-controls">
-        <div class="col-6 col-lg-3"><div class="card report-stat h-100"><div class="card-body"><div class="stat-icon"><i class="fas fa-location-dot"></i></div><div class="text-muted small text-uppercase">Tourist Spots</div><div class="fs-2 fw-bold text-teal">{{ $totalSpots }}</div></div></div></div>
-        <div class="col-6 col-lg-3"><div class="card report-stat h-100"><div class="card-body"><div class="stat-icon"><i class="fas fa-map"></i></div><div class="text-muted small text-uppercase">Municipalities</div><div class="fs-2 fw-bold">{{ $totalMunicipalities }}</div></div></div></div>
-        <div class="col-6 col-lg-3"><div class="card report-stat h-100"><div class="card-body"><div class="stat-icon"><i class="fas fa-user-shield"></i></div><div class="text-muted small text-uppercase">Municipal Admins</div><div class="fs-2 fw-bold">{{ $totalAdmins }}</div></div></div></div>
-        <div class="col-6 col-lg-3"><div class="card report-stat h-100"><div class="card-body"><div class="stat-icon"><i class="fas fa-star"></i></div><div class="text-muted small text-uppercase">Reviews</div>@if($totalReviews > 0)<div class="fs-2 fw-bold">{{ $totalReviews }}</div>@else<span class="badge text-bg-light border mt-2">Coming Soon</span>@endif</div></div></div>
-    </div>
+    @php
+        $activeFilters = [];
+        if ($spotName !== '') $activeFilters[] = ['name' => 'spot_name', 'label' => 'Tourist Spot: ' . $spotName];
+        if ($municipalityId > 0) $activeFilters[] = ['name' => 'municipality_id', 'label' => 'Municipality: ' . optional($municipalities->firstWhere('id', $municipalityId))->name];
+        if ($status !== 'all') $activeFilters[] = ['name' => 'status', 'label' => 'Status: ' . ($status === 'approved' ? 'Verified/Approved' : 'Pending')];
+        if ($dateFrom !== '' || $dateTo !== '') $activeFilters[] = ['name' => 'date_range', 'label' => 'Date Range: ' . ($dateFrom ?: 'Any date') . ' to ' . ($dateTo ?: 'Any date')];
+    @endphp
+    @if(count($activeFilters))
+        <div class="report-controls mb-3" aria-label="Active filters"><div class="active-filter-list">
+            @foreach($activeFilters as $filter)
+                <div class="active-filter-chip"><span>{{ $filter['label'] }}</span><button type="button" data-clear-filter="{{ $filter['name'] }}" aria-label="Remove {{ $filter['label'] }}"><i class="fas fa-times" aria-hidden="true"></i></button></div>
+            @endforeach
+        </div></div>
+    @endif
 
     @if(!$hasGeneratedReport)
         <div class="report-preview-empty report-controls"><i class="fas fa-file-circle-plus fa-2x mb-3" style="color: var(--tourism-teal);"></i><h5>Choose filters, then generate a report preview</h5><p class="mb-0">The official report will appear here after generation.</p></div>
@@ -120,10 +151,46 @@
 </div>
 
 <script>
-    document.getElementById('reportForm').addEventListener('submit', function () {
+    const reportForm = document.getElementById('reportForm');
+    const municipalitySearch = document.getElementById('municipalitySearch');
+    const municipalityId = document.getElementById('municipalityId');
+    const municipalityOptions = Array.from(document.querySelectorAll('#municipalityOptions option'));
+    municipalitySearch.addEventListener('input', function () {
+        const match = municipalityOptions.find(option => option.value.toLowerCase() === municipalitySearch.value.trim().toLowerCase());
+        municipalityId.value = match ? match.dataset.id : '0';
+        municipalitySearch.setCustomValidity(municipalitySearch.value.trim() && !match ? 'Choose a municipality from the suggestions.' : '');
+    });
+    reportForm.addEventListener('submit', function () {
         const button = document.getElementById('generateReport');
         button.disabled = true;
         button.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Generating...';
+    });
+    document.querySelectorAll('[data-date-preset]').forEach(function (button) {
+        button.addEventListener('click', function () {
+            const end = new Date();
+            const start = new Date(end);
+            const preset = button.dataset.datePreset;
+            if (preset === '7') start.setDate(start.getDate() - 6);
+            if (preset === 'month') start.setDate(1);
+            if (preset === 'year') start.setMonth(0, 1);
+            const formatDate = date => [date.getFullYear(), String(date.getMonth() + 1).padStart(2, '0'), String(date.getDate()).padStart(2, '0')].join('-');
+            document.getElementById('dateFrom').value = formatDate(start);
+            document.getElementById('dateTo').value = formatDate(end);
+        });
+    });
+    document.querySelectorAll('[data-clear-filter]').forEach(function (button) {
+        button.addEventListener('click', function () {
+            const filter = button.dataset.clearFilter;
+            if (filter === 'date_range') {
+                document.getElementById('dateFrom').value = '';
+                document.getElementById('dateTo').value = '';
+            } else {
+                const field = reportForm.elements[filter];
+                field.value = filter === 'municipality_id' ? '0' : (filter === 'status' ? 'all' : '');
+                if (filter === 'municipality_id') municipalitySearch.value = '';
+            }
+            reportForm.requestSubmit();
+        });
     });
     function printReport() { window.print(); }
 </script>
