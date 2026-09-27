@@ -16,7 +16,8 @@
                 </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body" data-preview-content>
+                <div class="alert alert-success py-2" data-preview-save-success role="status" hidden></div>
                 <div class="row g-4">
                     <div class="col-12 col-md-5" data-preview-media-column hidden>
                         <div data-preview-gallery hidden>
@@ -41,6 +42,10 @@
                             <dd class="col-sm-8" data-preview-value-for="submitted" hidden></dd>
                             <dt class="col-sm-4" data-preview-row="approved" hidden>Date approved</dt>
                             <dd class="col-sm-8" data-preview-value-for="approved" hidden></dd>
+                            <dt class="col-sm-4" data-preview-row="revisionReason" hidden>Revision request</dt>
+                            <dd class="col-sm-8" data-preview-value-for="revisionReason" hidden></dd>
+                            <dt class="col-sm-4" data-preview-row="facilities" hidden>Nearby facilities</dt>
+                            <dd class="col-sm-8" data-preview-value-for="facilities" hidden></dd>
                             <dt class="col-sm-4" data-preview-row="address" hidden>Address</dt>
                             <dd class="col-sm-8 text-break" data-preview-value-for="address" hidden></dd>
                             <dt class="col-sm-4" data-preview-row="barangay" hidden>Barangay</dt>
@@ -64,6 +69,58 @@
                     </div>
                 </div>
             </div>
+            <div class="modal-body" data-edit-content hidden>
+                <div class="btn-group w-100 mb-3" role="group" aria-label="Choose spot details to edit">
+                    <button type="button" class="btn btn-outline-secondary active" data-edit-section="description" aria-pressed="true">Description</button>
+                    <button type="button" class="btn btn-outline-secondary" data-edit-section="images" aria-pressed="false">Photos</button>
+                    <button type="button" class="btn btn-outline-secondary" data-edit-section="facilities" aria-pressed="false">Nearby Facilities</button>
+                </div>
+                <div class="alert alert-danger py-2" data-edit-feedback role="alert" hidden></div>
+                <div class="alert alert-success py-2" data-edit-success role="status" hidden></div>
+                <form data-inline-edit-form>
+                    @csrf
+                    <input type="hidden" name="section" value="description" data-edit-section-value>
+                    <div data-edit-panel="description">
+                        <label class="form-label fw-semibold" for="preview-edit-description">Spot description</label>
+                        <textarea class="form-control" id="preview-edit-description" name="description" rows="7" data-edit-description required></textarea>
+                    </div>
+                    <div data-edit-panel="images" hidden>
+                        <div class="small text-muted mb-2">Remove existing photos or add JPG, PNG, or WebP files. Maximum 5 photos, 2 MB each.</div>
+                        <div class="row g-2 mb-3" data-edit-image-list></div>
+                        <label class="form-label fw-semibold" for="preview-edit-images">Add photos</label>
+                        <input class="form-control" id="preview-edit-images" data-edit-images type="file" name="images[]" accept="image/jpeg,image/png,image/webp" multiple>
+                        <div class="small text-muted mt-2" data-edit-image-selection></div>
+                    </div>
+                    <div data-edit-panel="facilities" hidden>
+                        <p class="small text-muted mb-2">Choose a point on the map to place a facility pin. Only locations within 2 km of the spot can be added.</p>
+                        <div class="w-100 border rounded bg-light" style="height: 280px;" data-edit-map role="application" aria-label="Map for placing nearby facility pins"></div>
+                        <div class="small text-warning mt-2" data-edit-map-unavailable hidden>Map is unavailable. Check the Google Maps API key.</div>
+                        <div class="d-flex flex-wrap align-items-end gap-2 mt-3">
+                            <div class="flex-grow-1" style="min-width: 9rem;">
+                                <label class="form-label small mb-1" for="preview-edit-facility-type">Facility type</label>
+                                <select class="form-select form-select-sm" id="preview-edit-facility-type" data-new-facility-type>
+                                    <option value="dining">Dining</option>
+                                    <option value="gas_station">Gas station</option>
+                                </select>
+                            </div>
+                            <div class="flex-grow-1" style="min-width: 11rem;">
+                                <label class="form-label small mb-1" for="preview-edit-facility-name">Facility name</label>
+                                <input class="form-control form-control-sm" id="preview-edit-facility-name" type="text" maxlength="120" data-new-facility-name>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-primary" data-edit-add-facility disabled><i class="fas fa-map-pin me-1" aria-hidden="true"></i>Add pin</button>
+                        </div>
+                        <div class="small mt-2" data-edit-map-feedback aria-live="polite">Select a location on the map.</div>
+                        <div data-edit-facility-list></div>
+                    </div>
+                </form>
+            </div>
+            @if(auth()->check() && auth()->user()->hasPermission('manage_spots') && !auth()->user()->isSuperAdmin())
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-edit-cancel hidden>Back to details</button>
+                    <button type="button" class="btn btn-primary" data-edit-save hidden><i class="fas fa-save me-1" aria-hidden="true"></i>Save changes</button>
+                    <button type="button" class="btn btn-warning" data-preview-edit hidden><i class="fas fa-pen-to-square me-1" aria-hidden="true"></i>Edit Spot</button>
+                </div>
+            @endif
         </div>
     </div>
 </div>
@@ -72,6 +129,17 @@
     (() => {
         const previewModal = document.getElementById('touristSpotPreviewModal');
         if (!previewModal) return;
+        const editAction = previewModal.querySelector('[data-preview-edit]');
+        const previewContent = previewModal.querySelector('[data-preview-content]');
+        const editContent = previewModal.querySelector('[data-edit-content]');
+        const editForm = previewModal.querySelector('[data-inline-edit-form]');
+        const editCancel = previewModal.querySelector('[data-edit-cancel]');
+        const editSave = previewModal.querySelector('[data-edit-save]');
+        const editFeedback = previewModal.querySelector('[data-edit-feedback]');
+        const editSuccess = previewModal.querySelector('[data-edit-success]');
+        const previewSaveSuccess = previewModal.querySelector('[data-preview-save-success]');
+        const editUrlTemplate = @json(route('tourist_spots.preview-edit', ['touristSpot' => '__SPOT_ID__']));
+        const updateUrlTemplate = @json(route('tourist_spots.preview-update', ['touristSpot' => '__SPOT_ID__']));
 
         const setOptionalDetail = (name, value) => {
             const label = previewModal.querySelector(`[data-preview-row="${name}"]`);
@@ -88,6 +156,426 @@
         let previewMarker = null;
         let previewCoordinates = null;
         let previewSpotName = '';
+        let activeTrigger = null;
+        let activeSpotId = null;
+        let activeEditSection = 'description';
+        let editImages = [];
+        let editSpotCenter = { latitude: 0, longitude: 0 };
+        let editFacilityMap = null;
+        let editSpotMarker = null;
+        let editRadiusCircle = null;
+        let editCandidateMarker = null;
+        let editFacilityMarkers = [];
+        let selectedFacilityLocation = null;
+        const facilityRadiusMeters = 2000;
+        const facilityMarkerColors = { dining: '#ff6b35', gas_station: '#0d6efd' };
+
+        const setEditFeedback = (message, isSuccess = false) => {
+            if (!editFeedback || !editSuccess) return;
+            editFeedback.hidden = isSuccess || !message;
+            editSuccess.hidden = !isSuccess || !message;
+            editFeedback.textContent = isSuccess ? '' : message;
+            editSuccess.textContent = isSuccess ? message : '';
+        };
+
+        const setEditMode = (isEditing) => {
+            previewContent.hidden = isEditing;
+            editContent.hidden = !isEditing;
+            editAction.hidden = isEditing || !activeSpotId;
+            editCancel.hidden = !isEditing;
+            editSave.hidden = !isEditing;
+        };
+
+        const setEditSection = (section) => {
+            activeEditSection = section;
+            editForm.querySelector('[data-edit-section-value]').value = section;
+            previewModal.querySelectorAll('[data-edit-section]').forEach((button) => {
+                const isActive = button.dataset.editSection === section;
+                button.classList.toggle('active', isActive);
+                button.setAttribute('aria-pressed', String(isActive));
+            });
+            previewModal.querySelectorAll('[data-edit-panel]').forEach((panel) => {
+                panel.hidden = panel.dataset.editPanel !== section;
+            });
+            setEditFeedback('');
+            if (section === 'facilities') requestAnimationFrame(initEditFacilityMap);
+        };
+
+        const distanceBetweenMeters = (first, second) => {
+            const earthRadius = 6371000;
+            const toRadians = (degrees) => degrees * Math.PI / 180;
+            const deltaLatitude = toRadians(second.lat - first.lat);
+            const deltaLongitude = toRadians(second.lng - first.lng);
+            const firstLatitude = toRadians(first.lat);
+            const secondLatitude = toRadians(second.lat);
+            const haversine = Math.sin(deltaLatitude / 2) ** 2
+                + Math.cos(firstLatitude) * Math.cos(secondLatitude) * Math.sin(deltaLongitude / 2) ** 2;
+            return earthRadius * 2 * Math.atan2(Math.sqrt(haversine), Math.sqrt(1 - haversine));
+        };
+
+        const setFacilityMapFeedback = (message, allowed = null) => {
+            const feedback = previewModal.querySelector('[data-edit-map-feedback]');
+            feedback.textContent = message;
+            feedback.className = `small mt-2 ${allowed === true ? 'text-success' : (allowed === false ? 'text-danger' : 'text-muted')}`;
+        };
+
+        const updateFacilityPinButton = () => {
+            const button = previewModal.querySelector('[data-edit-add-facility]');
+            const name = previewModal.querySelector('[data-new-facility-name]').value.trim();
+            button.disabled = !selectedFacilityLocation?.allowed || !name;
+        };
+
+        const setCandidateFacilityLocation = (location) => {
+            const point = { lat: location.lat(), lng: location.lng() };
+            const center = { lat: editSpotCenter.latitude, lng: editSpotCenter.longitude };
+            const distance = distanceBetweenMeters(center, point);
+            const allowed = distance <= facilityRadiusMeters;
+            selectedFacilityLocation = { ...point, allowed };
+
+            if (!editCandidateMarker) {
+                editCandidateMarker = new google.maps.Marker({
+                    map: editFacilityMap,
+                    draggable: true,
+                    title: 'New nearby facility',
+                    icon: { path: google.maps.SymbolPath.CIRCLE, scale: 9, fillColor: '#a16207', fillOpacity: .95, strokeColor: '#fff', strokeWeight: 2 },
+                });
+                editCandidateMarker.addListener('dragend', () => setCandidateFacilityLocation(editCandidateMarker.getPosition()));
+            }
+            editCandidateMarker.setPosition(point);
+            setFacilityMapFeedback(
+                allowed
+                    ? `Selected ${distance.toFixed(0)} m from the spot. Enter a name, then add the pin.`
+                    : `Selected ${(distance / 1000).toFixed(2)} km away. Move the pin within the 2 km circle.`,
+                allowed
+            );
+            updateFacilityPinButton();
+        };
+
+        const refreshEditFacilityMarkers = () => {
+            if (!editFacilityMap || !window.google?.maps) return;
+            editFacilityMarkers.forEach((marker) => marker.setMap(null));
+            editFacilityMarkers = [];
+
+            previewModal.querySelectorAll('[data-edit-facility-row]').forEach((row) => {
+                const latitudeInput = row.querySelector('[data-facility-field="latitude"]');
+                const longitudeInput = row.querySelector('[data-facility-field="longitude"]');
+                const latitude = Number(latitudeInput.value);
+                const longitude = Number(longitudeInput.value);
+                if (!latitudeInput.value.trim() || !longitudeInput.value.trim() || !Number.isFinite(latitude) || !Number.isFinite(longitude)) return;
+
+                const type = row.querySelector('[data-facility-field="type"]').value;
+                const name = row.querySelector('[data-facility-field="name"]').value.trim();
+                const marker = new google.maps.Marker({
+                    map: editFacilityMap,
+                    position: { lat: latitude, lng: longitude },
+                    draggable: true,
+                    title: name || 'Nearby facility',
+                    icon: { path: google.maps.SymbolPath.CIRCLE, scale: 7, fillColor: facilityMarkerColors[type] || '#0f766e', fillOpacity: .95, strokeColor: '#fff', strokeWeight: 2 },
+                });
+                marker.addListener('dragend', () => {
+                    const position = marker.getPosition();
+                    const previousPosition = { lat: Number(latitudeInput.value), lng: Number(longitudeInput.value) };
+                    const location = { lat: position.lat(), lng: position.lng() };
+                    const center = { lat: editSpotCenter.latitude, lng: editSpotCenter.longitude };
+                    const distance = distanceBetweenMeters(center, location);
+                    if (distance > facilityRadiusMeters) {
+                        marker.setPosition(previousPosition);
+                        setFacilityMapFeedback('That facility is outside the 2 km radius. Its previous pin was restored.', false);
+                        return;
+                    }
+                    latitudeInput.value = location.lat.toFixed(6);
+                    longitudeInput.value = location.lng.toFixed(6);
+                    setFacilityMapFeedback(`Facility pin is ${distance.toFixed(0)} m from the spot.`, true);
+                });
+                editFacilityMarkers.push(marker);
+            });
+        };
+
+        const initEditFacilityMap = () => {
+            const mapElement = previewModal.querySelector('[data-edit-map]');
+            const unavailableMessage = previewModal.querySelector('[data-edit-map-unavailable]');
+            if (!window.google?.maps) {
+                mapElement.hidden = true;
+                unavailableMessage.hidden = false;
+                return;
+            }
+
+            mapElement.hidden = false;
+            unavailableMessage.hidden = true;
+            const center = { lat: editSpotCenter.latitude, lng: editSpotCenter.longitude };
+            if (!editFacilityMap) {
+                editFacilityMap = new google.maps.Map(mapElement, {
+                    center,
+                    zoom: 14,
+                    mapTypeControl: true,
+                    mapTypeId: google.maps.MapTypeId.ROADMAP,
+                    streetViewControl: false,
+                    fullscreenControl: false,
+                    scrollwheel: false,
+                });
+                editSpotMarker = new google.maps.Marker({
+                    position: center,
+                    map: editFacilityMap,
+                    title: 'Tourist spot location',
+                    icon: { path: google.maps.SymbolPath.CIRCLE, scale: 10, fillColor: '#dc2626', fillOpacity: .95, strokeColor: '#fff', strokeWeight: 2 },
+                });
+                editRadiusCircle = new google.maps.Circle({
+                    map: editFacilityMap,
+                    center,
+                    radius: facilityRadiusMeters,
+                    fillColor: '#0d6efd',
+                    fillOpacity: .10,
+                    strokeColor: '#0d6efd',
+                    strokeOpacity: .45,
+                    strokeWeight: 2,
+                    clickable: false,
+                });
+                editFacilityMap.addListener('click', (event) => setCandidateFacilityLocation(event.latLng));
+            } else {
+                editFacilityMap.setCenter(center);
+                editSpotMarker.setPosition(center);
+                editRadiusCircle.setCenter(center);
+            }
+
+            requestAnimationFrame(() => {
+                google.maps.event.trigger(editFacilityMap, 'resize');
+                editFacilityMap.setCenter(center);
+                refreshEditFacilityMarkers();
+            });
+        };
+
+        const renderEditImages = () => {
+            const imageList = previewModal.querySelector('[data-edit-image-list]');
+            imageList.replaceChildren();
+            editImages.forEach((image) => {
+                const column = document.createElement('div');
+                column.className = 'col-6 col-md-4';
+                const frame = document.createElement('div');
+                frame.className = 'position-relative';
+                const thumbnail = document.createElement('img');
+                thumbnail.src = image.url;
+                thumbnail.alt = 'Existing spot photo';
+                thumbnail.className = 'w-100 rounded';
+                thumbnail.style.cssText = 'height:110px;object-fit:cover;';
+                if (image.removed) thumbnail.style.opacity = '.35';
+                const removeButton = document.createElement('button');
+                removeButton.type = 'button';
+                removeButton.className = `btn btn-sm ${image.removed ? 'btn-secondary' : 'btn-danger'} position-absolute top-0 end-0 m-1`;
+                removeButton.textContent = image.removed ? 'Keep' : 'Remove';
+                removeButton.setAttribute('aria-label', `${image.removed ? 'Keep' : 'Remove'} existing photo`);
+                removeButton.addEventListener('click', () => {
+                    image.removed = !image.removed;
+                    renderEditImages();
+                });
+                frame.append(thumbnail, removeButton);
+                column.append(frame);
+                imageList.append(column);
+            });
+        };
+
+        const renderEditFacilities = (facilities) => {
+            const facilityList = previewModal.querySelector('[data-edit-facility-list]');
+            facilityList.replaceChildren();
+            facilities.forEach((facility) => {
+                const row = document.createElement('div');
+                row.className = 'row g-2 align-items-end mb-3';
+                row.dataset.editFacilityRow = '';
+
+                const addField = (labelText, className, value, inputType, key) => {
+                    const column = document.createElement('div');
+                    column.className = className;
+                    const label = document.createElement('label');
+                    label.className = 'form-label small mb-1';
+                    label.textContent = labelText;
+                    const input = document.createElement(inputType === 'select' ? 'select' : 'input');
+                    input.className = inputType === 'select' ? 'form-select form-select-sm' : 'form-control form-control-sm';
+                    input.dataset.facilityField = key;
+                    if (inputType === 'select') {
+                        [['dining', 'Dining'], ['gas_station', 'Gas station']].forEach(([optionValue, optionLabel]) => {
+                            const option = document.createElement('option');
+                            option.value = optionValue;
+                            option.textContent = optionLabel;
+                            input.append(option);
+                        });
+                    } else {
+                        input.type = inputType;
+                    }
+                    input.value = value ?? '';
+                    input.required = true;
+                    label.append(input);
+                    column.append(label);
+                    row.append(column);
+                };
+
+                addField('Type', 'col-12 col-md-3', facility.type || 'dining', 'select', 'type');
+                addField('Name', 'col-12 col-md-3', facility.name, 'text', 'name');
+                addField('Latitude', 'col-6 col-md-2', facility.latitude, 'number', 'latitude');
+                addField('Longitude', 'col-6 col-md-2', facility.longitude, 'number', 'longitude');
+                row.querySelector('[data-facility-field="latitude"]').step = 'any';
+                row.querySelector('[data-facility-field="longitude"]').step = 'any';
+                const removeColumn = document.createElement('div');
+                removeColumn.className = 'col-12 col-md-2';
+                const removeButton = document.createElement('button');
+                removeButton.type = 'button';
+                removeButton.className = 'btn btn-sm btn-outline-danger w-100';
+                removeButton.textContent = 'Remove';
+                removeButton.setAttribute('aria-label', `Remove ${facility.name || 'nearby facility'}`);
+                removeButton.addEventListener('click', () => {
+                    row.remove();
+                    refreshEditFacilityMarkers();
+                });
+                removeColumn.append(removeButton);
+                row.append(removeColumn);
+                facilityList.append(row);
+                row.querySelectorAll('[data-facility-field]').forEach((input) => input.addEventListener('change', refreshEditFacilityMarkers));
+            });
+            refreshEditFacilityMarkers();
+        };
+
+        const readEditFacilities = () => Array.from(previewModal.querySelectorAll('[data-edit-facility-row]')).map((row) => ({
+            type: row.querySelector('[data-facility-field="type"]').value,
+            name: row.querySelector('[data-facility-field="name"]').value.trim(),
+            latitude: row.querySelector('[data-facility-field="latitude"]').value,
+            longitude: row.querySelector('[data-facility-field="longitude"]').value,
+        }));
+
+        const loadEditMode = async () => {
+            if (!activeSpotId) return;
+            previewSaveSuccess.hidden = true;
+            setEditMode(true);
+            editAction.disabled = true;
+            setEditFeedback('Loading editable details...');
+            try {
+                const url = editUrlTemplate.replace('__SPOT_ID__', encodeURIComponent(activeSpotId));
+                const response = await fetch(url, { headers: { Accept: 'application/json' } });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.message || 'Unable to load editable spot details.');
+                previewModal.querySelector('[data-edit-description]').value = data.description || '';
+                editImages = (data.images || []).map((imageUrl) => ({ url: imageUrl, removed: false }));
+                editSpotCenter = { latitude: Number(data.latitude), longitude: Number(data.longitude) };
+                renderEditImages();
+                renderEditFacilities(data.nearbyFacilities || []);
+                selectedFacilityLocation = null;
+                if (editCandidateMarker) editCandidateMarker.setMap(null);
+                editCandidateMarker = null;
+                previewModal.querySelector('[data-new-facility-name]').value = '';
+                previewModal.querySelector('[data-edit-add-facility]').disabled = true;
+                setFacilityMapFeedback('Select a location on the map.');
+                if (editFacilityMap) initEditFacilityMap();
+                previewModal.querySelector('[data-edit-images]').value = '';
+                previewModal.querySelector('[data-edit-image-selection]').textContent = '';
+                setEditSection('description');
+            } catch (error) {
+                setEditFeedback(error.message || 'Unable to load editable spot details.');
+            } finally {
+                editAction.disabled = false;
+            }
+        };
+
+        const saveEditSection = async () => {
+            if (!activeSpotId) return;
+            const formData = new FormData(editForm);
+            formData.set('section', activeEditSection);
+
+            if (activeEditSection === 'images') {
+                const files = Array.from(previewModal.querySelector('[data-edit-images]').files || []);
+                const remainingCount = editImages.filter((image) => !image.removed).length;
+                if (remainingCount + files.length > 5) {
+                    setEditFeedback('A tourist spot can have a maximum of 5 images.');
+                    return;
+                }
+                editImages.filter((image) => image.removed).forEach((image) => formData.append('remove_images[]', image.url));
+            }
+
+            if (activeEditSection === 'facilities') {
+                const facilities = readEditFacilities();
+                if (facilities.some((facility) => !facility.name || facility.latitude.trim() === '' || facility.longitude.trim() === '')) {
+                    setEditFeedback('Complete each facility name and coordinates, or remove the empty row.');
+                    return;
+                }
+                formData.set('nearby_facilities', JSON.stringify(facilities));
+            }
+
+            formData.set('_method', 'PATCH');
+            editSave.disabled = true;
+            editSave.innerHTML = '<i class="fas fa-spinner fa-spin me-1" aria-hidden="true"></i>Saving';
+            setEditFeedback('');
+            try {
+                const url = updateUrlTemplate.replace('__SPOT_ID__', encodeURIComponent(activeSpotId));
+                const response = await fetch(url, {
+                    method: 'POST',
+                    body: formData,
+                    headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                });
+                const result = await response.json();
+                if (!response.ok) {
+                    const validationMessages = Object.values(result.errors || {}).flat();
+                    throw new Error(validationMessages.join(' ') || result.message || 'Unable to save these changes.');
+                }
+
+                previewModal.querySelector('[data-preview-description]').textContent = result.description || 'No description available.';
+                galleryImages = result.images || [];
+                renderGallery();
+                setOptionalDetail('facilities', (result.nearbyFacilities || []).map((facility) => facility.name).join(', '));
+                setOptionalDetail('revisionReason', result.rejectionReason);
+                if (activeTrigger) {
+                    activeTrigger.dataset.spotDescription = result.description || '';
+                    activeTrigger.dataset.spotImages = JSON.stringify(result.images || []);
+                    activeTrigger.dataset.spotImage = result.images?.[0] || '';
+                    activeTrigger.dataset.spotRejectionReason = result.rejectionReason || '';
+                }
+                editImages = (result.images || []).map((imageUrl) => ({ url: imageUrl, removed: false }));
+                renderEditImages();
+                previewModal.querySelector('[data-edit-images]').value = '';
+                previewModal.querySelector('[data-edit-image-selection]').textContent = '';
+                previewSaveSuccess.textContent = result.message || 'Changes saved.';
+                previewSaveSuccess.hidden = false;
+                setEditMode(false);
+            } catch (error) {
+                setEditFeedback(error.message || 'Unable to save these changes.');
+            } finally {
+                editSave.disabled = false;
+                editSave.innerHTML = '<i class="fas fa-save me-1" aria-hidden="true"></i>Save changes';
+            }
+        };
+
+        if (editAction && editForm) {
+            editAction.addEventListener('click', loadEditMode);
+            editCancel.addEventListener('click', () => setEditMode(false));
+            editSave.addEventListener('click', saveEditSection);
+            previewModal.querySelectorAll('[data-edit-section]').forEach((button) => {
+                button.addEventListener('click', () => setEditSection(button.dataset.editSection));
+            });
+            previewModal.querySelector('[data-edit-add-facility]').addEventListener('click', () => {
+                if (!selectedFacilityLocation?.allowed) return;
+                const nameInput = previewModal.querySelector('[data-new-facility-name]');
+                const typeInput = previewModal.querySelector('[data-new-facility-type]');
+                const name = nameInput.value.trim();
+                if (!name) return;
+                const location = selectedFacilityLocation;
+                const facility = {
+                    type: typeInput.value,
+                    name,
+                    latitude: Number(location.lat.toFixed(6)),
+                    longitude: Number(location.lng.toFixed(6)),
+                };
+                renderEditFacilities([...readEditFacilities(), facility]);
+                selectedFacilityLocation = null;
+                editCandidateMarker?.setMap(null);
+                editCandidateMarker = null;
+                nameInput.value = '';
+                previewModal.querySelector('[data-edit-add-facility]').disabled = true;
+                setFacilityMapFeedback('Pin added. Choose another point or save changes.', true);
+            });
+            previewModal.querySelector('[data-new-facility-name]').addEventListener('input', updateFacilityPinButton);
+            previewModal.querySelector('[data-new-facility-type]').addEventListener('change', updateFacilityPinButton);
+            previewModal.querySelector('[data-edit-images]').addEventListener('change', (event) => {
+                const fileNames = Array.from(event.target.files || []).map((file) => file.name);
+                previewModal.querySelector('[data-edit-image-selection]').textContent = fileNames.join(', ');
+                setEditFeedback('');
+            });
+            previewModal.addEventListener('hidden.bs.modal', () => setEditMode(false));
+        }
 
         const renderGallery = () => {
             const image = previewModal.querySelector('[data-preview-image]');
@@ -185,7 +673,9 @@
             const trigger = event.target.closest('[data-spot-preview]');
             if (!trigger) return;
 
+            activeTrigger = trigger;
             const data = trigger.dataset;
+            previewSaveSuccess.hidden = true;
             const spotName = data.spotName || 'Tourist Spot Details';
             const spotLocation = [data.spotBarangay, data.spotMunicipality, 'Pangasinan'].filter(Boolean).join(', ');
             previewModal.querySelector('[data-preview-name]').textContent = spotLocation ? `${spotName} — ${spotLocation}` : spotName;
@@ -212,12 +702,20 @@
             setOptionalDetail('submitterContact', data.spotSubmitterContact);
             setOptionalDetail('submitted', data.spotSubmitted);
             setOptionalDetail('approved', data.spotApproved);
+            setOptionalDetail('revisionReason', data.spotRejectionReason);
+            setOptionalDetail('facilities', '');
             setOptionalDetail('address', data.spotAddress);
             setOptionalDetail('barangay', data.spotBarangay);
             setOptionalDetail('hours', data.spotHours);
             setOptionalDetail('fee', data.spotFee);
             setOptionalDetail('phone', data.spotPhone);
             setOptionalDetail('website', data.spotWebsite);
+
+            if (editAction) {
+                const spotId = data.spotId || trigger.closest('[data-spot-id]')?.dataset.spotId;
+                activeSpotId = spotId;
+                editAction.hidden = !spotId;
+            }
 
             const latitude = Number(data.spotLatitude);
             const longitude = Number(data.spotLongitude);

@@ -61,6 +61,8 @@ Route::middleware(['auth', 'prevent.cache'])->group(function () {
 
     // Tourist Spots
     Route::resource('tourist_spots', TouristSpotController::class);
+    Route::get('/tourist_spots/{touristSpot}/preview-edit', [TouristSpotController::class, 'previewEdit'])->name('tourist_spots.preview-edit');
+    Route::patch('/tourist_spots/{touristSpot}/preview-edit', [TouristSpotController::class, 'previewUpdate'])->name('tourist_spots.preview-update');
     Route::get(
         '/tourist_spots/{touristSpot}/reviews-json',
         [TouristSpotController::class, 'reviewsJson']
