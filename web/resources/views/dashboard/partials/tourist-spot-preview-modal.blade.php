@@ -17,10 +17,6 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body" data-preview-content>
-<<<<<<< HEAD
-                <div class="alert alert-success py-2" data-preview-save-success role="status" hidden></div>
-=======
->>>>>>> 6c9dd0a899a4398a2daa9c967749cf1516b0239a
                 <div class="row g-4">
                     <div class="col-12 col-md-5" data-preview-media-column hidden>
                         <div data-preview-gallery hidden>
@@ -140,10 +136,6 @@
         const editSave = previewModal.querySelector('[data-edit-save]');
         const editFeedback = previewModal.querySelector('[data-edit-feedback]');
         const editSuccess = previewModal.querySelector('[data-edit-success]');
-<<<<<<< HEAD
-        const previewSaveSuccess = previewModal.querySelector('[data-preview-save-success]');
-=======
->>>>>>> 6c9dd0a899a4398a2daa9c967749cf1516b0239a
         const editUrlTemplate = @json(route('tourist_spots.preview-edit', ['touristSpot' => '__SPOT_ID__']));
         const updateUrlTemplate = @json(route('tourist_spots.preview-update', ['touristSpot' => '__SPOT_ID__']));
 
@@ -447,10 +439,6 @@
 
         const loadEditMode = async () => {
             if (!activeSpotId) return;
-<<<<<<< HEAD
-            previewSaveSuccess.hidden = true;
-=======
->>>>>>> 6c9dd0a899a4398a2daa9c967749cf1516b0239a
             setEditMode(true);
             editAction.disabled = true;
             setEditFeedback('Loading editable details...');
@@ -537,13 +525,7 @@
                 renderEditImages();
                 previewModal.querySelector('[data-edit-images]').value = '';
                 previewModal.querySelector('[data-edit-image-selection]').textContent = '';
-<<<<<<< HEAD
-                previewSaveSuccess.textContent = result.message || 'Changes saved.';
-                previewSaveSuccess.hidden = false;
-                setEditMode(false);
-=======
                 setEditFeedback(result.message || 'Changes saved.', true);
->>>>>>> 6c9dd0a899a4398a2daa9c967749cf1516b0239a
             } catch (error) {
                 setEditFeedback(error.message || 'Unable to save these changes.');
             } finally {
@@ -688,7 +670,6 @@
 
             activeTrigger = trigger;
             const data = trigger.dataset;
-            previewSaveSuccess.hidden = true;
             const spotName = data.spotName || 'Tourist Spot Details';
             const spotLocation = [data.spotBarangay, data.spotMunicipality, 'Pangasinan'].filter(Boolean).join(', ');
             previewModal.querySelector('[data-preview-name]').textContent = spotLocation ? `${spotName} — ${spotLocation}` : spotName;
