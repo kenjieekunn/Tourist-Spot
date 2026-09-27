@@ -22,8 +22,9 @@ Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login.form
 Route::post('/login', [AuthController::class, 'login'])->name('login');
 
 // Protected Routes
-Route::middleware(['auth', 'prevent.cache'])->group(function () {
+Route::middleware(['auth', 'temporary-password', 'prevent.cache'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+    Route::get('/account/password/change', [AuthController::class, 'requirePasswordChange'])->name('account.password.change');
     Route::put('/account/password', [AuthController::class, 'updatePassword'])->name('account.password.update');
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');

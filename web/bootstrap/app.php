@@ -18,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'superadmin' => \App\Http\Middleware\EnsureSuperAdmin::class,
             'municipalityadmin' => \App\Http\Middleware\EnsureMunicipalityAdmin::class,
             'prevent.cache' => \App\Http\Middleware\PreventAuthenticatedPageCache::class,
+            'temporary-password' => \App\Http\Middleware\RequireTemporaryStaffPasswordChange::class,
         ]);
     })
     ->withExceptions(function ($exceptions) {

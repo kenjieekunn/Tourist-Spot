@@ -51,12 +51,8 @@
                 <label for="review-date" class="form-label">Report date</label>
                 <input type="date" name="date" id="review-date" value="{{ $reviewDate }}" class="form-control">
             </div>
-            <div class="col-12 col-md-auto">
-                <button type="submit" class="btn btn-primary"><i class="fas fa-filter"></i> Filter Reviews</button>
-                <a href="{{ route('municipality-admin.reviews') }}" class="btn btn-outline-secondary">Reset</a>
-            </div>
             <div class="col-12 col-md-auto ms-md-auto">
-                <button type="button" class="btn btn-dark" onclick="window.print()"><i class="fas fa-print"></i> Print Feedback Report</button>
+                <button type="button" class="btn btn-dark" onclick="window.print()"><i class="fas fa-print"></i> Print</button>
             </div>
         </form>
     </div>
@@ -101,5 +97,11 @@
     <div class="reviews-report-signoff"><p>Prepared by: ____________________________________</p><p>Position: Municipal Tourism Officer</p><p>Date Printed: ___________________________________</p></div>
     <footer class="reviews-report-footer"><span class="reviews-report-page-number"></span></footer>
 </div>
+
+<script>
+    document.getElementById('review-date')?.addEventListener('change', function () {
+        this.form.requestSubmit();
+    });
+</script>
 
 @endsection

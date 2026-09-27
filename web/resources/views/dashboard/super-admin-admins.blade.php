@@ -9,8 +9,10 @@
     .admin-list-page .card { border: 1px solid #dce9e5; border-radius: 10px; box-shadow: 0 8px 24px rgba(23, 63, 67, .06); }
     .admin-list-page .card-header { color: var(--tourism-ink); border-bottom-color: #dce9e5; }
     .admin-list-page .coverage-panel { background: linear-gradient(135deg, #effaf7, #f7fbf3); border: 1px solid #c8e5da; border-radius: 10px; }
-    .admin-list-page .btn-tourism, .create-admin-modal .btn-tourism { background: var(--tourism-teal); border-color: var(--tourism-teal); color: #fff; }
-    .admin-list-page .btn-tourism:hover, .create-admin-modal .btn-tourism:hover { background: #115e59; border-color: #115e59; color: #fff; }
+    .admin-list-page .btn-tourism, .create-admin-modal .btn-tourism, #credentialsModal .btn-tourism { background: var(--tourism-teal, #0f766e); border-color: var(--tourism-teal, #0f766e); color: #fff; }
+    .admin-list-page .btn-tourism:hover, .admin-list-page .btn-tourism:focus-visible,
+    .create-admin-modal .btn-tourism:hover, .create-admin-modal .btn-tourism:focus-visible,
+    #credentialsModal .btn-tourism:hover, #credentialsModal .btn-tourism:focus-visible { background: #115e59; border-color: #115e59; color: #fff; }
     .create-admin-modal { --tourism-teal: #0f766e; --tourism-ink: #173f43; }
     .create-admin-modal .scope-note { background: #effaf7; border: 1px solid #c8e5da; color: var(--tourism-ink); border-radius: 8px; }
     .admin-list-page .table { --bs-table-striped-bg: #fbfcfc; }
@@ -77,7 +79,7 @@
                             </span>
                         </td>
                         <td class="text-end">
-                            <button type="button" class="btn btn-sm btn-outline-secondary" data-show-admin-credentials data-admin-id="{{ $admin->id }}" data-admin-name="{{ $admin->name }}" data-admin-email="{{ $admin->email }}" data-bs-toggle="modal" data-bs-target="#credentialsModal" title="Show temporary credentials"><i class="fas fa-key"></i> Credentials</button>
+                            <button type="button" class="btn btn-sm btn-tourism" data-show-admin-credentials data-admin-id="{{ $admin->id }}" data-admin-name="{{ $admin->name }}" data-admin-email="{{ $admin->email }}" data-bs-toggle="modal" data-bs-target="#credentialsModal" title="Show temporary credentials"><i class="fas fa-key"></i> Credentials</button>
                         </td>
                     </tr>
                 @empty
@@ -111,14 +113,14 @@
                     <label class="form-label">Password</label>
                     <div class="input-group">
                         <input type="text" class="form-control" id="credentialPassword" readonly style="background-color: #fff;">
-                        <button class="btn btn-outline-secondary" type="button" id="copyPasswordBtn" onclick="copyPassword()">
+                        <button class="btn btn-tourism" type="button" id="copyPasswordBtn" onclick="copyPassword()">
                             <i class="fas fa-copy"></i>
                         </button>
                     </div>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-tourism" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>

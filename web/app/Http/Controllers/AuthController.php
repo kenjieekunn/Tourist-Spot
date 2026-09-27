@@ -73,6 +73,10 @@ class AuthController extends Controller
             ]);
             $request->session()->regenerate();
 
+            if ($user->isMunicipalityStaff() && AdminTempCredential::where('user_id', $user->id)->exists()) {
+                return redirect()->route('account.password.change');
+            }
+
             // Redirect based on user role
             if (Auth::user()->isSuperAdmin()) {
                 return redirect()->route('super-admin.dashboard');
@@ -104,16 +108,35 @@ class AuthController extends Controller
 
     public function updatePassword(Request $request)
     {
+        $user = $request->user();
+        $mustChangeTemporaryPassword = $user->isMunicipalityStaff()
+            && AdminTempCredential::where('user_id', $user->id)->exists();
+
         $validated = $request->validate([
             'current_password' => ['required', 'current_password'],
             'password' => ['required', 'string', 'min:8', 'confirmed', 'different:current_password', 'regex:/[A-Z]/', 'regex:/[^A-Za-z0-9]/'],
         ]);
 
-        $user = $request->user();
         $user->forceFill(['password' => Hash::make($validated['password'])])->save();
         AdminTempCredential::where('user_id', $user->id)->delete();
 
+        if ($mustChangeTemporaryPassword) {
+            return redirect()->route('dashboard')->with('success', 'Password changed. You can now access your staff dashboard.');
+        }
+
         return back()->with('success', 'Your password has been updated.');
+    }
+
+    public function requirePasswordChange(Request $request)
+    {
+        $user = $request->user();
+        abort_unless($user && $user->isMunicipalityStaff(), 404);
+
+        if (!AdminTempCredential::where('user_id', $user->id)->exists()) {
+            return redirect()->route('dashboard');
+        }
+
+        return view('auth.force-password-change');
     }
 
     public function register()
