@@ -88,7 +88,7 @@
             <div class="card">
                 <div class="card-header bg-light"><h5 class="mb-0"><i class="fas fa-circle-info info-icon me-2"></i>Municipality Overview</h5></div>
                 <div class="card-body">
-                    <div class="mb-3"><small class="text-muted d-block">Total Spots</small><strong class="{{ $totalSpots === 0 ? 'text-warning' : '' }}">{{ $totalSpots }}{{ $totalSpots === 0 ? ' - No spots yet' : '' }}</strong><div class="small text-muted">{{ $approvedSpots }} Approved</div></div>
+                    <div class="mb-3"><small class="text-muted d-block">Total Spots</small><strong class="{{ $totalSpots === 0 ? 'text-warning' : '' }}">{{ $totalSpots }}{{ $totalSpots === 0 ? ' - No spots yet' : '' }}</strong><div class="small text-muted">{{ $approvedSpots }} Verified</div></div>
                     <div class="mb-3"><small class="text-muted d-block">Assigned Admin</small>@if($assignedAdmin)<span class="overview-link"><i class="fas fa-user-shield me-1"></i>{{ $assignedAdmin->name }}</span>@else<span class="text-muted">No admin assigned</span>@endif</div>
                     <div class="mb-3"><a class="overview-link" href="{{ route('municipalities.show', $municipality) }}"><i class="fas fa-location-dot me-1"></i> View Tourist Spots</a></div>
                     <hr>

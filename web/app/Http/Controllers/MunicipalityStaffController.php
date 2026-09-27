@@ -62,7 +62,6 @@ class MunicipalityStaffController extends Controller
         $rules = [
             'name' => ['required', 'string', 'max:255'],
             'login' => ['required', 'string', 'max:255'],
-            'is_active' => ['nullable', 'boolean'],
             'permissions' => ['nullable', 'array'],
         ];
         $validated = $request->validate($rules);
@@ -76,7 +75,7 @@ class MunicipalityStaffController extends Controller
             'password' => Hash::make($temporaryPassword),
             'role' => 'municipality-staff',
             'municipality_id' => $admin->municipality_id,
-            'is_active' => $request->boolean('is_active'),
+            'is_active' => true,
             'permissions' => $this->normalizePermissions($admin, $request->input('permissions', [])),
         ];
         if ($hasUsernameColumn) {

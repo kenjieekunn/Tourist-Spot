@@ -62,11 +62,11 @@
             @php
                 $spotImages = collect($spot->image_urls ?? [])->map(fn ($image) => $resolveImageUrl($image))->filter()->values();
                 $verificationStatus = $hasVerificationStatus && $spot->verification_status
-                    ? ucfirst($spot->verification_status)
+                    ? ($spot->verification_status === 'approved' ? 'Verified' : ucfirst($spot->verification_status))
                     : (in_array($spot->status, ['pending', 'inactive'], true) ? 'Pending' : 'Recorded');
                 $verificationBadgeClass = $verificationStatus === 'Pending'
                     ? 'bg-warning text-dark'
-                    : ($verificationStatus === 'Approved' ? 'bg-success' : ($verificationStatus === 'Rejected' ? 'bg-danger' : 'bg-secondary'));
+                    : ($verificationStatus === 'Verified' ? 'bg-success' : ($verificationStatus === 'Rejected' ? 'bg-danger' : 'bg-secondary'));
             @endphp
             <div class="col-12 col-md-6 col-xl-4">
                 <button type="button" class="verification-card" data-spot-preview

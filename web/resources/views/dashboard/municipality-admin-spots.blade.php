@@ -331,7 +331,7 @@
                     data-spot-municipality="{{ $spot->municipality->name ?? 'Unknown Municipality' }}"
                     data-spot-barangay="{{ $spot->barangay }}"
                     data-spot-category="{{ ucfirst($spot->category ?? 'nature') }}"
-                    data-spot-status="{{ ucfirst($spot->verification_status ?? 'Recorded') }}"
+                                    data-spot-status="{{ $spot->verification_status === 'approved' ? 'Verified' : ucfirst($spot->verification_status ?? 'Recorded') }}"
                     data-spot-description="{{ $spot->description }}"
                     data-spot-address="{{ $spot->address }}"
                     data-spot-hours="{{ $spot->opening_hours }}"
@@ -369,7 +369,7 @@
                                 {{ $spot->municipality->name ?? 'Unknown Municipality' }}
                             </span>
                             <span class="badge spot-badge {{ $spot->verification_status === 'approved' ? 'bg-success' : ($spot->verification_status === 'pending' ? 'bg-warning text-dark' : 'bg-danger') }}">
-                                {{ ucfirst($spot->verification_status) }}
+                                {{ $spot->verification_status === 'approved' ? 'Verified' : ucfirst($spot->verification_status ?? 'Recorded') }}
                             </span>
                             <span class="badge spot-badge {{ in_array($spot->status, ['open', 'active']) ? 'bg-success' : 'bg-secondary' }}">
                                 {{ in_array($spot->status, ['open', 'active']) ? 'Open' : 'Closed' }}

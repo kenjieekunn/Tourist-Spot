@@ -221,7 +221,7 @@
                     </div>
                 @elseif($isApprovedPublished)
                     <div class="alert alert-warning">
-                        <i class="fas fa-triangle-exclamation me-1"></i> This spot is approved and published. Saving changes will update the live public listing immediately.
+                        <i class="fas fa-triangle-exclamation me-1"></i> This spot is verified and published. Saving changes will update the live public listing immediately.
                     </div>
                 @else
                     <div class="alert alert-info">

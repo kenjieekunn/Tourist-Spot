@@ -40,7 +40,7 @@
                             <dd class="col-sm-8 text-break" data-preview-value-for="submitterContact" hidden></dd>
                             <dt class="col-sm-4" data-preview-row="submitted" hidden>Date submitted</dt>
                             <dd class="col-sm-8" data-preview-value-for="submitted" hidden></dd>
-                            <dt class="col-sm-4" data-preview-row="approved" hidden>Date approved</dt>
+                            <dt class="col-sm-4" data-preview-row="approved" hidden>Date verified</dt>
                             <dd class="col-sm-8" data-preview-value-for="approved" hidden></dd>
                             <dt class="col-sm-4" data-preview-row="revisionReason" hidden>Revision request</dt>
                             <dd class="col-sm-8" data-preview-value-for="revisionReason" hidden></dd>
@@ -686,8 +686,8 @@
             const status = data.spotStatus || 'Recorded';
             const normalizedStatus = status.toLowerCase();
             const statusBadge = previewModal.querySelector('[data-preview-status]');
-            statusBadge.className = 'badge ' + (normalizedStatus === 'pending' ? 'bg-warning text-dark' : (normalizedStatus === 'approved' ? 'bg-success' : (normalizedStatus === 'rejected' ? 'bg-danger' : 'bg-secondary')));
-            statusBadge.textContent = status;
+            statusBadge.className = 'badge ' + (normalizedStatus === 'pending' ? 'bg-warning text-dark' : (['approved', 'verified'].includes(normalizedStatus) ? 'bg-success' : (normalizedStatus === 'rejected' ? 'bg-danger' : 'bg-secondary')));
+            statusBadge.textContent = ['approved', 'verified'].includes(normalizedStatus) ? 'Verified' : status;
             previewModal.querySelector('[data-preview-description]').textContent = data.spotDescription || 'No description available.';
 
             try {

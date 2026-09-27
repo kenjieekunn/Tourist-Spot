@@ -288,7 +288,7 @@
                                             $pendingSpots = $municipality->pending_spots_count ?? $municipality->touristSpots->where('verification_status', 'pending')->count();
                                         @endphp
                                         <span class="badge municipality-badge bg-success">
-                                            {{ $approvedSpots }}/{{ $municipality->tourist_spots_count }} Approved
+                                            {{ $approvedSpots }}/{{ $municipality->tourist_spots_count }} Verified
                                         </span>
                                         @if($pendingSpots > 0)
                                             <span class="badge municipality-badge bg-warning text-dark">{{ $pendingSpots }} Pending</span>

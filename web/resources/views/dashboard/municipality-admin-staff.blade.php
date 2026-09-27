@@ -66,11 +66,6 @@
                             <input class="form-control" id="staff-modal-login" name="login" placeholder="staff@example.com or staff_username" required>
                         </div>
                         <div class="col-12">
-                            <label class="form-label d-block">Account Status</label>
-                            <input type="hidden" name="is_active" value="0">
-                            <div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="staff-modal-active" name="is_active" value="1" checked><label class="form-check-label" for="staff-modal-active">Active account</label></div>
-                        </div>
-                        <div class="col-12">
                             <label class="form-label d-block">Staff Capabilities</label>
                             @forelse($permissions as $permission => $label)
                                 <div class="form-check mb-2"><input class="form-check-input" type="checkbox" id="staff-modal-permission-{{ $permission }}" name="permissions[]" value="{{ $permission }}"><label class="form-check-label" for="staff-modal-permission-{{ $permission }}">{{ $label }}</label></div>

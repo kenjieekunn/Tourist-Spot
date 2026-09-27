@@ -84,9 +84,7 @@
         align-items: center;
     }
     .municipality-banner-copy { position: relative; z-index: 1; }
-    .municipality-banner-eyebrow { font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; opacity: .82; }
     .municipality-banner-subtitle { margin: 0; opacity: .9; }
-    .municipality-banner-logo { width: 92px; height: 92px; border-radius: 50%; object-fit: cover; border: 3px solid rgba(255,255,255,.75); box-shadow: 0 8px 20px rgba(0,0,0,.18); }
     .spot-row-thumbnail { width: 60px; height: 60px; border-radius: 10px; object-fit: cover; flex: 0 0 auto; background: #eef5f2; }
     .spot-row-placeholder { display: inline-flex; align-items: center; justify-content: center; color: #0f766e; border: 1px solid #c8e5da; }
     .verification-status-badge { background: #fff3cd; color: #856404; border: 1px solid #f1d487; }
@@ -217,19 +215,9 @@
 <div class="municipality-banner">
     <div class="municipality-info">
         <div class="municipality-banner-copy">
-            <div class="municipality-banner-eyebrow">
-                @if(auth()->user()->isMunicipalityStaff())
-                    Welcome Back, {{ auth()->user()->name }}
-                @else
-                    Welcome back, {{ $municipality->name }} Admin
-                @endif
-            </div>
             <h2 class="mb-1">{{ $municipality->name }}</h2>
             <p class="municipality-banner-subtitle">Municipality in Pangasinan · 2nd District of Pangasinan</p>
         </div>
-        @if($municipality->image_url)
-            <img class="municipality-banner-logo" src="{{ preg_match('#^https?://#i', $municipality->image_url) ? $municipality->image_url : url($municipality->image_url) }}" alt="{{ $municipality->name }} municipality seal">
-        @endif
     </div>
 </div>
 
@@ -370,7 +358,7 @@
                         </div>
                         <div class="text-end spot-row-status">
                             <span class="verification-pill verification-status-badge">
-                                {{ ucfirst($spot->verification_status ?? 'Pending') }}
+                                {{ $spot->verification_status === 'approved' ? 'Verified' : ucfirst($spot->verification_status ?? 'Pending') }}
                             </span>
                             <div class="mt-2">
                                 <span class="spot-status-badge operational-status-badge">
@@ -407,7 +395,7 @@
                         <p class="text-muted small mb-0">{{ Str::limit($spot->description, 100) }}</p>
                     </div>
                 @empty
-                    <p class="text-muted">All your spots have been approved or are currently closed.</p>
+                    <p class="text-muted">All your spots are verified or currently closed.</p>
                 @endforelse
             </div>
         </div>
