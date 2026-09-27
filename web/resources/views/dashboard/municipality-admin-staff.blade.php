@@ -27,11 +27,10 @@
                         <td>{{ collect($member->permissions ?? [])->filter()->keys()->map(fn ($permission) => \Illuminate\Support\Str::headline($permission))->join(', ') ?: 'None' }}</td>
                         <td><span class="badge {{ $member->is_active ? 'bg-success' : 'bg-danger' }}">{{ $member->is_active ? 'Active' : 'Inactive' }}</span></td>
                         <td class="text-end">
-                            <a href="{{ route('municipality-admin.staff.edit', $member) }}" class="btn btn-sm btn-outline-secondary"><i class="fas fa-edit"></i> Edit</a>
-                            <form action="{{ route('municipality-admin.staff.toggle-status', $member) }}" method="POST" class="d-inline">
+                            <form action="{{ route('municipality-admin.staff.destroy', $member) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete the staff account for {{ addslashes($member->name) }}? This cannot be undone.');">
                                 @csrf
-                                @method('PATCH')
-                                <button type="submit" class="btn btn-sm {{ $member->is_active ? 'btn-outline-danger' : 'btn-outline-success' }}">{{ $member->is_active ? 'Disable' : 'Enable' }}</button>
+                                @method('DELETE')
+                                <button type="submit" class="btn btn-sm btn-outline-danger" aria-label="Delete {{ $member->name }}" title="Delete staff account"><i class="fas fa-trash-can me-1" aria-hidden="true"></i>Delete</button>
                             </form>
                         </td>
                     </tr>

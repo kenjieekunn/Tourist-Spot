@@ -164,6 +164,19 @@ class MunicipalityStaffController extends Controller
         return back()->with('success', 'Staff account status updated.');
     }
 
+    public function destroy(User $staff)
+    {
+        $admin = $this->currentAdmin();
+        $this->ensureStaffBelongsToAdmin($staff, $admin);
+
+        DB::transaction(function () use ($staff) {
+            AdminTempCredential::where('user_id', $staff->id)->delete();
+            $staff->delete();
+        });
+
+        return redirect()->route('municipality-admin.staff')->with('success', 'Staff account deleted successfully.');
+    }
+
     private function ensureStaffBelongsToAdmin(User $staff, User $admin): void
     {
         abort_unless($staff->isMunicipalityStaff() && (int) $staff->municipality_id === (int) $admin->municipality_id, 404);
