@@ -1,4 +1,38 @@
-    <!DOCTYPE html>
+@php
+    $pageUser = auth()->user();
+    $currentRouteName = Route::currentRouteName();
+    $isSuperAdmin = $pageUser?->isSuperAdmin() ?? false;
+    $routeTitles = [
+        'dashboard' => 'Dashboard',
+        'super-admin.dashboard' => 'Dashboard',
+        'super-admin.tourist-spots' => 'All Tourist Spots',
+        'super-admin.reports' => 'Reports',
+        'super-admin.admins' => 'Municipality Admins',
+        'super-admin.admins.create' => 'Add Municipality Admin',
+        'municipality-admin.dashboard' => 'Dashboard',
+        'municipality-admin.tourist-spots' => 'Tourist Spots',
+        'municipality-admin.reports' => 'Reports',
+        'municipality-admin.reviews' => 'Reviews',
+        'municipality-admin.staff' => 'Staff Accounts',
+        'municipality-admin.staff.create' => 'Add Staff Account',
+        'municipality-admin.staff.edit' => 'Edit Staff Account',
+        'municipality-admin.info' => 'Municipality Information',
+        'tourist_spots.index' => 'Tourist Spots',
+        'tourist_spots.create' => 'Add Tourist Spot',
+        'tourist_spots.show' => 'Tourist Spot Details',
+        'tourist_spots.edit' => 'Edit Tourist Spot',
+        'municipalities.create' => 'Add Municipality',
+        'municipalities.show' => isset($municipality) ? $municipality->name . ' Tourist Spots' : 'Municipality Tourist Spots',
+        'municipalities.edit' => 'Edit Municipality',
+        'reviews.index' => 'Reviews',
+    ];
+    $pageTitle = trim($__env->yieldContent('header', ''));
+    if ($pageTitle === '') {
+        $pageTitle = $routeTitles[$currentRouteName] ?? trim($__env->yieldContent('title', 'Dashboard'));
+        $pageTitle = preg_replace('/\s+-\s+(Super Admin|Municipality Admin)$/', '', $pageTitle);
+    }
+@endphp
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -104,6 +138,7 @@
                 padding-left: 1rem !important;
                 padding-right: 1rem !important;
             }
+            .navbar-custom { padding: 1rem; }
         }
         .sidebar .nav-link {
             color: #bbb;
@@ -199,7 +234,12 @@
         .navbar-custom {
             background-color: #fff;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            padding: 1rem 0;
+            padding: 1rem 2rem;
+        }
+        .admin-header-actions { min-width: 0; }
+        @media (max-width: 767.98px) {
+            .admin-header-row { flex-wrap: wrap; row-gap: .75rem; }
+            .admin-header-actions { width: 100%; justify-content: flex-end; }
         }
         .profile-menu {
             min-width: 220px;
@@ -247,7 +287,18 @@
         }
         .sidebar-account { border-top: 1px solid rgba(153, 246, 228, .22); padding: .9rem 0 1rem; color: #e6fffb; }
         .sidebar-account-icon { width: 2.35rem; height: 2.35rem; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; background: #2dd4bf; color: #134e4a; }
-        .sidebar-account-role { color: #99f6e4; font-size: .72rem; }
+        .super-admin-profile-menu { position: relative; flex: 0 0 auto; }
+        .super-admin-profile-trigger { padding: 0; border: 0; color: #134e4a; cursor: pointer; }
+        .super-admin-profile-trigger:hover,
+        .super-admin-profile-trigger:focus-visible { outline: 3px solid #99f6e4; outline-offset: 3px; }
+        .super-admin-profile-actions { display: none; position: absolute; z-index: 1040; bottom: calc(100% + .65rem); left: 0; width: max-content; min-width: 8rem; max-width: calc(100vw - 2rem); padding: .35rem; border: 1px solid #d9dde3; border-radius: .5rem; background: #fff; box-shadow: 0 8px 24px rgba(15,23,42,.18); }
+        .super-admin-profile-actions::after { position: absolute; right: 1rem; bottom: -.4rem; width: .7rem; height: .7rem; border-right: 1px solid #d9dde3; border-bottom: 1px solid #d9dde3; background: #fff; content: ''; transform: rotate(45deg); }
+        .super-admin-profile-actions .profile-logout-button,
+        .super-admin-profile-actions .profile-logout-button:hover,
+        .super-admin-profile-actions .profile-logout-button:focus { border-color: transparent; background: transparent; box-shadow: none; color: #dc3545; }
+        .super-admin-profile-trigger:hover ~ .super-admin-profile-actions,
+        .super-admin-profile-menu:focus-within .super-admin-profile-actions,
+        .super-admin-profile-menu.is-open .super-admin-profile-actions { display: block; }
         .sidebar-version { color: #8bb8b3; font-size: .7rem; letter-spacing: .04em; }
         @media (max-width: 768px) {
             .main-col,
@@ -283,17 +334,14 @@
                         <a class="nav-link @if(Route::currentRouteName() == 'super-admin.dashboard') active @endif" href="{{ route('super-admin.dashboard') }}">
                             <i class="fas fa-dashboard"></i> Dashboard
                         </a>
+                        <a class="nav-link @if(request()->routeIs('super-admin.admins*')) active @endif" href="{{ route('super-admin.admins') }}">
+                            <i class="fas fa-user-shield"></i> Municipality Admins
+                        </a>
                         <a class="nav-link @if(Route::currentRouteName() == 'super-admin.tourist-spots') active @endif" href="{{ route('super-admin.tourist-spots') }}">
-                            <i class="fas fa-check-circle"></i> Spots Verification
+                            <i class="fas fa-map-location-dot"></i> All Tourist Spots
                         </a>
                         <a class="nav-link @if(Route::currentRouteName() == 'super-admin.reports') active @endif" href="{{ route('super-admin.reports') }}">
                             <i class="fas fa-chart-column"></i> Reports
-                        </a>
-                        <a class="nav-link district-municipalities-tab @if(request()->routeIs('municipalities.*')) active @endif" href="{{ route('municipalities.index') }}" title="2nd District Municipalities">
-                            <i class="fas fa-building"></i> 2nd District Municipalities
-                        </a>
-                        <a class="nav-link @if(request()->routeIs('super-admin.admins*')) active @endif" href="{{ route('super-admin.admins') }}">
-                            <i class="fas fa-user-shield"></i> Municipality Admins
                         </a>
                     @elseif(auth()->user()->belongsToMunicipalityTeam())
                         <!-- Municipality Admin Navigation -->
@@ -335,37 +383,86 @@
                 </nav>
                 <div class="sidebar-logout">
                     <hr style="border-color: #555;">
-                    <div class="sidebar-account d-flex align-items-center gap-2">
-                        <span class="sidebar-account-icon"><i class="fas fa-user-tie"></i></span>
-                        <div class="min-w-0">
+                    @if($currentUser->isSuperAdmin())
+                        <div class="sidebar-account d-flex align-items-center gap-2">
+                            <div class="super-admin-profile-menu" data-profile-menu>
+                                <button type="button" class="sidebar-account-icon super-admin-profile-trigger" data-profile-toggle aria-expanded="false" aria-controls="superAdminProfileActions" aria-label="Show logout button">
+                                    <i class="fas fa-user-tie" aria-hidden="true"></i>
+                                </button>
+                                <div class="super-admin-profile-actions" id="superAdminProfileActions">
+                                    <form action="{{ route('logout') }}" method="POST">
+                                        @csrf
+                                        <button type="submit" class="btn btn-sm w-100 profile-logout-button"><i class="fas fa-sign-out-alt me-1"></i> Logout</button>
+                                    </form>
+                                </div>
+                            </div>
                             <strong class="d-block text-truncate">{{ $currentUser->name ?: 'Provincial Tourism Office' }}</strong>
                         </div>
-                    </div>
-                    <div class="d-flex align-items-center justify-content-between gap-2">
-                        <form action="{{ route('logout') }}" method="POST">
-                            @csrf
-                            <button type="submit" class="btn btn-sm btn-outline-danger">
-                                <i class="fas fa-sign-out-alt"></i> Logout
-                            </button>
-                        </form>
-                    </div>
+                    @else
+                        <div class="sidebar-account d-flex align-items-center gap-2">
+                            <span class="sidebar-account-icon"><i class="fas fa-user-tie"></i></span>
+                            <div class="min-w-0"><strong class="d-block text-truncate">{{ $currentUser->name ?: 'Provincial Tourism Office' }}</strong></div>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2 mt-2">
+                            @if($currentUser->isMunicipalityAdmin())
+                                <button type="button" class="btn btn-sm btn-outline-light" data-bs-toggle="modal" data-bs-target="#changeOwnPasswordModal"><i class="fas fa-key me-1"></i> Change Password</button>
+                            @endif
+                            <form action="{{ route('logout') }}" method="POST">
+                                @csrf
+                                <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fas fa-sign-out-alt"></i> Logout</button>
+                            </form>
+                        </div>
+                    @endif
                 </div>
             </div>
+            @if($currentUser->isMunicipalityAdmin())
+                <div class="modal fade" id="changeOwnPasswordModal" tabindex="-1" aria-labelledby="changeOwnPasswordModalLabel" aria-hidden="true" data-open-on-load="{{ $errors->any() && old('_password_change') ? 'true' : 'false' }}">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="changeOwnPasswordModalLabel">Change Password</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <form action="{{ route('account.password.update') }}" method="POST">
+                                @csrf
+                                @method('PUT')
+                                <input type="hidden" name="_password_change" value="1">
+                                <div class="modal-body">
+                                    <div class="mb-3">
+                                        <label for="currentAccountPassword" class="form-label">Current password</label>
+                                        <input type="password" class="form-control @error('current_password') is-invalid @enderror" id="currentAccountPassword" name="current_password" autocomplete="current-password" required>
+                                        @error('current_password')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="newAccountPassword" class="form-label">New password</label>
+                                        <input type="password" class="form-control @error('password') is-invalid @enderror" id="newAccountPassword" name="password" minlength="8" autocomplete="new-password" required>
+                                        <div class="form-text">Use at least 8 characters, including an uppercase letter and a symbol.</div>
+                                        @error('password')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                    </div>
+                                    <div>
+                                        <label for="confirmAccountPassword" class="form-label">Confirm new password</label>
+                                        <input type="password" class="form-control" id="confirmAccountPassword" name="password_confirmation" minlength="8" autocomplete="new-password" required>
+                                    </div>
+                                </div>
+                                <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button><button type="submit" class="btn btn-primary">Update Password</button></div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            @endif
             <div class="sidebar-overlay" data-sidebar-overlay></div>
 
             <!-- Main Content -->
             <div class="main-col">
                 <div class="navbar-custom">
-                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="admin-header-row d-flex justify-content-between align-items-center">
                         <div class="d-flex align-items-center gap-2">
                             <button type="button" class="sidebar-toggle" data-sidebar-toggle aria-controls="admin-sidebar" aria-expanded="false" aria-label="Open menu" title="Open menu">
                                 <i class="fas fa-bars"></i>
                             </button>
-                            @if(trim($__env->yieldContent('header', 'Dashboard')) !== '')
-                                <h4 class="m-0">@yield('header', 'Dashboard')</h4>
-                            @endif
+                            <h4 class="m-0">{{ $pageTitle }}</h4>
                         </div>
-                        <div class="d-flex align-items-center gap-2 flex-wrap justify-content-end">
+                        <div class="admin-header-actions d-flex align-items-center gap-2 flex-wrap justify-content-end">
                             @yield('header_actions')
                         </div>
                     </div>
@@ -409,6 +506,30 @@
             const sidebar = document.querySelector('.sidebar');
             const toggle = document.querySelector('[data-sidebar-toggle]');
             const overlay = document.querySelector('[data-sidebar-overlay]');
+            const profileMenu = document.querySelector('[data-profile-menu]');
+            const profileToggle = document.querySelector('[data-profile-toggle]');
+            const changePasswordModal = document.getElementById('changeOwnPasswordModal');
+
+            if (changePasswordModal?.dataset.openOnLoad === 'true') {
+                bootstrap.Modal.getOrCreateInstance(changePasswordModal).show();
+            }
+
+            if (profileMenu && profileToggle) {
+                const setProfileOpen = function (isOpen) {
+                    profileMenu.classList.toggle('is-open', isOpen);
+                    profileToggle.setAttribute('aria-expanded', String(isOpen));
+                };
+
+                profileToggle.addEventListener('click', function () {
+                    setProfileOpen(!profileMenu.classList.contains('is-open'));
+                });
+                document.addEventListener('click', function (event) {
+                    if (!profileMenu.contains(event.target)) setProfileOpen(false);
+                });
+                document.addEventListener('keydown', function (event) {
+                    if (event.key === 'Escape') setProfileOpen(false);
+                });
+            }
 
             if (!sidebar || !toggle || !overlay) return;
 

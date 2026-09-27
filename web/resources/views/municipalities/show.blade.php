@@ -50,6 +50,9 @@
         background: #ffffff;
         overflow: hidden;
     }
+    .spot-card-trigger { width: 100%; padding: 0; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+    .spot-card-trigger:hover { box-shadow: 0 8px 20px rgba(23, 63, 67, .12); }
+    .spot-card-trigger:focus-visible { outline: 3px solid rgba(15, 118, 110, .35); outline-offset: 3px; }
     .spot-image,
     .spot-image-placeholder {
         width: 100%;
@@ -90,6 +93,12 @@
 </style>
 
 <div class="municipality-details-page">
+<nav aria-label="Breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ auth()->user()?->isSuperAdmin() ? route('super-admin.dashboard') . '#dashboard-municipalities' : route('municipality-admin.dashboard') }}">Municipalities</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ $municipality->name }}</li>
+    </ol>
+</nav>
 <div class="municipality-detail-header mb-4">
     @if($municipality->image_url)
         <img
@@ -128,7 +137,28 @@
                     <div class="row g-3">
                         @foreach($categorySpots as $spot)
                             <div class="col-12 col-md-6 col-xl-4">
-                                <div class="spot-card h-100 d-flex flex-column">
+                                @php($verificationStatus = $spot->verification_status ? ucfirst($spot->verification_status) : 'Recorded')
+                                <button type="button" class="spot-card spot-card-trigger h-100 d-flex flex-column" data-spot-preview
+                                    data-spot-name="{{ $spot->name }}"
+                                    data-spot-municipality="{{ $municipality->name }}"
+                                    data-spot-barangay="{{ $spot->barangay }}"
+                                    data-spot-category="{{ ucfirst($spot->category ?? 'nature') }}"
+                                    data-spot-status="{{ $verificationStatus }}"
+                                    data-spot-description="{{ $spot->description }}"
+                                    data-spot-submitter="{{ $canViewSubmissionSource ? $spot->creator?->name : '' }}"
+                                    data-spot-submitter-contact="{{ $canViewSubmissionSource ? $spot->creator?->email : '' }}"
+                                    data-spot-submitted="{{ optional($spot->created_at)->format('M d, Y h:i A') }}"
+                                    data-spot-approved="{{ optional($spot->approvalEvent?->created_at)->format('M d, Y h:i A') }}"
+                                    data-spot-address="{{ $spot->address }}"
+                                    data-spot-hours="{{ $spot->opening_hours }}"
+                                    data-spot-fee="{{ $spot->entrance_fee === null ? '' : ($spot->entrance_fee == 0 ? 'Free' : 'PHP ' . number_format($spot->entrance_fee, 2)) }}"
+                                    data-spot-phone="{{ $spot->phone }}"
+                                    data-spot-website="{{ $spot->website }}"
+                                    data-spot-latitude="{{ $spot->latitude }}"
+                                    data-spot-longitude="{{ $spot->longitude }}"
+                                    data-spot-images="{{ json_encode($spot->image_urls) }}"
+                                    data-spot-image="{{ $spot->primary_image_url }}"
+                                    aria-label="View details for {{ $spot->name }}">
                                     @if($spot->image_url)
                                         <img
                                             src="{{ preg_match('#^https?://#i', $spot->image_url) ? $spot->image_url : url($spot->image_url) }}"
@@ -146,13 +176,8 @@
                                                 {{ in_array($spot->status, ['open', 'active']) ? 'Open' : 'Closed' }}
                                             </span>
                                         </div>
-                                        <div class="mt-auto pt-3">
-                                            <a href="{{ route('tourist_spots.show', $spot->id) }}" class="btn btn-sm btn-tourism">
-                                                <i class="fas fa-eye"></i> View Spot
-                                            </a>
-                                        </div>
                                     </div>
-                                </div>
+                                </button>
                             </div>
                         @endforeach
                     </div>
@@ -168,4 +193,6 @@
     </div>
 @endif
 </div>
+
+@include('dashboard.partials.tourist-spot-preview-modal')
 @endsection

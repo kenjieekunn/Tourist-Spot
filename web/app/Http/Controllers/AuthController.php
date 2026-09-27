@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
+use App\Models\AdminTempCredential;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
@@ -99,6 +100,20 @@ class AuthController extends Controller
         $request->session()->regenerateToken();
 
         return redirect()->route('login.form');
+    }
+
+    public function updatePassword(Request $request)
+    {
+        $validated = $request->validate([
+            'current_password' => ['required', 'current_password'],
+            'password' => ['required', 'string', 'min:8', 'confirmed', 'different:current_password', 'regex:/[A-Z]/', 'regex:/[^A-Za-z0-9]/'],
+        ]);
+
+        $user = $request->user();
+        $user->forceFill(['password' => Hash::make($validated['password'])])->save();
+        AdminTempCredential::where('user_id', $user->id)->delete();
+
+        return back()->with('success', 'Your password has been updated.');
     }
 
     public function register()

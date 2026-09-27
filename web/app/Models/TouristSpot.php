@@ -64,6 +64,13 @@ class TouristSpot extends Model
         return $this->belongsTo(User::class, 'edited_by');
     }
 
+    public function approvalEvent()
+    {
+        return $this->hasOne(TouristSpotVerificationEvent::class)
+            ->where('action', 'approved')
+            ->latestOfMany('created_at');
+    }
+
     public function reviews()
     {
         return $this->hasMany(Review::class);

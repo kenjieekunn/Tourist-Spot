@@ -24,6 +24,7 @@ Route::post('/login', [AuthController::class, 'login'])->name('login');
 // Protected Routes
 Route::middleware(['auth', 'prevent.cache'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+    Route::put('/account/password', [AuthController::class, 'updatePassword'])->name('account.password.update');
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
@@ -38,9 +39,6 @@ Route::middleware(['auth', 'prevent.cache'])->group(function () {
         Route::get('/admins/create', [SuperAdminDashboardController::class, 'createAdmin'])->name('admins.create');
         Route::post('/admins', [SuperAdminDashboardController::class, 'storeAdmin'])->name('admins.store');
         Route::get('/reports', [SuperAdminDashboardController::class, 'reports'])->name('reports');
-        Route::get('/admins/{admin}', [SuperAdminDashboardController::class, 'showAdmin'])->name('admins.show');
-        Route::get('/admins/{admin}/edit', [SuperAdminDashboardController::class, 'editAdmin'])->name('admins.edit');
-        Route::put('/admins/{admin}', [SuperAdminDashboardController::class, 'updateAdmin'])->name('admins.update');
         Route::patch('/admins/{admin}/status', [SuperAdminDashboardController::class, 'toggleAdminStatus'])->name('admins.toggle-status');
         Route::get('/admins/{admin}/password', [SuperAdminDashboardController::class, 'getAdminPassword'])->name('admins.password');
     });

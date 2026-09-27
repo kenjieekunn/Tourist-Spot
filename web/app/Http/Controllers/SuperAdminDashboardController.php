@@ -37,43 +37,22 @@ class SuperAdminDashboardController extends Controller
                 ]);
             }
 
-            $recentSpots = TouristSpot::with(['municipality', 'creator'])
-                ->latest('created_at')
-                ->take(5)
-                ->get()
-                ->map(fn ($spot) => [
-                    'type' => 'spot',
-                    'icon' => 'fa-location-dot',
-                    'title' => $spot->name,
-                    'description' => ($spot->creator?->name ?? 'An admin') . ' added a tourist spot in ' . ($spot->municipality?->name ?? 'a municipality'),
-                    'url' => route('tourist_spots.show', $spot),
-                    'created_at' => $spot->created_at,
-                ]);
-            $recentAdmins = User::whereIn('role', ['municipality-admin', 'municipality-staff'])
-                ->with('municipality')
-                ->latest('created_at')
-                ->take(5)
-                ->get()
-                ->map(fn ($user) => [
-                    'type' => 'admin',
-                    'icon' => 'fa-user-plus',
-                    'title' => $user->name,
-                    'description' => 'New ' . str_replace('-', ' ', $user->role) . ' account for ' . ($user->municipality?->name ?? 'the system'),
-                    'url' => route('super-admin.admins'),
-                    'created_at' => $user->created_at,
-                ]);
-            $recentReviews = Review::with('touristSpot')
-                ->latest('created_at')
-                ->take(5)
-                ->get()
-                ->map(fn ($review) => [
-                    'type' => 'review',
-                    'icon' => 'fa-star',
-                    'title' => 'Review for ' . ($review->touristSpot?->name ?? 'tourist spot'),
-                    'description' => ($review->user_name ?: 'A visitor') . ' submitted a visitor review',
-                    'url' => route('reviews.index'),
-                    'created_at' => $review->created_at,
-                ]);
+            $pendingSpotsQuery = TouristSpot::with(['municipality', 'creator']);
+            if (Schema::hasTable('tourist_spot_verification_events')) {
+                $pendingSpotsQuery->with('approvalEvent');
+            }
+            if ($hasVerificationStatus) {
+                $pendingSpotsQuery->where(function ($query) {
+                    $query->where('verification_status', 'pending')
+                        ->orWhere(function ($legacyQuery) {
+                            $legacyQuery->whereNull('verification_status')
+                                ->whereIn('status', ['pending', 'inactive']);
+                        });
+                });
+            } else {
+                $pendingSpotsQuery->whereIn('status', ['pending', 'inactive']);
+            }
+            $pendingTouristSpots = $pendingSpotsQuery->latest('created_at')->get();
 
             $dashboardData = [
                 'totalSpots' => TouristSpot::count(),
@@ -81,14 +60,9 @@ class SuperAdminDashboardController extends Controller
                 'totalReviews' => Review::count(),
                 'totalAdmins' => User::where('role', 'municipality-admin')->count(),
                 'pendingReviews' => Review::where('status', 'pending')->count(),
-                'pendingVerificationSpots' => $hasVerificationStatus
-                    ? TouristSpot::where('verification_status', 'pending')->count()
-                    : 0,
+                'pendingVerificationSpots' => $pendingTouristSpots->count(),
+                'pendingTouristSpots' => $pendingTouristSpots,
                 'municipalities' => $municipalityQuery->orderBy('name')->get(),
-                'recentActivity' => $recentSpots->merge($recentAdmins)->merge($recentReviews)
-                    ->sortByDesc('created_at')
-                    ->take(8)
-                    ->values(),
             ];
         } catch (\Exception $e) {
             Log::error('Super admin dashboard error: ' . $e->getMessage());
@@ -100,8 +74,8 @@ class SuperAdminDashboardController extends Controller
                 'totalAdmins' => 0,
                 'pendingReviews' => 0,
                 'pendingVerificationSpots' => 0,
+                'pendingTouristSpots' => collect(),
                 'municipalities' => collect(),
-                'recentActivity' => collect(),
             ];
         }
 
@@ -194,28 +168,23 @@ class SuperAdminDashboardController extends Controller
     {
         try {
             $hasVerificationStatus = Schema::hasColumn('tourist_spots', 'verification_status');
-
-            $pendingQuery = TouristSpot::with('municipality', 'creator')
+            $touristSpotsQuery = TouristSpot::with(['municipality', 'creator'])
                 ->withCount('reviews');
-
-            if ($hasVerificationStatus) {
-                $pendingQuery->where(function ($query) {
-                    $query->where('verification_status', 'pending')
-                        ->orWhere(function ($legacyQuery) {
-                            $legacyQuery->whereNull('verification_status')
-                                ->whereIn('status', ['pending', 'inactive']);
-                        });
-                });
-            } else {
-                $pendingQuery->whereIn('status', ['pending', 'inactive']);
+            if (Schema::hasTable('tourist_spot_verification_events')) {
+                $touristSpotsQuery->with('approvalEvent');
             }
+            $touristSpots = $touristSpotsQuery->orderByDesc('created_at')->get();
+            $pendingTouristSpots = $touristSpots->filter(function ($spot) use ($hasVerificationStatus) {
+                if ($hasVerificationStatus && $spot->verification_status !== null) {
+                    return $spot->verification_status === 'pending';
+                }
 
-            $pendingSpots = $pendingQuery
-                ->orderByDesc('created_at')
-                ->get();
+                return in_array($spot->status, ['pending', 'inactive'], true);
+            })->values();
 
             return view('dashboard.super-admin-tourist-spots', [
-                'pendingSpots' => $pendingSpots,
+                'touristSpots' => $touristSpots,
+                'pendingTouristSpots' => $pendingTouristSpots,
                 'hasVerificationStatus' => $hasVerificationStatus,
             ]);
         } catch (\Exception $e) {
@@ -230,34 +199,10 @@ class SuperAdminDashboardController extends Controller
     public function admins(Request $request)
     {
         try {
-            $search = trim((string) $request->query('search', ''));
-            $status = $request->query('status', 'all');
-            if (!in_array($status, ['all', 'active', 'disabled'], true)) {
-                $status = 'all';
-            }
-
-            $hasUsernameColumn = Schema::hasColumn('users', 'username');
-
             $admins = User::where('role', 'municipality-admin')
                 ->with(['municipality' => fn ($query) => $query->withCount(['touristSpots', 'staffAccounts'])])
-                ->when($search !== '', function ($query) use ($search, $hasUsernameColumn) {
-                    $query->where(function ($adminQuery) use ($search, $hasUsernameColumn) {
-                        $adminQuery->where('name', 'like', '%' . $search . '%')
-                            ->orWhere('email', 'like', '%' . $search . '%');
-
-                        if ($hasUsernameColumn) {
-                            $adminQuery->orWhere('username', 'like', '%' . $search . '%');
-                        }
-
-                        $adminQuery->orWhereHas('municipality', function ($municipalityQuery) use ($search) {
-                            $municipalityQuery->where('name', 'like', '%' . $search . '%');
-                        });
-                    });
-                })
-                ->when($status === 'active', fn ($query) => $query->where('is_active', true))
-                ->when($status === 'disabled', fn ($query) => $query->where('is_active', false))
                 ->orderBy('name')
-                ->paginate(15);
+                ->get();
 
             $municipalityCount = Municipality::count();
             $municipalitiesWithAdmins = User::where('role', 'municipality-admin')
@@ -267,10 +212,10 @@ class SuperAdminDashboardController extends Controller
 
             return view('dashboard.super-admin-admins', [
                 'admins' => $admins,
-                'search' => $search,
-                'status' => $status,
                 'municipalityCount' => $municipalityCount,
                 'municipalitiesWithAdmins' => $municipalitiesWithAdmins,
+                'availableMunicipalities' => Municipality::whereDoesntHave('admins')->orderBy('name')->get(),
+                'selectedMunicipalityId' => (int) $request->query('municipality_id', 0),
             ]);
         } catch (\Exception $e) {
             Log::error('Super admin admins view error: ' . $e->getMessage());
@@ -303,12 +248,11 @@ class SuperAdminDashboardController extends Controller
                 'exists:municipalities,id',
                 Rule::unique('users', 'municipality_id')->where(fn ($query) => $query->where('role', 'municipality-admin')),
             ],
-            'password' => ['required', 'string', 'min:8', 'confirmed', 'regex:/[A-Z]/', 'regex:/[^A-Za-z0-9]/'],
-            'is_active' => ['required', 'boolean'],
             'max_staff_accounts' => ['required', 'integer', 'min:0', 'max:10000'],
         ];
 
         $validated = $request->validate($rules);
+        $temporaryPassword = Str::random(32) . 'A!';
         $login = $this->normalizeAdminUsername($validated['login']);
         $email = $this->resolveAdminEmail($login);
         $this->ensureLoginIsAvailable($login, $email);
@@ -316,20 +260,24 @@ class SuperAdminDashboardController extends Controller
             'name' => $validated['name'],
             'email' => $email,
             'username' => $hasUsernameColumn ? $login : null,
-            'password' => Hash::make($validated['password']),
+            'password' => Hash::make($temporaryPassword),
             'role' => 'municipality-admin',
             'municipality_id' => $validated['municipality_id'],
-            'is_active' => (bool) $validated['is_active'],
+            'is_active' => true,
             'permissions' => $this->normalizePermissions(array_keys($this->adminPermissions())),
             'max_staff_accounts' => $validated['max_staff_accounts'],
         ]);
 
         AdminTempCredential::updateOrCreate(
             ['user_id' => $admin->id],
-            ['password' => encrypt($validated['password'])]
+            ['password' => encrypt($temporaryPassword)]
         );
 
-        return redirect()->route('super-admin.admins')->with('success', 'Municipality admin created successfully.');
+        return redirect()->route('super-admin.admins')
+            ->with('success', 'Municipality admin created successfully. Share the temporary password securely.')
+            ->with('temporary_password', $temporaryPassword)
+            ->with('temporary_admin_name', $admin->name)
+            ->with('temporary_admin_email', $admin->email);
     }
 
     /**
@@ -445,116 +393,6 @@ class SuperAdminDashboardController extends Controller
             Log::error('Super admin reports view error: ' . $e->getMessage());
             return redirect()->route('super-admin.dashboard')->with('error', 'Error loading reports. Please try again.');
         }
-    }
-
-    /**
-     * Show the edit form for a municipality admin
-     */
-    public function editAdmin(User $admin)
-    {
-        if ($admin->role !== 'municipality-admin') {
-            abort(404);
-        }
-
-        $admin->load('municipality');
-        $municipality = $admin->municipality;
-
-        return view('dashboard.super-admin-admin-edit', [
-            'admin' => $admin,
-            'permissions' => $this->adminPermissions(),
-            'touristSpotsCount' => $municipality ? TouristSpot::where('municipality_id', $municipality->id)->count() : 0,
-            'staffAccountsUsed' => $municipality
-                ? User::where('role', 'municipality-staff')->where('municipality_id', $municipality->id)->count()
-                : 0,
-        ]);
-    }
-
-    /**
-     * Show read-only details for a municipality admin.
-     */
-    public function showAdmin(User $admin)
-    {
-        if ($admin->role !== 'municipality-admin') {
-            abort(404);
-        }
-
-        $admin->load('municipality');
-        $municipality = $admin->municipality;
-        $permissions = $this->adminPermissions();
-        $enabledPermissions = $admin->permissions === null
-            ? array_keys($permissions)
-            : collect($admin->permissions)->filter(fn ($enabled) => $enabled === true)->keys()->all();
-
-        return view('dashboard.super-admin-admin-show', [
-            'admin' => $admin,
-            'permissions' => $permissions,
-            'enabledPermissions' => $enabledPermissions,
-            'touristSpotsCount' => $municipality ? TouristSpot::where('municipality_id', $municipality->id)->count() : 0,
-            'staffAccountsUsed' => $municipality
-                ? User::where('role', 'municipality-staff')->where('municipality_id', $municipality->id)->count()
-                : 0,
-        ]);
-    }
-
-    /**
-     * Update a municipality admin's details
-     */
-    public function updateAdmin(Request $request, User $admin)
-    {
-        if ($admin->role !== 'municipality-admin') {
-            abort(404);
-        }
-
-        $hasUsernameColumn = Schema::hasColumn('users', 'username');
-
-        $rules = [
-            'name' => 'required|string|max:255',
-            'login' => ['required', 'string', 'max:255'],
-            'password' => ['nullable', 'string', 'min:8', 'confirmed', 'regex:/[A-Z]/', 'regex:/[^A-Za-z0-9]/'],
-            'is_active' => 'required|boolean',
-            'permissions' => 'nullable|array',
-            'max_staff_accounts' => ['required', 'integer', 'min:0', 'max:10000'],
-        ];
-
-        $validated = $request->validate($rules);
-
-        $username = $this->normalizeAdminUsername($validated['login']);
-        $email = $this->resolveAdminEmail($username);
-        $this->ensureLoginIsAvailable($username, $email, $admin->id);
-
-        $admin->name = $validated['name'];
-        if ($hasUsernameColumn) {
-            $admin->username = $username;
-        }
-        $admin->email = $email;
-        $admin->is_active = $request->boolean('is_active');
-        if ($request->has('permissions')) {
-            $admin->permissions = $this->normalizePermissions($request->input('permissions', []));
-        }
-        $admin->max_staff_accounts = $validated['max_staff_accounts'];
-
-        if (!empty($validated['password'])) {
-            $admin->password = Hash::make($validated['password']);
-            AdminTempCredential::updateOrCreate(
-                ['user_id' => $admin->id],
-                ['password' => encrypt($validated['password'])]
-            );
-        }
-
-        $admin->save();
-
-        $returnTo = $request->input('return_to');
-        if (is_string($returnTo) && $returnTo !== '') {
-            $host = parse_url($returnTo, PHP_URL_HOST);
-            $scheme = parse_url($returnTo, PHP_URL_SCHEME);
-            $isRelative = !str_starts_with($returnTo, 'http://') && !str_starts_with($returnTo, 'https://');
-
-            if ($isRelative || ($host === $request->getHost() && in_array($scheme, [null, '', $request->getScheme()], true))) {
-                return redirect($returnTo)->with('success', 'Municipality admin updated successfully.');
-            }
-        }
-
-        return redirect()->route('super-admin.admins')->with('success', 'Municipality admin updated successfully.');
     }
 
     /**

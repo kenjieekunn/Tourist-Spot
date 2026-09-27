@@ -321,9 +321,6 @@
                     <h5 class="mb-0">Recent Tourist Spots</h5>
                     <div class="d-flex gap-2 spot-panel-actions">
                         <a href="{{ route('municipality-admin.tourist-spots') }}" class="btn btn-sm btn-tourism">View All</a>
-                        @if(auth()->user()->hasPermission('manage_spots'))
-                            <a href="{{ route('tourist_spots.create') }}" class="btn btn-sm btn-outline-success"><i class="fas fa-plus me-1"></i> Add New Spot</a>
-                        @endif
                     </div>
                 </div>
             </div>

@@ -15,8 +15,6 @@
 
 <style>
     .municipality-edit-page { --tourism-teal: #0f766e; --tourism-green: #3f7d42; --tourism-ink: #173f43; }
-    .municipality-edit-page .breadcrumb { --bs-breadcrumb-divider: '>'; font-size: .88rem; }
-    .municipality-edit-page .breadcrumb a { color: var(--tourism-teal); text-decoration: none; }
     .municipality-edit-page .page-heading { border: 1px solid #c8e5da; border-radius: 10px; padding: 1.1rem 1.25rem; background: linear-gradient(135deg, #effaf7, #f7fbf3); color: var(--tourism-ink); }
     .municipality-edit-page .card { border: 1px solid #dce9e5; border-radius: 10px; box-shadow: 0 8px 24px rgba(23, 63, 67, .06); }
     .municipality-edit-page .card-header { color: var(--tourism-ink); border-bottom-color: #dce9e5; }
@@ -31,14 +29,6 @@
 </style>
 
 <div class="municipality-edit-page">
-    <nav aria-label="Breadcrumb" class="mb-3">
-        <ol class="breadcrumb mb-0">
-            <li class="breadcrumb-item"><a href="{{ route('super-admin.dashboard') }}">Provincial Dashboard</a></li>
-            <li class="breadcrumb-item"><a href="{{ route('municipalities.index') }}">2nd District Municipalities</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Edit: {{ $municipality->name }}</li>
-        </ol>
-    </nav>
-
     <div class="page-heading mb-4">
         <div class="small text-uppercase fw-bold" style="color: var(--tourism-teal); letter-spacing: .06em;">Pangasinan 2nd District</div>
         <h2 class="h4 mb-0">Edit Municipality: {{ $municipality->name }}</h2>
@@ -87,7 +77,7 @@
 
                         <div class="d-flex flex-wrap gap-2 pt-2">
                             <button type="submit" class="btn btn-tourism"><i class="fas fa-save me-1"></i> Save Changes</button>
-                            <a href="{{ route('municipalities.index') }}" class="btn btn-outline-secondary"><i class="fas fa-times me-1"></i> Cancel</a>
+                            <a href="{{ route('super-admin.dashboard') }}#dashboard-municipalities" class="btn btn-outline-secondary"><i class="fas fa-times me-1"></i> Cancel</a>
                         </div>
                     </form>
                 </div>
@@ -99,7 +89,7 @@
                 <div class="card-header bg-light"><h5 class="mb-0"><i class="fas fa-circle-info info-icon me-2"></i>Municipality Overview</h5></div>
                 <div class="card-body">
                     <div class="mb-3"><small class="text-muted d-block">Total Spots</small><strong class="{{ $totalSpots === 0 ? 'text-warning' : '' }}">{{ $totalSpots }}{{ $totalSpots === 0 ? ' - No spots yet' : '' }}</strong><div class="small text-muted">{{ $approvedSpots }} Approved</div></div>
-                    <div class="mb-3"><small class="text-muted d-block">Assigned Admin</small>@if($assignedAdmin)<a class="overview-link" href="{{ route('super-admin.admins.edit', $assignedAdmin) }}"><i class="fas fa-user-shield me-1"></i>{{ $assignedAdmin->name }}</a>@else<span class="text-muted">No admin assigned</span>@endif</div>
+                    <div class="mb-3"><small class="text-muted d-block">Assigned Admin</small>@if($assignedAdmin)<span class="overview-link"><i class="fas fa-user-shield me-1"></i>{{ $assignedAdmin->name }}</span>@else<span class="text-muted">No admin assigned</span>@endif</div>
                     <div class="mb-3"><a class="overview-link" href="{{ route('municipalities.show', $municipality) }}"><i class="fas fa-location-dot me-1"></i> View Tourist Spots</a></div>
                     <hr>
                     <div class="mb-3"><small class="text-muted d-block">Created</small><strong>{{ optional($municipality->created_at)->format('M d, Y H:i') }}</strong></div>

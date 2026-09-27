@@ -40,7 +40,7 @@
                         <button type="submit" class="btn btn-primary">
                             <i class="fas fa-save"></i> Create Municipality
                         </button>
-                        <a href="{{ route('municipalities.index') }}" class="btn btn-secondary">
+                        <a href="{{ route('super-admin.dashboard') }}#dashboard-municipalities" class="btn btn-secondary">
                             <i class="fas fa-times"></i> Cancel
                         </a>
                     </div>

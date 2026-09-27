@@ -69,6 +69,8 @@
         color: var(--dash-text);
         text-decoration: none;
     }
+    #dashboard-municipalities { scroll-margin-top: 1.5rem; }
+    .pending-spots-trigger { cursor: pointer; font-family: inherit; text-align: left; }
     .stat-card:focus-visible {
         outline: 3px solid rgba(15, 118, 110, 0.35);
         outline-offset: 3px;
@@ -167,23 +169,20 @@
         border: 1px solid #e9ecef;
     }
     .municipality-attention { color: #946c10; border: 1px solid #e9c76a; background: #fff9e8; }
-    .activity-item { border-bottom: 1px solid #edf1ef; padding: .85rem 0; }
-    .activity-item:last-child { border-bottom: 0; }
-    .activity-icon { width: 2rem; height: 2rem; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; background: #e5f5f1; color: #0f766e; flex: 0 0 auto; }
 </style>
 
 <!-- Statistics Row -->
 <div class="dashboard-shell">
 <div class="row g-3 mb-4">
     <div class="col-sm-6 col-xl-3">
-        <a href="{{ route('tourist_spots.index') }}" class="stat-card h-100 w-100" aria-label="View all tourist spots">
+        <a href="{{ route('super-admin.tourist-spots') }}" class="stat-card h-100 w-100" aria-label="View all tourist spots">
             <span class="stat-icon"><i class="fas fa-location-dot"></i></span>
             <div class="stat-value">{{ $totalSpots }}</div>
             <div class="stat-label">Total Tourist Spots</div>
         </a>
     </div>
     <div class="col-sm-6 col-xl-3">
-        <a href="{{ route('municipalities.index') }}" class="stat-card h-100 w-100" aria-label="View all municipalities">
+        <a href="#dashboard-municipalities" class="stat-card h-100 w-100" aria-label="Scroll to dashboard municipalities">
             <span class="stat-icon"><i class="fas fa-map"></i></span>
             <div class="stat-value">{{ $totalMunicipalities }}</div>
             <div class="stat-label">Municipalities</div>
@@ -197,15 +196,15 @@
         </a>
     </div>
     <div class="col-sm-6 col-xl-3">
-        <a href="{{ route('super-admin.tourist-spots') }}" class="stat-card priority-stat h-100 w-100" aria-label="View tourist spots pending verification">
+        <button type="button" class="stat-card priority-stat pending-spots-trigger h-100 w-100 border-0" data-bs-toggle="modal" data-bs-target="#dashboardPendingSpotsModal" aria-label="View tourist spots pending verification">
             <span class="stat-icon"><i class="fas fa-hourglass-half"></i></span>
             <div class="stat-value">{{ $pendingVerificationSpots }}</div>
             <div class="stat-label">Pending Spot Verification</div>
-        </a>
+        </button>
     </div>
 </div>
 
-<div class="row mt-4">
+<div class="row mt-4" id="dashboard-municipalities">
     <div class="col-12">
         <div class="card">
             <div class="card-header bg-light d-flex justify-content-between align-items-center">
@@ -273,35 +272,55 @@
     </div>
 </div>
 
-<div class="row g-4 mt-1">
-    <div class="col-lg-8">
-        <div class="card h-100">
-            <div class="card-header bg-light d-flex justify-content-between align-items-center"><h5 class="mb-0">Recent Activity</h5><span class="small text-muted">Latest system updates</span></div>
-            <div class="card-body">
-                @forelse($recentActivity as $activity)
-                    <a href="{{ $activity['url'] }}" class="activity-item d-flex align-items-center gap-3 text-decoration-none text-reset">
-                        <span class="activity-icon"><i class="fas {{ $activity['icon'] }}"></i></span>
-                        <span class="flex-grow-1"><strong class="d-block">{{ $activity['title'] }}</strong><small class="text-muted">{{ $activity['description'] }}</small></span>
-                        <small class="text-muted text-nowrap">{{ optional($activity['created_at'])->diffForHumans() }}</small>
-                    </a>
+</div>
+
+<div class="modal fade" id="dashboardPendingSpotsModal" tabindex="-1" aria-labelledby="dashboardPendingSpotsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title" id="dashboardPendingSpotsModalLabel">Pending Tourist Spots</h5>
+                    <small class="text-muted">{{ $pendingTouristSpots->count() }} awaiting review</small>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0">
+                @forelse($pendingTouristSpots as $pendingSpot)
+                    <button type="button" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center gap-3 px-4 py-3 text-start w-100" data-spot-preview
+                        data-spot-name="{{ $pendingSpot->name }}"
+                        data-spot-municipality="{{ $pendingSpot->municipality->name ?? 'Unknown Municipality' }}"
+                        data-spot-barangay="{{ $pendingSpot->barangay }}"
+                        data-spot-category="{{ ucfirst($pendingSpot->category ?? 'nature') }}"
+                        data-spot-status="Pending"
+                        data-spot-description="{{ $pendingSpot->description }}"
+                        data-spot-submitter="{{ $pendingSpot->creator?->name }}"
+                        data-spot-submitter-contact="{{ $pendingSpot->creator?->email }}"
+                        data-spot-submitted="{{ optional($pendingSpot->created_at)->format('M d, Y h:i A') }}"
+                        data-spot-approved="{{ optional($pendingSpot->approvalEvent?->created_at)->format('M d, Y h:i A') }}"
+                        data-spot-address="{{ $pendingSpot->address }}"
+                        data-spot-hours="{{ $pendingSpot->opening_hours }}"
+                        data-spot-fee="{{ $pendingSpot->entrance_fee === null ? '' : ($pendingSpot->entrance_fee == 0 ? 'Free' : 'PHP ' . number_format($pendingSpot->entrance_fee, 2)) }}"
+                        data-spot-phone="{{ $pendingSpot->phone }}"
+                        data-spot-website="{{ $pendingSpot->website }}"
+                        data-spot-latitude="{{ $pendingSpot->latitude }}"
+                        data-spot-longitude="{{ $pendingSpot->longitude }}"
+                        data-spot-images="{{ json_encode($pendingSpot->image_urls) }}"
+                        data-spot-image="{{ $pendingSpot->primary_image_url }}">
+                        <span class="min-w-0">
+                            <strong class="d-block">{{ $pendingSpot->name }}</strong>
+                            <small class="text-muted">{{ $pendingSpot->municipality->name ?? 'Unknown Municipality' }} · {{ optional($pendingSpot->created_at)->format('M d, Y') }}</small>
+                        </span>
+                        <i class="fas fa-arrow-right text-muted" aria-hidden="true"></i>
+                    </button>
                 @empty
-                    <div class="text-muted py-3">No recent activity yet.</div>
+                    <div class="text-center text-muted py-5"><i class="fas fa-circle-check fa-2x mb-3 text-success"></i><div>No pending tourist spots.</div></div>
                 @endforelse
             </div>
         </div>
     </div>
-    <div class="col-lg-4">
-        <div class="card h-100">
-            <div class="card-header bg-light"><h5 class="mb-0">Quick Actions</h5></div>
-            <div class="card-body d-grid gap-2 align-content-start">
-                <a href="{{ route('super-admin.admins') }}" class="btn btn-outline-secondary text-start"><i class="fas fa-users me-2"></i> 2nd District Municipalities</a>
-                <a href="{{ route('super-admin.tourist-spots') }}" class="btn btn-outline-secondary text-start"><i class="fas fa-check-circle me-2"></i> Review Spot Submissions</a>
-                <a href="{{ route('super-admin.reports') }}" class="btn btn-outline-secondary text-start"><i class="fas fa-chart-column me-2"></i> Open Tourism Reports</a>
-            </div>
-        </div>
-    </div>
 </div>
-</div>
+
+@include('dashboard.partials.tourist-spot-preview-modal')
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {

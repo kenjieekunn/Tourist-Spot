@@ -12,19 +12,22 @@ class MunicipalityController extends Controller
 {
     public function index()
     {
-        $municipalitiesQuery = Municipality::query();
-        if (Schema::hasColumn('municipalities', 'is_active')) {
-            $municipalitiesQuery->where('is_active', true);
+        $user = Auth::user();
+        if ($user?->isSuperAdmin()) {
+            return redirect()->to(route('super-admin.dashboard') . '#dashboard-municipalities');
         }
-        $municipalities = $municipalitiesQuery->paginate(15);
-        return view('municipalities.index', ['municipalities' => $municipalities]);
+
+        return redirect()->route($user?->belongsToMunicipalityTeam() ? 'municipality-admin.dashboard' : 'dashboard');
     }
 
     public function show(Municipality $municipality)
     {
         abort_unless(!Schema::hasColumn('municipalities', 'is_active') || $municipality->is_active || Auth::user()?->isSuperAdmin(), 404);
         $user = Auth::user();
-        $spotsQuery = $municipality->touristSpots();
+        $spotsQuery = $municipality->touristSpots()->with('creator');
+        if (Schema::hasTable('tourist_spot_verification_events')) {
+            $spotsQuery->with('approvalEvent');
+        }
 
         if ($user && $user->isMunicipalityAdmin()) {
             abort_unless((int) $user->municipality_id === (int) $municipality->id, 403);
@@ -34,6 +37,8 @@ class MunicipalityController extends Controller
         }
 
         $spots = $spotsQuery->get();
+        $canViewSubmissionSource = $user?->isSuperAdmin()
+            || ($user?->belongsToMunicipalityTeam() && (int) $user->municipality_id === (int) $municipality->id);
         $spotCategories = $this->spotCategories();
         $groupedSpots = collect($spotCategories)->mapWithKeys(function ($label, $key) use ($spots) {
             return [
@@ -43,18 +48,18 @@ class MunicipalityController extends Controller
             ];
         });
 
-        return view('municipalities.show', compact('municipality', 'groupedSpots', 'spotCategories'));
+        return view('municipalities.show', compact('municipality', 'groupedSpots', 'spotCategories', 'canViewSubmissionSource'));
     }
 
     public function create()
     {
-        return redirect()->route('municipalities.index')
+        return redirect()->to(route('super-admin.dashboard') . '#dashboard-municipalities')
             ->with('info', 'Municipalities are fixed for the 2nd district and cannot be added.');
     }
 
     public function store(Request $request)
     {
-        return redirect()->route('municipalities.index')
+        return redirect()->to(route('super-admin.dashboard') . '#dashboard-municipalities')
             ->with('info', 'Municipalities are fixed for the 2nd district and cannot be added.');
     }
 
@@ -107,7 +112,7 @@ class MunicipalityController extends Controller
     public function destroy(Municipality $municipality)
     {
         $municipality->delete();
-        return redirect()->route('municipalities.index')->with('success', 'Municipality deleted successfully!');
+        return redirect()->to(route('super-admin.dashboard') . '#dashboard-municipalities')->with('success', 'Municipality deleted successfully!');
     }
 
     private function storeImageAndGetUrl(Request $request, string $inputName, string $directory, ?string $existingUrl = null): ?string

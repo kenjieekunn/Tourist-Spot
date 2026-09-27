@@ -44,7 +44,7 @@
 <div class="spots-page">
     <div class="spot-header d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
         <div><h2 class="h4 mb-1">Tourist Spots <span class="badge rounded-pill text-bg-light border">{{ $totalVisibleSpots }} total spots</span></h2><p class="text-muted mb-0">Cross-municipality tourism listings and verification status.</p></div>
-        <div class="d-flex gap-2 align-items-center"><div class="btn-group btn-group-sm" role="group" aria-label="Spot view"><a href="{{ route('tourist_spots.index', $queryParams + ['view' => 'grid']) }}" class="btn {{ $viewMode === 'grid' ? 'btn-tourism' : 'btn-outline-secondary' }}"><i class="fas fa-grip"></i> Grid</a><a href="{{ route('tourist_spots.index', $queryParams + ['view' => 'list']) }}" class="btn {{ $viewMode === 'list' ? 'btn-tourism' : 'btn-outline-secondary' }}"><i class="fas fa-list"></i> List</a></div>@if(auth()->user()->isAdmin())<a href="{{ route('tourist_spots.create') }}" class="btn btn-tourism btn-sm"><i class="fas fa-plus me-1"></i> Add New Spot</a>@endif</div>
+        <div class="d-flex gap-2 align-items-center"><div class="btn-group btn-group-sm" role="group" aria-label="Spot view"><a href="{{ route('tourist_spots.index', $queryParams + ['view' => 'grid']) }}" class="btn {{ $viewMode === 'grid' ? 'btn-tourism' : 'btn-outline-secondary' }}"><i class="fas fa-grip"></i> Grid</a><a href="{{ route('tourist_spots.index', $queryParams + ['view' => 'list']) }}" class="btn {{ $viewMode === 'list' ? 'btn-tourism' : 'btn-outline-secondary' }}"><i class="fas fa-list"></i> List</a></div></div>
     </div>
 
     @if($totalVisibleSpots > 0 && $viewMode === 'grid')
