@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class MunicipalityStaffController extends Controller
 {
@@ -36,6 +37,21 @@ class MunicipalityStaffController extends Controller
             'staff' => $staff,
             'temporaryCredentialIds' => $temporaryCredentialIds,
             'permissions' => $this->availablePermissions($admin),
+            'staffLimit' => $admin->max_staff_accounts,
+        ]);
+    }
+
+    public function create()
+    {
+        $admin = $this->currentAdmin();
+        $staffCount = $this->staffCount($admin);
+        if ($this->hasReachedStaffLimit($admin, $staffCount)) {
+            return redirect()->route('municipality-admin.staff')->with('error', 'The staff account limit has been reached. Ask the super admin to increase the limit.');
+        }
+
+        return view('dashboard.municipality-admin-staff-create', [
+            'permissions' => $this->availablePermissions($admin),
+            'staffCount' => $staffCount,
             'staffLimit' => $admin->max_staff_accounts,
         ]);
     }
@@ -94,6 +110,61 @@ class MunicipalityStaffController extends Controller
             ->with('temporary_staff_name', $staff->name)
             ->with('temporary_staff_login', $login)
             ->with('temporary_staff_password', $temporaryPassword);
+    }
+
+    public function edit(User $staff)
+    {
+        $admin = $this->currentAdmin();
+        $this->ensureStaffBelongsToAdmin($staff, $admin);
+
+        return view('dashboard.municipality-admin-staff-edit', [
+            'staff' => $staff,
+            'permissions' => $this->availablePermissions($admin),
+        ]);
+    }
+
+    public function update(Request $request, User $staff)
+    {
+        $admin = $this->currentAdmin();
+        $this->ensureStaffBelongsToAdmin($staff, $admin);
+        $hasUsernameColumn = Schema::hasColumn('users', 'username');
+        $rules = [
+            'name' => ['required', 'string', 'max:255'],
+            'password' => ['nullable', 'string', 'min:8', 'confirmed'],
+            'login' => ['required', 'string', 'max:255'],
+            'is_active' => ['required', 'boolean'],
+            'permissions' => ['nullable', 'array'],
+        ];
+        $validated = $request->validate($rules);
+        $login = $this->normalizeLogin($validated['login']);
+        $email = $this->resolveEmail($login);
+        $this->ensureLoginIsAvailable($login, $email, $staff->id, $hasUsernameColumn);
+        $staff->name = $validated['name'];
+        if ($hasUsernameColumn) {
+            $staff->username = $login;
+        }
+        $staff->email = $email;
+        $staff->is_active = $request->boolean('is_active');
+        $staff->permissions = $this->normalizePermissions($admin, $request->input('permissions', []));
+        if (!empty($validated['password'])) {
+            $staff->password = Hash::make($validated['password']);
+            AdminTempCredential::updateOrCreate(
+                ['user_id' => $staff->id],
+                ['password' => encrypt($validated['password'])]
+            );
+        }
+        $staff->save();
+
+        return redirect()->route('municipality-admin.staff')->with('success', 'Staff account updated successfully.');
+    }
+
+    public function toggleStatus(User $staff)
+    {
+        $admin = $this->currentAdmin();
+        $this->ensureStaffBelongsToAdmin($staff, $admin);
+        $staff->update(['is_active' => !$staff->is_active]);
+
+        return back()->with('success', 'Staff account status updated.');
     }
 
     public function destroy(User $staff)

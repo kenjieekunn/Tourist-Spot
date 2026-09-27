@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\TouristSpotChanged;
 use App\Models\TouristSpot;
 use App\Models\Municipality;
 use Illuminate\Http\Request;
@@ -265,6 +266,7 @@ class TouristSpotController extends Controller
         }
 
         $spot = TouristSpot::create($validated);
+// event(new TouristSpotChanged('created', $spot->toArray())); // Disabled broadcasting to fix Pusher error
 
         if ($user && $user->belongsToMunicipalityTeam()) {
             return redirect()->route('municipality-admin.tourist-spots')->with('success', 'Tourist spot created successfully!');
@@ -596,6 +598,7 @@ class TouristSpotController extends Controller
             && str_starts_with((string) $touristSpot->rejection_reason, 'Revision requested:')) {
             $touristSpot->update(['rejection_reason' => null]);
         }
+// event(new TouristSpotChanged('updated', $touristSpot->fresh()->toArray())); // Disabled broadcasting to fix Pusher error
 
         $returnTo = $request->input('return_to');
         if (is_string($returnTo) && $returnTo !== '') {
@@ -616,7 +619,9 @@ class TouristSpotController extends Controller
     {
         $this->ensureSpotAccess($touristSpot);
 
+        $deletedId = $touristSpot->id;
         $touristSpot->delete();
+// event(new TouristSpotChanged('deleted', ['id' => $deletedId])); // Disabled broadcasting to fix Pusher error
 
         $returnTo = $request->input('return_to');
         if (is_string($returnTo) && $returnTo !== '') {

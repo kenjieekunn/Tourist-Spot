@@ -14,6 +14,8 @@
         'municipality-admin.reports' => 'Reports',
         'municipality-admin.reviews' => 'Reviews',
         'municipality-admin.staff' => 'Staff Accounts',
+        'municipality-admin.staff.create' => 'Add Staff Account',
+        'municipality-admin.staff.edit' => 'Edit Staff Account',
         'municipality-admin.info' => 'Municipality Information',
         'tourist_spots.index' => 'Tourist Spots',
         'tourist_spots.create' => 'Add Tourist Spot',
