@@ -6,6 +6,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:tourist_spot_app/config/routes/app_routes.dart';
 import 'package:tourist_spot_app/config/theme/app_theme.dart';
 import 'package:tourist_spot_app/services/location_service.dart';
+import 'package:tourist_spot_app/views/screens/tourism_landing_screen.dart';
 
 void main() {
   runApp(
@@ -67,7 +68,11 @@ class _SplashScreenState extends State<SplashScreen> {
   void _navigateToHome() {
     Future.delayed(const Duration(seconds: 2), () {
       if (mounted) {
-        Navigator.of(context).pushReplacementNamed('/home');
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (_) => const TourismLandingScreen(),
+          ),
+        );
       }
     });
   }
