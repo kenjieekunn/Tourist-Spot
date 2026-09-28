@@ -3,22 +3,22 @@ import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
   // Colors
-  static const Color primaryColor = Color(0xFF0F766E);
-  static const Color secondaryColor = Color(0xFF3F7D42);
-  static const Color accentColor = Color(0xFF2A9D8F);
-  static const Color backgroundColor = Color(0xFFF7F9FC);
+  static const Color primaryColor = Color(0xFF0D3B3E);
+  static const Color secondaryColor = Color(0xFF1A5C52);
+  static const Color accentColor = Color(0xFFF2622E);
+  static const Color backgroundColor = Color(0xFFF7F8F3);
   static const Color surfaceColor = Color(0xFFFFFFFF);
   static const Color errorColor = Color(0xFFE74C3C);
   static const Color successColor = Color(0xFF27AE60);
   static const Color warningColor = Color(0xFFF39C12);
 
   // Text Colors
-  static const Color textPrimary = Color(0xFF173F43);
-  static const Color textSecondary = Color(0xFF5E6C84);
+  static const Color textPrimary = Color(0xFF153B3B);
+  static const Color textSecondary = Color(0xFF667B78);
   static const Color textHint = Color(0xFF97A3B6);
 
-  static const Color _darkBackground = Color(0xFF1E1E1E);
-  static const Color _darkSurface = Color(0xFF2D2D2D);
+  static const Color _darkBackground = Color(0xFF142725);
+  static const Color _darkSurface = Color(0xFF203735);
 
   static const ColorScheme _lightColorScheme = ColorScheme.light(
     primary: primaryColor,
@@ -39,7 +39,7 @@ class AppTheme {
     secondary: secondaryColor,
     onSecondary: Colors.white,
     tertiary: accentColor,
-    onTertiary: Colors.black,
+    onTertiary: Colors.white,
     error: errorColor,
     onError: Colors.black,
     surface: _darkSurface,
@@ -124,7 +124,7 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: primaryColor, width: 2),
+          borderSide: const BorderSide(color: secondaryColor, width: 2),
         ),
         hintStyle: GoogleFonts.roboto(color: textHint),
       ),
@@ -174,7 +174,7 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: primaryColor, width: 2),
+          borderSide: const BorderSide(color: accentColor, width: 2),
         ),
         hintStyle: GoogleFonts.roboto(color: Colors.white54),
       ),

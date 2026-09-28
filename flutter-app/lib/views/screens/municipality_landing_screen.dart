@@ -18,7 +18,18 @@ class MunicipalityLandingScreen extends ConsumerStatefulWidget {
 class _MunicipalityLandingScreenState
     extends ConsumerState<MunicipalityLandingScreen> {
   final TextEditingController _searchController = TextEditingController();
+  final GlobalKey _municipalitySectionKey = GlobalKey();
   String _searchQuery = '';
+
+  void _scrollToMunicipalities() {
+    final sectionContext = _municipalitySectionKey.currentContext;
+    if (sectionContext == null) return;
+    Scrollable.ensureVisible(
+      sectionContext,
+      duration: const Duration(milliseconds: 450),
+      curve: Curves.easeOutCubic,
+    );
+  }
 
   @override
   void dispose() {
@@ -67,37 +78,8 @@ class _MunicipalityLandingScreenState
   Widget _buildErrorState(Object error, BuildContext context, WidgetRef ref) {
     return CustomScrollView(
       slivers: [
-        SliverAppBar(
-          pinned: true,
-          elevation: 0,
-          backgroundColor: AppTheme.primaryColor,
-          expandedHeight: 200.h,
-          flexibleSpace: FlexibleSpaceBar(
-            background: Container(
-              decoration: const BoxDecoration(
-                color: AppTheme.primaryColor,
-              ),
-              child: Stack(
-                children: [
-                  Opacity(
-                    opacity: 0.1,
-                    child: Icon(
-                      Icons.location_on,
-                      size: 200.sp,
-                      color: Colors.white,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            title: Text(
-              'Explore the 2nd District of Pangasinan',
-              style: GoogleFonts.roboto(
-                fontSize: 18.sp,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
+        SliverToBoxAdapter(
+          child: _buildHero(),
         ),
         SliverToBoxAdapter(
           child: Padding(
@@ -181,35 +163,36 @@ class _MunicipalityLandingScreenState
 
     return CustomScrollView(
       slivers: [
-        SliverAppBar(
-          pinned: true,
-          elevation: 0,
-          backgroundColor: AppTheme.primaryColor,
-          expandedHeight: 200.h,
-          flexibleSpace: FlexibleSpaceBar(
-            background: Container(
-              decoration: const BoxDecoration(
-                color: AppTheme.primaryColor,
-              ),
-              child: Stack(
-                children: [
-                  Opacity(
-                    opacity: 0.1,
-                    child: Icon(
-                      Icons.location_on,
-                      size: 200.sp,
-                      color: Colors.white,
-                    ),
+        SliverToBoxAdapter(
+          child: _buildHero(
+            imageUrl:
+                municipalities.isEmpty ? null : municipalities.first.imageUrl,
+          ),
+        ),
+        SliverToBoxAdapter(
+          key: _municipalitySectionKey,
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(16.w, 24.h, 16.w, 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Explore by municipality',
+                  style: GoogleFonts.outfit(
+                    fontSize: 21.sp,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.textPrimary,
                   ),
-                ],
-              ),
-            ),
-            title: Text(
-              'Explore 2nd District of Pangasinan',
-              style: GoogleFonts.roboto(
-                fontSize: 18.sp,
-                fontWeight: FontWeight.bold,
-              ),
+                ),
+                SizedBox(height: 4.h),
+                Text(
+                  'Find places, local favorites, and routes across the district.',
+                  style: GoogleFonts.roboto(
+                    fontSize: 13.sp,
+                    color: AppTheme.textSecondary,
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -245,10 +228,11 @@ class _MunicipalityLandingScreenState
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
+                      crossAxisCount:
+                          MediaQuery.sizeOf(context).width >= 600 ? 3 : 2,
                       crossAxisSpacing: 12.w,
                       mainAxisSpacing: 12.w,
-                      childAspectRatio: 0.8,
+                      childAspectRatio: 0.76,
                     ),
                     itemCount: filteredMunicipalities.length,
                     itemBuilder: (context, index) {
@@ -268,20 +252,109 @@ class _MunicipalityLandingScreenState
     );
   }
 
+  Widget _buildHero({String? imageUrl}) {
+    return SizedBox(
+      height: 330.h,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          if (imageUrl != null && imageUrl.isNotEmpty)
+            CachedImageWidget(imageUrl: imageUrl, fit: BoxFit.cover)
+          else
+            Container(color: AppTheme.primaryColor),
+          const DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Color(0x660D3B3E), Color(0xF20D3B3E)],
+              ),
+            ),
+          ),
+          SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(20.w, 22.h, 20.w, 24.h),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.location_on,
+                          color: const Color(0xFF69D3B6), size: 20.sp),
+                      SizedBox(width: 8.w),
+                      Text(
+                        'PANGASINAN 2ND DISTRICT',
+                        style: GoogleFonts.roboto(
+                          color: Colors.white,
+                          fontSize: 11.sp,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Spacer(),
+                  Text(
+                    'YOUR LOCAL TOURISM GUIDE',
+                    style: GoogleFonts.roboto(
+                      color: const Color(0xFF8DE0C8),
+                      fontSize: 11.sp,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  SizedBox(height: 8.h),
+                  Text(
+                    'Discover the\nhidden gems.',
+                    style: GoogleFonts.outfit(
+                      color: Colors.white,
+                      fontSize: 34.sp,
+                      height: 1.04,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  SizedBox(height: 8.h),
+                  Text(
+                    'Eight municipalities. A hundred ways to explore.',
+                    style: GoogleFonts.roboto(
+                      color: Colors.white.withOpacity(0.88),
+                      fontSize: 13.sp,
+                    ),
+                  ),
+                  SizedBox(height: 16.h),
+                  FilledButton.icon(
+                    onPressed: _scrollToMunicipalities,
+                    icon: const Icon(Icons.explore_outlined, size: 18),
+                    label: const Text('Explore places'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppTheme.accentColor,
+                      foregroundColor: Colors.white,
+                      padding: EdgeInsets.symmetric(
+                          horizontal: 16.w, vertical: 11.h),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildSearchBar() {
     return Container(
       padding: EdgeInsets.all(14.w),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16.r),
+        borderRadius: BorderRadius.circular(8.r),
         gradient: const LinearGradient(
           colors: [
             Colors.white,
-            Color(0xFFFFF7F1),
+            Color(0xFFF7F8F3),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        border: Border.all(color: const Color(0xFFFFD7C2)),
+        border: Border.all(color: const Color(0xFFE1EBE6)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.04),
@@ -314,15 +387,15 @@ class _MunicipalityLandingScreenState
           filled: true,
           fillColor: Colors.white,
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12.r),
+            borderRadius: BorderRadius.circular(8.r),
             borderSide: BorderSide.none,
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12.r),
+            borderRadius: BorderRadius.circular(8.r),
             borderSide: BorderSide(color: Colors.grey.shade300),
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12.r),
+            borderRadius: BorderRadius.circular(8.r),
             borderSide: const BorderSide(color: AppTheme.primaryColor),
           ),
           contentPadding: EdgeInsets.symmetric(
@@ -394,7 +467,7 @@ class _MunicipalityLandingScreenState
       child: Card(
         elevation: 4,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12.r),
+          borderRadius: BorderRadius.circular(8.r),
         ),
         child: Stack(
           children: [

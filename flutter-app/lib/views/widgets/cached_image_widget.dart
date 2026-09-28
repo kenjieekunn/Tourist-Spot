@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:tourist_spot_app/config/theme/app_theme.dart';
+import 'package:tourist_spot_app/services/api_base_url_resolver.dart';
 
 class CachedImageWidget extends StatefulWidget {
   final String imageUrl;
@@ -29,7 +30,7 @@ class _CachedImageWidgetState extends State<CachedImageWidget> {
   @override
   Widget build(BuildContext context) {
     final imageWidget = CachedNetworkImage(
-      imageUrl: widget.imageUrl,
+      imageUrl: _resolveImageUrl(widget.imageUrl),
       fit: widget.fit,
       placeholder: (context, url) => _buildLoadingWidget(),
       errorWidget: (context, url, error) => _buildPlaceholder(),
@@ -41,6 +42,36 @@ class _CachedImageWidgetState extends State<CachedImageWidget> {
           ? imageWidget
           : ClipRRect(borderRadius: widget.borderRadius!, child: imageWidget),
     );
+  }
+
+  String _resolveImageUrl(String rawUrl) {
+    final value = rawUrl.trim();
+    final parsed = Uri.tryParse(value);
+    final activeBase = Uri.tryParse(ApiBaseUrlResolver.activeBaseUrl);
+    if (parsed == null || activeBase == null) return value;
+
+    final serverOrigin = Uri(
+      scheme: activeBase.scheme,
+      host: activeBase.host,
+      port: activeBase.hasPort ? activeBase.port : null,
+    );
+    if (parsed.hasScheme) {
+      if (parsed.host == 'localhost' || parsed.host == '127.0.0.1') {
+        return serverOrigin
+            .replace(
+              path: parsed.path,
+              query: parsed.hasQuery ? parsed.query : null,
+            )
+            .toString();
+      }
+      return value;
+    }
+
+    if (value.startsWith('/')) return serverOrigin.resolve(value).toString();
+    if (value.startsWith('storage/')) {
+      return serverOrigin.resolve('/$value').toString();
+    }
+    return serverOrigin.resolve('/storage/$value').toString();
   }
 
   Widget _buildLoadingWidget() {

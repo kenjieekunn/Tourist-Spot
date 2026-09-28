@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:tourist_spot_app/config/routes/app_routes.dart';
 import 'package:tourist_spot_app/config/theme/app_theme.dart';
+import 'package:tourist_spot_app/services/location_service.dart';
 
 void main() {
   runApp(
@@ -49,7 +51,17 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
+    _requestStartupPermissions();
     _navigateToHome();
+  }
+
+  Future<void> _requestStartupPermissions() async {
+    try {
+      await LocationService.requestLocationPermission();
+      await Permission.camera.request();
+    } catch (_) {
+      // Permission prompts should never prevent the app from opening.
+    }
   }
 
   void _navigateToHome() {

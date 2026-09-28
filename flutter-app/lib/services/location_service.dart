@@ -11,8 +11,6 @@ class LocationService {
       if (status == LocationPermission.denied) {
         return false;
       } else if (status == LocationPermission.deniedForever) {
-        // Permissions are denied forever, we cannot request them again
-        openAppSettings();
         return false;
       }
 
