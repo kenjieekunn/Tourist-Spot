@@ -57,21 +57,30 @@ class _CachedImageWidgetState extends State<CachedImageWidget> {
     );
     if (parsed.hasScheme) {
       if (parsed.host == 'localhost' || parsed.host == '127.0.0.1') {
-        return serverOrigin
-            .replace(
-              path: parsed.path,
-              query: parsed.hasQuery ? parsed.query : null,
-            )
-            .toString();
+        return _normalizeStoragePath(
+          serverOrigin.replace(
+            path: parsed.path,
+            query: parsed.hasQuery ? parsed.query : null,
+          ),
+        ).toString();
       }
-      return value;
+      return _normalizeStoragePath(parsed).toString();
     }
 
-    if (value.startsWith('/')) return serverOrigin.resolve(value).toString();
-    if (value.startsWith('storage/')) {
-      return serverOrigin.resolve('/$value').toString();
+    final path = value.startsWith('/') || value.startsWith('storage/')
+        ? value.startsWith('/')
+            ? value
+            : '/$value'
+        : '/storage/$value';
+    return _normalizeStoragePath(serverOrigin.resolve(path)).toString();
+  }
+
+  Uri _normalizeStoragePath(Uri uri) {
+    var path = uri.path;
+    while (path.contains('/storage/storage/')) {
+      path = path.replaceAll('/storage/storage/', '/storage/');
     }
-    return serverOrigin.resolve('/storage/$value').toString();
+    return path == uri.path ? uri : uri.replace(path: path);
   }
 
   Widget _buildLoadingWidget() {

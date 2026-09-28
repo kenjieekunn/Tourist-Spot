@@ -535,8 +535,12 @@ class TouristSpotApiController extends Controller
             return $path;
         }
 
-        // Uploaded public-disk files are exposed through the storage symlink.
-        return asset('storage/' . ltrim($path, '/'));
+        $relativePath = ltrim($path, '/');
+        while (str_starts_with($relativePath, 'storage/')) {
+            $relativePath = substr($relativePath, strlen('storage/'));
+        }
+
+        return asset('storage/' . $relativePath);
     }
 
     private function transformMunicipality(Municipality $municipality): array
