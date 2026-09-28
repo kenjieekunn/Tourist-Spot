@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:tourist_spot_app/models/municipality_model.dart';
 import 'package:tourist_spot_app/models/tourist_spot_model.dart';
 import 'package:tourist_spot_app/views/screens/municipality_landing_screen.dart';
+import 'package:tourist_spot_app/views/screens/tourism_landing_screen.dart';
 import 'package:tourist_spot_app/views/screens/tourist_spots_list_screen.dart';
 import 'package:tourist_spot_app/views/screens/tourist_spot_detail_screen.dart';
 import 'package:tourist_spot_app/views/screens/tourist_spot_map_screen.dart';
@@ -20,6 +21,10 @@ class AppRoutes {
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
       case home:
+        return MaterialPageRoute(
+          builder: (_) => const TourismLandingScreen(),
+        );
+      case '/municipalities':
         return MaterialPageRoute(
           builder: (_) => const MunicipalityLandingScreen(),
         );
