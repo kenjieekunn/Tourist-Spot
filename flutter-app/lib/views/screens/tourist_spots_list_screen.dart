@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'dart:convert';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tourist_spot_app/controllers/auth_providers.dart';
 import 'package:tourist_spot_app/models/municipality_model.dart';
@@ -13,7 +14,20 @@ import 'package:tourist_spot_app/controllers/app_providers.dart';
 import 'package:tourist_spot_app/views/widgets/cached_image_widget.dart';
 import 'package:tourist_spot_app/config/theme/app_theme.dart';
 
-enum _SpotCategoryFilter { all, beach, parks, falls, nature, resort, favorites }
+enum _SpotCategoryFilter {
+  all,
+  nature,
+  beach,
+  falls,
+  heritage,
+  food,
+  farm,
+  church,
+  adventure,
+  parks,
+  resort,
+  favorites,
+}
 
 class TouristSpotsListScreen extends ConsumerStatefulWidget {
   final Municipality municipality;
@@ -33,6 +47,7 @@ class _TouristSpotsListScreenState
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   _SpotCategoryFilter _selectedCategory = _SpotCategoryFilter.all;
+  bool _isMapView = false;
   final Set<int> _updatingFavorites = <int>{};
 
   @override
@@ -247,6 +262,10 @@ class _TouristSpotsListScreenState
                   SizedBox(height: 12.h),
                   _buildSearchBar(),
                   SizedBox(height: 12.h),
+                  _buildCategoryChips(),
+                  SizedBox(height: 10.h),
+                  _buildViewToggle(),
+                  SizedBox(height: 12.h),
                   Text(
                     'Showing ${filteredSpots.length} of ${spots.length} spots',
                     style: GoogleFonts.roboto(
@@ -320,6 +339,10 @@ class _TouristSpotsListScreenState
                 SizedBox(height: 12.h),
                 _buildSearchBar(),
                 SizedBox(height: 12.h),
+                _buildCategoryChips(),
+                SizedBox(height: 10.h),
+                _buildViewToggle(),
+                SizedBox(height: 12.h),
                 Text(
                   'Showing ${filteredSpots.length} of ${spots.length} spots',
                   style: GoogleFonts.roboto(
@@ -331,21 +354,30 @@ class _TouristSpotsListScreenState
             ),
           ),
         ),
-        SliverPadding(
-          padding: EdgeInsets.all(12.w),
-          sliver: SliverGrid(
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 12.w,
-              mainAxisSpacing: 12.w,
-              childAspectRatio: 0.75,
+        if (_isMapView)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(12.w, 0, 12.w, 12.h),
+              child: _buildSpotsMap(filteredSpots),
             ),
-            delegate: SliverChildBuilderDelegate(
-              (context, index) => _buildSpotCard(filteredSpots[index], context),
-              childCount: filteredSpots.length,
+          )
+        else
+          SliverPadding(
+            padding: EdgeInsets.all(12.w),
+            sliver: SliverGrid(
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                crossAxisSpacing: 12.w,
+                mainAxisSpacing: 12.w,
+                childAspectRatio: 0.75,
+              ),
+              delegate: SliverChildBuilderDelegate(
+                (context, index) =>
+                    _buildSpotCard(filteredSpots[index], context),
+                childCount: filteredSpots.length,
+              ),
             ),
           ),
-        ),
       ],
     );
   }
@@ -382,26 +414,15 @@ class _TouristSpotsListScreenState
         decoration: InputDecoration(
           hintText: 'Search tourist spots',
           prefixIcon: const Icon(Icons.search),
-          suffixIcon: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (_searchQuery.isNotEmpty)
-                IconButton(
+          suffixIcon: _searchQuery.isNotEmpty
+              ? IconButton(
                   icon: const Icon(Icons.clear),
                   onPressed: () {
                     _searchController.clear();
-                    setState(() {
-                      _searchQuery = '';
-                    });
+                    setState(() => _searchQuery = '');
                   },
-                ),
-              _buildCategoryFilterButton(),
-            ],
-          ),
-          suffixIconConstraints: const BoxConstraints(
-            minWidth: 0,
-            minHeight: 0,
-          ),
+                )
+              : null,
           filled: true,
           fillColor: Colors.white,
           border: OutlineInputBorder(
@@ -425,50 +446,120 @@ class _TouristSpotsListScreenState
     );
   }
 
-  Widget _buildCategoryFilterButton() {
-    return PopupMenuButton<_SpotCategoryFilter>(
-      tooltip: 'Category filter',
-      initialValue: _selectedCategory,
-      onSelected: (value) {
-        setState(() {
-          _selectedCategory = value;
-        });
-      },
-      icon: Icon(
-        Icons.arrow_drop_down,
-        color: _selectedCategory == _SpotCategoryFilter.all
-            ? Colors.grey[700]
-            : AppTheme.primaryColor,
-      ),
-      itemBuilder: (context) {
-        return _SpotCategoryFilter.values
-            .map(
-              (filter) => PopupMenuItem<_SpotCategoryFilter>(
-                value: filter,
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        _categoryFilterLabel(filter),
-                        style: GoogleFonts.roboto(
-                          fontSize: 13.sp,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                    if (filter == _selectedCategory)
-                      const Icon(
-                        Icons.check,
-                        size: 18,
-                        color: AppTheme.primaryColor,
-                      ),
-                  ],
-                ),
+  Widget _buildCategoryChips() {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: _SpotCategoryFilter.values.map((filter) {
+          return Padding(
+            padding: EdgeInsets.only(right: 8.w),
+            child: FilterChip(
+              label: Text(_categoryFilterLabel(filter)),
+              selected: _selectedCategory == filter,
+              onSelected: (_) => setState(() => _selectedCategory = filter),
+              showCheckmark: false,
+              selectedColor: AppTheme.primaryColor.withValues(alpha: 0.14),
+              labelStyle: GoogleFonts.roboto(
+                fontSize: 12.sp,
+                color: _selectedCategory == filter
+                    ? AppTheme.primaryColor
+                    : Colors.grey[800],
+                fontWeight: _selectedCategory == filter
+                    ? FontWeight.w700
+                    : FontWeight.w500,
               ),
-            )
-            .toList();
-      },
+              side: BorderSide(
+                color: _selectedCategory == filter
+                    ? AppTheme.primaryColor
+                    : Colors.grey.shade300,
+              ),
+            ),
+          );
+        }).toList(),
+      ),
     );
+  }
+
+  Widget _buildViewToggle() {
+    return Align(
+      alignment: Alignment.centerRight,
+      child: SegmentedButton<bool>(
+        segments: const [
+          ButtonSegment(
+            value: false,
+            icon: Icon(Icons.grid_view),
+            label: Text('List'),
+          ),
+          ButtonSegment(
+            value: true,
+            icon: Icon(Icons.map_outlined),
+            label: Text('Map'),
+          ),
+        ],
+        selected: {_isMapView},
+        onSelectionChanged: (selection) {
+          setState(() => _isMapView = selection.first);
+        },
+      ),
+    );
+  }
+
+  Widget _buildSpotsMap(List<TouristSpot> spots) {
+    final firstSpot = spots.first;
+    final markers = spots.map((spot) {
+      return Marker(
+        markerId: MarkerId('spot-${spot.id}'),
+        position: LatLng(spot.latitude, spot.longitude),
+        icon:
+            BitmapDescriptor.defaultMarkerWithHue(_categoryHue(spot.category)),
+        infoWindow: InfoWindow(
+          title: spot.name,
+          snippet: spot.categoryLabel,
+          onTap: () =>
+              Navigator.of(context).pushNamed('/spot-detail', arguments: spot),
+        ),
+        onTap: () =>
+            Navigator.of(context).pushNamed('/spot-detail', arguments: spot),
+      );
+    }).toSet();
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12.r),
+      child: SizedBox(
+        height: 500.h,
+        child: GoogleMap(
+          initialCameraPosition: CameraPosition(
+            target: LatLng(firstSpot.latitude, firstSpot.longitude),
+            zoom: spots.length == 1 ? 14 : 10,
+          ),
+          markers: markers,
+          myLocationButtonEnabled: false,
+          zoomControlsEnabled: true,
+        ),
+      ),
+    );
+  }
+
+  double _categoryHue(String? category) {
+    switch ((category ?? '').toLowerCase()) {
+      case 'beach':
+        return BitmapDescriptor.hueAzure;
+      case 'falls':
+      case 'waterfall':
+        return BitmapDescriptor.hueCyan;
+      case 'heritage':
+      case 'church':
+        return BitmapDescriptor.hueViolet;
+      case 'food':
+        return BitmapDescriptor.hueOrange;
+      case 'farm':
+      case 'nature':
+        return BitmapDescriptor.hueGreen;
+      case 'adventure':
+        return BitmapDescriptor.hueRose;
+      default:
+        return BitmapDescriptor.hueRed;
+    }
   }
 
   List<TouristSpot> _filterSpots(
@@ -477,19 +568,25 @@ class _TouristSpotsListScreenState
 
     return spots.where((spot) {
       final category = (spot.category ?? '').toLowerCase().trim();
-      final matchesCategory = _selectedCategory == _SpotCategoryFilter.all ||
-          (_selectedCategory == _SpotCategoryFilter.beach &&
-              category == 'beach') ||
-          (_selectedCategory == _SpotCategoryFilter.parks &&
-              category == 'parks') ||
-          (_selectedCategory == _SpotCategoryFilter.falls &&
-              category == 'falls') ||
-          (_selectedCategory == _SpotCategoryFilter.nature &&
-              category == 'nature') ||
-          (_selectedCategory == _SpotCategoryFilter.resort &&
-              category == 'resort') ||
-          (_selectedCategory == _SpotCategoryFilter.favorites &&
-              spot.isFavorited);
+      final matchesCategory = switch (_selectedCategory) {
+        _SpotCategoryFilter.all => true,
+        _SpotCategoryFilter.nature => {'nature', 'natural'}.contains(category),
+        _SpotCategoryFilter.beach => {'beach', 'beaches'}.contains(category),
+        _SpotCategoryFilter.falls =>
+          {'falls', 'waterfall', 'waterfalls'}.contains(category),
+        _SpotCategoryFilter.heritage =>
+          {'heritage', 'cultural'}.contains(category),
+        _SpotCategoryFilter.food =>
+          {'food', 'dining', 'local_food'}.contains(category),
+        _SpotCategoryFilter.farm =>
+          {'farm', 'agri_tourism', 'agritourism'}.contains(category),
+        _SpotCategoryFilter.church =>
+          {'church', 'religious'}.contains(category),
+        _SpotCategoryFilter.adventure => category == 'adventure',
+        _SpotCategoryFilter.parks => {'park', 'parks'}.contains(category),
+        _SpotCategoryFilter.resort => category == 'resort',
+        _SpotCategoryFilter.favorites => spot.isFavorited,
+      };
 
       final matchesQuery = query.isEmpty ||
           spot.name.toLowerCase().contains(query) ||
@@ -506,6 +603,16 @@ class _TouristSpotsListScreenState
     switch (filter) {
       case _SpotCategoryFilter.all:
         return 'All';
+      case _SpotCategoryFilter.heritage:
+        return 'Heritage';
+      case _SpotCategoryFilter.food:
+        return 'Food';
+      case _SpotCategoryFilter.farm:
+        return 'Farm';
+      case _SpotCategoryFilter.church:
+        return 'Church';
+      case _SpotCategoryFilter.adventure:
+        return 'Adventure';
       case _SpotCategoryFilter.beach:
         return 'Beach';
       case _SpotCategoryFilter.parks:

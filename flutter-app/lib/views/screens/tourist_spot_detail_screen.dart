@@ -1,6 +1,7 @@
 ﻿import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
+import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -12,8 +13,10 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:map_launcher/map_launcher.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tourist_spot_app/models/tourist_spot_model.dart';
 import 'package:tourist_spot_app/controllers/app_providers.dart';
+import 'package:tourist_spot_app/controllers/auth_providers.dart';
 import 'package:tourist_spot_app/config/constants/api_constants.dart';
 import 'package:tourist_spot_app/views/widgets/cached_image_widget.dart';
 import 'package:tourist_spot_app/config/theme/app_theme.dart';
@@ -47,10 +50,13 @@ class _TouristSpotDetailScreenState
   bool _isFetchingRoute = false;
   DateTime? _lastRouteFetch;
   LatLng? _lastRouteFrom;
+  bool _showMap = false;
+  late bool _isSaved;
 
   @override
   void initState() {
     super.initState();
+    _isSaved = widget.spot.isFavorited;
     _scrollController = ScrollController();
     _scrollController.addListener(_handleScroll);
     _initLocationTracking();
@@ -70,6 +76,55 @@ class _TouristSpotDetailScreenState
     } else if (_scrollController.offset <= 100 && _isAppBarVisible) {
       setState(() => _isAppBarVisible = false);
     }
+  }
+
+  Future<void> _toggleSaved() async {
+    final shouldSave = !_isSaved;
+    try {
+      if (ref.read(authUserProvider) != null) {
+        await ref.read(apiServiceProvider).toggleSpotFavorite(widget.spot.id);
+      } else {
+        final prefs = await SharedPreferences.getInstance();
+        final encoded = prefs.getString('local_favorites') ?? '{}';
+        final favorites = Map<String, bool>.from(
+          (jsonDecode(encoded) as Map).cast<String, bool>(),
+        );
+        final key = widget.spot.id.toString();
+        if (shouldSave) {
+          favorites[key] = true;
+        } else {
+          favorites.remove(key);
+        }
+        await prefs.setString('local_favorites', jsonEncode(favorites));
+        ref.invalidate(localFavoritesProvider);
+      }
+
+      if (!mounted) return;
+      setState(() => _isSaved = shouldSave);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(shouldSave ? 'Spot saved' : 'Spot removed')),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not update saved spot: $error')),
+      );
+    }
+  }
+
+  Future<void> _copyCoordinates() async {
+    final coordinates =
+        '${widget.spot.latitude.toStringAsFixed(6)}, ${widget.spot.longitude.toStringAsFixed(6)}';
+    await Clipboard.setData(ClipboardData(text: coordinates));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Coordinates copied')),
+    );
+  }
+
+  Future<void> _openLocationSettings() async {
+    final opened = await Geolocator.openLocationSettings();
+    if (!opened) await Geolocator.openAppSettings();
   }
 
   Future<void> _initLocationTracking() async {
@@ -414,9 +469,47 @@ class _TouristSpotDetailScreenState
           ),
 
           SliverToBoxAdapter(
-            child: SizedBox(height: 30.h),
+            child: SizedBox(height: 96.h),
           ),
         ],
+      ),
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: Container(
+          padding: EdgeInsets.fromLTRB(16.w, 10.h, 16.w, 10.h),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border(top: BorderSide(color: Colors.grey.shade200)),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: _openMapNavigation,
+                  icon: const Icon(Icons.navigation),
+                  label: const Text('Navigate'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppTheme.primaryColor,
+                    minimumSize: Size.fromHeight(48.h),
+                  ),
+                ),
+              ),
+              SizedBox(width: 10.w),
+              SizedBox(
+                height: 48.h,
+                child: OutlinedButton.icon(
+                  onPressed: _toggleSaved,
+                  icon: Icon(_isSaved ? Icons.bookmark : Icons.bookmark_border),
+                  label: Text(_isSaved ? 'Saved' : 'Save'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppTheme.primaryColor,
+                    side: const BorderSide(color: AppTheme.primaryColor),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -627,73 +720,52 @@ class _TouristSpotDetailScreenState
             borderRadius: BorderRadius.circular(12.r),
             child: SizedBox(
               height: 250.h,
-              child: GoogleMap(
-                initialCameraPosition: CameraPosition(
-                  target: spotLatLng,
-                  zoom: 15,
-                ),
-                markers: markers,
-                polylines: polylines,
-                myLocationEnabled: _hasLocationPermission,
-                myLocationButtonEnabled: _hasLocationPermission,
-                zoomControlsEnabled: true,
-                mapToolbarEnabled: true,
-                onMapCreated: (controller) {
-                  _mapController = controller;
-                  Future.delayed(const Duration(milliseconds: 500), () {
-                    _updateCameraToBounds();
-                    _fetchRouteIfNeeded(force: true);
-                  });
-                },
-              ),
+              child: _showMap
+                  ? GoogleMap(
+                      initialCameraPosition: CameraPosition(
+                        target: spotLatLng,
+                        zoom: 15,
+                      ),
+                      markers: markers,
+                      polylines: polylines,
+                      myLocationEnabled: _hasLocationPermission,
+                      myLocationButtonEnabled: _hasLocationPermission,
+                      zoomControlsEnabled: true,
+                      mapToolbarEnabled: true,
+                      onMapCreated: (controller) {
+                        _mapController = controller;
+                        Future.delayed(const Duration(milliseconds: 500), () {
+                          _updateCameraToBounds();
+                          _fetchRouteIfNeeded(force: true);
+                        });
+                      },
+                    )
+                  : Material(
+                      color: const Color(0xffe8eee9),
+                      child: InkWell(
+                        onTap: () => setState(() => _showMap = true),
+                        child: Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.map_outlined,
+                                  size: 38.sp, color: AppTheme.primaryColor),
+                              SizedBox(height: 8.h),
+                              const Text('Tap to load map'),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
             ),
           ),
           SizedBox(height: 12.h),
-          Container(
-            padding: EdgeInsets.all(12.w),
-            decoration: BoxDecoration(
-              color: Colors.grey[50],
-              borderRadius: BorderRadius.circular(8.r),
-              border: Border.all(color: Colors.grey[300]!),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      Icons.location_on,
-                      size: 16.sp,
-                      color: AppTheme.primaryColor,
-                    ),
-                    SizedBox(width: 8.w),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Coordinates',
-                            style: GoogleFonts.roboto(
-                              fontSize: 11.sp,
-                              color: Colors.grey[600],
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          SizedBox(height: 2.h),
-                          Text(
-                            '${widget.spot.latitude.toStringAsFixed(6)}, ${widget.spot.longitude.toStringAsFixed(6)}',
-                            style: GoogleFonts.roboto(
-                              fontSize: 12.sp,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.grey[800],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: _copyCoordinates,
+              icon: const Icon(Icons.copy, size: 16),
+              label: const Text('Copy coordinates'),
             ),
           ),
           if (_locationError != null) ...[
@@ -721,6 +793,10 @@ class _TouristSpotDetailScreenState
                         color: Colors.orange[700],
                       ),
                     ),
+                  ),
+                  TextButton(
+                    onPressed: _openLocationSettings,
+                    child: const Text('Enable'),
                   ),
                 ],
               ),
