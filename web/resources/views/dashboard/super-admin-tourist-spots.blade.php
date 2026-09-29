@@ -70,6 +70,8 @@
             @endphp
             <div class="col-12 col-md-6 col-xl-4">
                 <button type="button" class="verification-card" data-spot-preview
+                    data-spot-id="{{ $spot->id }}"
+                    data-spot-return-to="tourist-spots"
                     data-spot-name="{{ $spot->name }}"
                     data-spot-municipality="{{ $spot->municipality->name ?? 'Unknown Municipality' }}"
                     data-spot-barangay="{{ $spot->barangay }}"
@@ -136,9 +138,9 @@
             </div>
             <div class="modal-body pending-spot-list">
                 @forelse($pendingTouristSpots as $pendingSpot)
-                    <div class="list-group-item d-flex align-items-center gap-3 py-2">
-                    <button type="button" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center gap-3 py-2 text-start flex-grow-1 border-0" data-spot-preview
+                    <button type="button" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center gap-3 py-3 text-start w-100" data-spot-preview
                         data-spot-id="{{ $pendingSpot->id }}"
+                        data-spot-return-to="tourist-spots"
                         data-spot-name="{{ $pendingSpot->name }}"
                         data-spot-municipality="{{ $pendingSpot->municipality->name ?? 'Unknown Municipality' }}"
                         data-spot-barangay="{{ $pendingSpot->barangay }}"
@@ -162,12 +164,6 @@
                             <div class="small text-muted">{{ $pendingSpot->municipality->name ?? 'Unknown Municipality' }} · {{ optional($pendingSpot->created_at)->format('M d, Y') }}</div>
                         <i class="fas fa-arrow-right text-muted" aria-hidden="true"></i>
                     </button>
-                    <form action="{{ route('super-admin.spots.approve', $pendingSpot) }}" method="POST" class="flex-shrink-0">
-                        @csrf
-                        <input type="hidden" name="return_to" value="tourist-spots">
-                        <button type="submit" class="btn btn-sm btn-success" aria-label="Verify {{ $pendingSpot->name }}"><i class="fas fa-circle-check me-1" aria-hidden="true"></i>Verify</button>
-                    </form>
-                    </div>
                 @empty
                     <div class="text-center text-muted py-5"><i class="fas fa-circle-check fa-2x mb-3 text-success"></i><div>No pending tourist spots.</div></div>
                 @endforelse

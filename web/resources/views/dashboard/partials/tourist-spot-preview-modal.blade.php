@@ -121,6 +121,15 @@
                     <button type="button" class="btn btn-warning" data-preview-edit hidden><i class="fas fa-pen-to-square me-1" aria-hidden="true"></i>Edit Spot</button>
                 </div>
             @endif
+            @if(auth()->check() && auth()->user()->isSuperAdmin())
+                <div class="modal-footer" data-superadmin-verify-footer hidden>
+                    <form method="POST" data-superadmin-verify-form>
+                        @csrf
+                        <input type="hidden" name="return_to" data-verify-return-to>
+                        <button type="submit" class="btn btn-success" data-superadmin-verify hidden><i class="fas fa-circle-check me-1" aria-hidden="true"></i>Verify Spot</button>
+                    </form>
+                </div>
+            @endif
         </div>
     </div>
 </div>
@@ -140,6 +149,11 @@
         const previewSaveFeedback = previewModal.querySelector('[data-preview-save-feedback]');
         const editUrlTemplate = @json(route('tourist_spots.preview-edit', ['touristSpot' => '__SPOT_ID__']));
         const updateUrlTemplate = @json(route('tourist_spots.preview-update', ['touristSpot' => '__SPOT_ID__']));
+        const verifyUrlTemplate = @json(route('super-admin.spots.approve', ['touristSpot' => '__SPOT_ID__']));
+        const verifyFooter = previewModal.querySelector('[data-superadmin-verify-footer]');
+        const verifyForm = previewModal.querySelector('[data-superadmin-verify-form]');
+        const verifyButton = previewModal.querySelector('[data-superadmin-verify]');
+        const verifyReturnTo = previewModal.querySelector('[data-verify-return-to]');
 
         const setOptionalDetail = (name, value) => {
             const label = previewModal.querySelector(`[data-preview-row="${name}"]`);
@@ -712,10 +726,19 @@
             setOptionalDetail('phone', data.spotPhone);
             setOptionalDetail('website', data.spotWebsite);
 
+            const spotId = data.spotId || trigger.closest('[data-spot-id]')?.dataset.spotId;
+            activeSpotId = spotId;
             if (editAction) {
-                const spotId = data.spotId || trigger.closest('[data-spot-id]')?.dataset.spotId;
-                activeSpotId = spotId;
                 editAction.hidden = !spotId;
+            }
+            if (verifyFooter && verifyForm && verifyButton && verifyReturnTo) {
+                const canVerify = Boolean(spotId) && normalizedStatus === 'pending';
+                verifyFooter.hidden = !canVerify;
+                verifyButton.hidden = !canVerify;
+                if (canVerify) {
+                    verifyForm.action = verifyUrlTemplate.replace('__SPOT_ID__', encodeURIComponent(spotId));
+                    verifyReturnTo.value = data.spotReturnTo || 'tourist-spots';
+                }
             }
 
             const latitude = Number(data.spotLatitude);
