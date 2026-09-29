@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
@@ -28,9 +30,18 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        val localPropertiesFile = rootProject.file("local.properties")
+        val localMapsApiKey = if (localPropertiesFile.exists()) {
+            Properties().apply {
+                localPropertiesFile.inputStream().use { load(it) }
+            }.getProperty("MAPS_API_KEY")?.takeIf { it.isNotBlank() }
+        } else {
+            null
+        }
         val mapsApiKey = (project.findProperty("MAPS_API_KEY") as? String)
             ?.takeIf { it.isNotBlank() }
             ?: System.getenv("MAPS_API_KEY")?.takeIf { it.isNotBlank() }
+            ?: localMapsApiKey
         if (mapsApiKey == null) {
             logger.warn("MAPS_API_KEY is not configured; Google Maps tiles will not load.")
         }

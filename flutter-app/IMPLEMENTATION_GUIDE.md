@@ -363,6 +363,7 @@ Place images/icons in:
 - [ ] Verify API response format matches models
 - [ ] Test data fetching with real API
 - [ ] Configure Google Maps API key (Android & iOS)
+- Android: add `MAPS_API_KEY=YOUR_KEY` to `android/local.properties`. Enable Maps SDK for Android for that key; do not commit the key.
 - [ ] Set up image hosting/CDN for spot images
 - [ ] Implement authentication (if required)
 - [ ] Set up Firebase (optional, for notifications)
