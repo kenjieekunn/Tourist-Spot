@@ -26,6 +26,7 @@ class TouristSpot {
   final String? website;
   final double? entranceFee;
   final String? imageUrl;
+  final List<String> imageUrls;
   final String? nearbyDining;
   final String? nearbyGasStations;
   final List<Map<String, dynamic>>? nearbyFacilities;
@@ -52,6 +53,7 @@ class TouristSpot {
     this.website,
     this.entranceFee,
     this.imageUrl,
+    this.imageUrls = const [],
     this.nearbyDining,
     this.nearbyGasStations,
     this.nearbyFacilities,
@@ -101,6 +103,35 @@ class TouristSpot {
       }
     }
 
+    List<String> imageUrls = [];
+    final rawImages = json['images'] ?? json['image_urls'];
+    if (rawImages is List) {
+      imageUrls = rawImages
+          .map((image) => image?.toString().trim() ?? '')
+          .where((image) => image.isNotEmpty)
+          .toList();
+    } else if (rawImages is String && rawImages.trim().isNotEmpty) {
+      try {
+        final decoded = jsonDecode(rawImages);
+        if (decoded is List) {
+          imageUrls = decoded
+              .map((image) => image?.toString().trim() ?? '')
+              .where((image) => image.isNotEmpty)
+              .toList();
+        }
+      } catch (_) {
+        imageUrls = [rawImages.trim()];
+      }
+    }
+    if (imageUrls.isEmpty && json['image_url'] != null) {
+      imageUrls = [json['image_url'].toString()];
+    }
+    imageUrls = imageUrls
+        .map((image) => _versionImageUrl(image, json['updated_at']) ?? '')
+        .where((image) => image.isNotEmpty)
+        .toSet()
+        .toList();
+
     return TouristSpot(
       id: int.parse(json['id'].toString()),
       name: json['name']?.toString() ?? '',
@@ -117,7 +148,8 @@ class TouristSpot {
       entranceFee: json['entrance_fee'] != null
           ? double.tryParse(json['entrance_fee'].toString())
           : null,
-      imageUrl: _versionImageUrl(json['image_url'], json['updated_at']),
+      imageUrl: imageUrls.isNotEmpty ? imageUrls.first : null,
+      imageUrls: imageUrls,
       nearbyDining: json['nearby_dining']?.toString(),
       nearbyGasStations: json['nearby_gas_stations']?.toString(),
       nearbyFacilities: nearbyFacilities,
@@ -154,6 +186,7 @@ class TouristSpot {
       'website': website,
       'entrance_fee': entranceFee,
       'image_url': imageUrl,
+      'images': imageUrls,
       'nearby_dining': nearbyDining,
       'nearby_gas_stations': nearbyGasStations,
       'nearby_facilities': nearbyFacilities,

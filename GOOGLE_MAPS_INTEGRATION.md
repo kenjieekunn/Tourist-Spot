@@ -78,10 +78,18 @@ This guide covers the Google Maps integration for both the Laravel Admin Panel a
 
 #### Step 6: Run Flutter App with Maps API Key
 
-**Option A: Using dart-define (Recommended for Development)**
+**Option A: Set the Android native key at build time (Recommended)**
 ```bash
-flutter run --dart-define=MAPS_API_KEY=YOUR_API_KEY
+export MAPS_API_KEY=YOUR_ANDROID_API_KEY
+flutter run --dart-define=MAPS_API_KEY=$MAPS_API_KEY
+flutter build apk --release --dart-define=MAPS_API_KEY=$MAPS_API_KEY
 ```
+
+On Windows PowerShell, use `$env:MAPS_API_KEY = 'YOUR_ANDROID_API_KEY'` before
+running the Flutter commands. The environment variable configures the native
+Google Maps SDK key; `--dart-define` configures the Directions API key. Restrict
+the key to the Android app package and SHA-1 certificate fingerprint, and enable
+Maps SDK for Android and Directions API in Google Cloud.
 
 **Option B: Hardcode in api_constants.dart (Not recommended for production)**
 Edit `flutter-app/lib/config/constants/api_constants.dart`:

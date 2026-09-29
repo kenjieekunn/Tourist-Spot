@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/services.dart';
@@ -8,7 +8,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart' hide MapType;
 import 'package:http/http.dart' as http;
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:map_launcher/map_launcher.dart';
@@ -50,8 +50,8 @@ class _TouristSpotDetailScreenState
   bool _isFetchingRoute = false;
   DateTime? _lastRouteFetch;
   LatLng? _lastRouteFrom;
-  bool _showMap = false;
   late bool _isSaved;
+  int _currentGalleryPage = 0;
 
   @override
   void initState() {
@@ -515,8 +515,10 @@ class _TouristSpotDetailScreenState
   }
 
   Widget _buildImageGallery() {
-    final imageUrl = widget.spot.imageUrl ?? '';
-    if (imageUrl.isEmpty) {
+    final images = widget.spot.imageUrls.isNotEmpty
+        ? widget.spot.imageUrls
+        : [if ((widget.spot.imageUrl ?? '').isNotEmpty) widget.spot.imageUrl!];
+    if (images.isEmpty) {
       return Container(
         height: 250.h,
         color: Colors.grey[300],
@@ -532,18 +534,59 @@ class _TouristSpotDetailScreenState
 
     return SizedBox(
       height: 250.h,
-      child: CachedImageWidget(
-        imageUrl: imageUrl,
-        fit: BoxFit.cover,
-        placeholderBuilder: () => Container(
-          color: Colors.grey[300],
-          child: Center(
-            child: Icon(
-              Icons.image_not_supported,
-              color: Colors.grey[600],
-              size: 50.sp,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          PageView.builder(
+            itemCount: images.length,
+            onPageChanged: (index) =>
+                setState(() => _currentGalleryPage = index),
+            itemBuilder: (context, index) => GestureDetector(
+              onTap: () => _openImageGallery(images, index),
+              child: CachedImageWidget(
+                imageUrl: images[index],
+                fit: BoxFit.cover,
+                placeholderBuilder: () => Container(
+                  color: Colors.grey[300],
+                  child: Center(
+                    child: Icon(
+                      Icons.image_not_supported,
+                      color: Colors.grey[600],
+                      size: 50.sp,
+                    ),
+                  ),
+                ),
+              ),
             ),
           ),
+          if (images.length > 1)
+            Positioned(
+              right: 12.w,
+              bottom: 12.h,
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.65),
+                  borderRadius: BorderRadius.circular(16.r),
+                ),
+                child: Text(
+                  '${_currentGalleryPage + 1} / ${images.length}',
+                  style: TextStyle(color: Colors.white, fontSize: 12.sp),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  void _openImageGallery(List<String> images, int initialIndex) {
+    Navigator.of(context).push<void>(
+      MaterialPageRoute(
+        builder: (_) => _SpotImageGalleryPage(
+          spotName: widget.spot.name,
+          images: images,
+          initialIndex: initialIndex,
         ),
       ),
     );
@@ -720,43 +763,25 @@ class _TouristSpotDetailScreenState
             borderRadius: BorderRadius.circular(12.r),
             child: SizedBox(
               height: 250.h,
-              child: _showMap
-                  ? GoogleMap(
-                      initialCameraPosition: CameraPosition(
-                        target: spotLatLng,
-                        zoom: 15,
-                      ),
-                      markers: markers,
-                      polylines: polylines,
-                      myLocationEnabled: _hasLocationPermission,
-                      myLocationButtonEnabled: _hasLocationPermission,
-                      zoomControlsEnabled: true,
-                      mapToolbarEnabled: true,
-                      onMapCreated: (controller) {
-                        _mapController = controller;
-                        Future.delayed(const Duration(milliseconds: 500), () {
-                          _updateCameraToBounds();
-                          _fetchRouteIfNeeded(force: true);
-                        });
-                      },
-                    )
-                  : Material(
-                      color: const Color(0xffe8eee9),
-                      child: InkWell(
-                        onTap: () => setState(() => _showMap = true),
-                        child: Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.map_outlined,
-                                  size: 38.sp, color: AppTheme.primaryColor),
-                              SizedBox(height: 8.h),
-                              const Text('Tap to load map'),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
+              child: GoogleMap(
+                initialCameraPosition: CameraPosition(
+                  target: spotLatLng,
+                  zoom: 15,
+                ),
+                markers: markers,
+                polylines: polylines,
+                myLocationEnabled: _hasLocationPermission,
+                myLocationButtonEnabled: _hasLocationPermission,
+                zoomControlsEnabled: true,
+                mapToolbarEnabled: true,
+                onMapCreated: (controller) {
+                  _mapController = controller;
+                  Future.delayed(const Duration(milliseconds: 500), () {
+                    _updateCameraToBounds();
+                    _fetchRouteIfNeeded(force: true);
+                  });
+                },
+              ),
             ),
           ),
           SizedBox(height: 12.h),
@@ -935,56 +960,31 @@ class _TouristSpotDetailScreenState
             ),
           ],
           SizedBox(height: 12.h),
-          Row(
-            children: [
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: _openMapNavigation,
-                  icon: const Icon(Icons.navigation),
-                  label: Text(
-                    'Navigate',
-                    style: GoogleFonts.roboto(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryColor,
-                    foregroundColor: Colors.white,
-                    padding: EdgeInsets.symmetric(vertical: 12.h),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8.r),
-                    ),
-                  ),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () => Navigator.pushNamed(
+                context,
+                '/spot-map',
+                arguments: widget.spot,
+              ),
+              icon: const Icon(Icons.map),
+              label: Text(
+                'Full Map',
+                style: GoogleFonts.roboto(
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-              SizedBox(width: 12.w),
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: () => Navigator.pushNamed(
-                    context,
-                    '/spot-map',
-                    arguments: widget.spot,
-                  ),
-                  icon: const Icon(Icons.map),
-                  label: Text(
-                    'Full Map',
-                    style: GoogleFonts.roboto(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
-                    foregroundColor: Colors.white,
-                    padding: EdgeInsets.symmetric(vertical: 12.h),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8.r),
-                    ),
-                  ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue,
+                foregroundColor: Colors.white,
+                padding: EdgeInsets.symmetric(vertical: 12.h),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8.r),
                 ),
               ),
-            ],
+            ),
           ),
         ],
       ),
@@ -1673,65 +1673,20 @@ Longitude: ${widget.spot.longitude}''';
         widget.spot.latitude,
         widget.spot.longitude,
       );
-      final availableMaps = await MapLauncher.installedMaps;
-      if (availableMaps.isEmpty) {
+      final isGoogleMapsAvailable =
+          await MapLauncher.isMapAvailable(MapType.google);
+      if (!isGoogleMapsAvailable) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'No maps app installed',
-              style: GoogleFonts.roboto(),
-            ),
-            backgroundColor: Colors.red,
-          ),
+          const SnackBar(content: Text('Google Maps is not installed')),
         );
         return;
       }
-      if (availableMaps.length == 1) {
-        await availableMaps.first.showDirections(
-          destination: coords,
-        );
-      } else {
-        if (!mounted) return;
-        showModalBottomSheet(
-          context: context,
-          builder: (context) => Container(
-            padding: EdgeInsets.all(16.w),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Choose Navigation App',
-                  style: GoogleFonts.roboto(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                SizedBox(height: 16.h),
-                ...availableMaps.map((map) => ListTile(
-                      leading: CircleAvatar(
-                        backgroundColor: Colors.grey[200],
-                        child: const Icon(
-                          Icons.map,
-                          color: AppTheme.primaryColor,
-                        ),
-                      ),
-                      title: Text(
-                        map.mapName,
-                        style: GoogleFonts.roboto(fontSize: 14.sp),
-                      ),
-                      onTap: () async {
-                        Navigator.pop(context);
-                        await map.showDirections(
-                          destination: coords,
-                        );
-                      },
-                    )),
-              ],
-            ),
-          ),
-        );
-      }
+      await MapLauncher.showDirections(
+        mapType: MapType.google,
+        destination: coords,
+        destinationTitle: widget.spot.name,
+      );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1852,17 +1807,12 @@ Longitude: ${widget.spot.longitude}''';
 
     try {
       final coords = Coords(latitude, longitude);
-      final availableMaps = await MapLauncher.installedMaps;
-      if (availableMaps.isEmpty) {
+      final isGoogleMapsAvailable =
+          await MapLauncher.isMapAvailable(MapType.google);
+      if (!isGoogleMapsAvailable) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'No maps app installed',
-              style: GoogleFonts.roboto(),
-            ),
-            backgroundColor: Colors.red,
-          ),
+          const SnackBar(content: Text('Google Maps is not installed')),
         );
         return;
       }
@@ -1872,63 +1822,11 @@ Longitude: ${widget.spot.longitude}''';
         facility['type']?.toString().toLowerCase() ?? '',
       );
 
-      if (availableMaps.length == 1) {
-        await availableMaps.first.showMarker(
-          coords: coords,
-          title: title,
-          description: description,
-        );
-        return;
-      }
-
-      if (!mounted) return;
-      showModalBottomSheet(
-        context: context,
-        builder: (context) => SafeArea(
-          child: Container(
-            padding: EdgeInsets.all(16.w),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Open Facility in',
-                  style: GoogleFonts.roboto(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                SizedBox(height: 16.h),
-                ...availableMaps.map(
-                  (map) => ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: Colors.grey[200],
-                      child: const Icon(
-                        Icons.place,
-                        color: AppTheme.primaryColor,
-                      ),
-                    ),
-                    title: Text(
-                      map.mapName,
-                      style: GoogleFonts.roboto(fontSize: 14.sp),
-                    ),
-                    subtitle: Text(
-                      title,
-                      style: GoogleFonts.roboto(fontSize: 12.sp),
-                    ),
-                    onTap: () async {
-                      Navigator.pop(context);
-                      await map.showMarker(
-                        coords: coords,
-                        title: title,
-                        description: description,
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
+      await MapLauncher.showMarker(
+        mapType: MapType.google,
+        coords: coords,
+        title: title,
+        description: description,
       );
     } catch (e) {
       if (!mounted) return;
@@ -1942,5 +1840,67 @@ Longitude: ${widget.spot.longitude}''';
         ),
       );
     }
+  }
+}
+
+class _SpotImageGalleryPage extends StatefulWidget {
+  final String spotName;
+  final List<String> images;
+  final int initialIndex;
+
+  const _SpotImageGalleryPage({
+    required this.spotName,
+    required this.images,
+    required this.initialIndex,
+  });
+
+  @override
+  State<_SpotImageGalleryPage> createState() => _SpotImageGalleryPageState();
+}
+
+class _SpotImageGalleryPageState extends State<_SpotImageGalleryPage> {
+  late final PageController _pageController;
+  late int _currentIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex;
+    _pageController = PageController(initialPage: widget.initialIndex);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+        title: Text(
+          '${widget.spotName}  ${_currentIndex + 1}/${widget.images.length}',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ),
+      body: PageView.builder(
+        controller: _pageController,
+        itemCount: widget.images.length,
+        onPageChanged: (index) => setState(() => _currentIndex = index),
+        itemBuilder: (context, index) => Center(
+          child: CachedImageWidget(
+            imageUrl: widget.images[index],
+            width: double.infinity,
+            height: double.infinity,
+            fit: BoxFit.contain,
+          ),
+        ),
+      ),
+    );
   }
 }

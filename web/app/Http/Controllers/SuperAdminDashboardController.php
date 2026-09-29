@@ -85,7 +85,7 @@ class SuperAdminDashboardController extends Controller
     /**
      * Approve a tourist spot
      */
-    public function approveSpot(TouristSpot $touristSpot)
+    public function approveSpot(Request $request, TouristSpot $touristSpot)
     {
         $touristSpot->update([
             'verification_status' => 'approved',
@@ -96,8 +96,12 @@ class SuperAdminDashboardController extends Controller
         }
         $this->recordVerificationEvent($touristSpot, 'approved');
 
+        $returnRoute = $request->input('return_to') === 'dashboard'
+            ? 'super-admin.dashboard'
+            : 'super-admin.tourist-spots';
+
         return redirect()
-            ->route('super-admin.tourist-spots')
+            ->route($returnRoute)
             ->with('success', "Tourist spot '{$touristSpot->name}' has been approved!");
     }
 

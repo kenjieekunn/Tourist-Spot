@@ -620,6 +620,7 @@ class TouristSpotApiController extends Controller
             'closing_time' => $spot->closing_time,
             'entrance_fee' => $spot->entrance_fee,
             'image_url' => $spot->primary_image_url ?? $this->normalizeImageUrl($spot->image_url),
+            'images' => $spot->image_urls,
             'nearby_dining' => $spot->nearby_dining,
             'nearby_gas_stations' => $spot->nearby_gas_stations,
             'nearby_facilities' => $spot->nearby_facilities,

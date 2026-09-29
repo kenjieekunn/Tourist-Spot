@@ -28,8 +28,13 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
-        manifestPlaceholders["MAPS_API_KEY"] =
-            project.findProperty("MAPS_API_KEY") as String? ?: ""
+        val mapsApiKey = (project.findProperty("MAPS_API_KEY") as? String)
+            ?.takeIf { it.isNotBlank() }
+            ?: System.getenv("MAPS_API_KEY")?.takeIf { it.isNotBlank() }
+        if (mapsApiKey == null) {
+            logger.warn("MAPS_API_KEY is not configured; Google Maps tiles will not load.")
+        }
+        manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey.orEmpty()
     }
 
     buildTypes {

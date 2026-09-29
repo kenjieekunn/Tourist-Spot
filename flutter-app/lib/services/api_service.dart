@@ -276,6 +276,7 @@ class ApiService {
             website: spot.website,
             entranceFee: spot.entranceFee,
             imageUrl: spot.imageUrl,
+            imageUrls: spot.imageUrls,
             nearbyDining: spot.nearbyDining,
             nearbyGasStations: spot.nearbyGasStations,
             nearbyFacilities: spot.nearbyFacilities,
