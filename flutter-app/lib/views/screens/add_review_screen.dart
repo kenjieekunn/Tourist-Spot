@@ -198,7 +198,7 @@ class _AddReviewScreenState extends ConsumerState<AddReviewScreen> {
                 ),
                 SizedBox(height: 12.h),
                 Text(
-                  'Please sign in with your Google or Facebook account to submit a review.',
+                  'Please sign in with your Google account to submit a review.',
                   style: GoogleFonts.roboto(
                     fontSize: 14.sp,
                     color: Colors.grey[600],
@@ -208,7 +208,7 @@ class _AddReviewScreenState extends ConsumerState<AddReviewScreen> {
                 SizedBox(height: 32.h),
                 SizedBox(
                   width: double.infinity,
-                  child: ElevatedButton(
+                  child: ElevatedButton.icon(
                     onPressed: () async {
                       final result = await Navigator.pushNamed(
                         context,
@@ -225,8 +225,9 @@ class _AddReviewScreenState extends ConsumerState<AddReviewScreen> {
                         borderRadius: BorderRadius.circular(8.r),
                       ),
                     ),
-                    child: Text(
-                      'Sign In',
+                    icon: const Icon(Icons.login, color: Colors.white),
+                    label: Text(
+                      'Sign in with Google',
                       style: GoogleFonts.roboto(
                         fontSize: 14.sp,
                         fontWeight: FontWeight.bold,

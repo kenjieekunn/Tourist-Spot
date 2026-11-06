@@ -59,7 +59,6 @@ class _TouristSpotDetailScreenState
     _isSaved = widget.spot.isFavorited;
     _scrollController = ScrollController();
     _scrollController.addListener(_handleScroll);
-    _initLocationTracking();
   }
 
   @override
@@ -443,11 +442,6 @@ class _TouristSpotDetailScreenState
             child: _buildBasicInfo(),
           ),
 
-          // Map
-          SliverToBoxAdapter(
-            child: _buildMapSection(),
-          ),
-
           // Description
           SliverToBoxAdapter(
             child: _buildDescriptionSection(),
@@ -495,8 +489,7 @@ class _TouristSpotDetailScreenState
                 ),
               ),
               SizedBox(width: 10.w),
-              SizedBox(
-                height: 48.h,
+              Expanded(
                 child: OutlinedButton.icon(
                   onPressed: _toggleSaved,
                   icon: Icon(_isSaved ? Icons.bookmark : Icons.bookmark_border),
@@ -504,6 +497,7 @@ class _TouristSpotDetailScreenState
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppTheme.primaryColor,
                     side: const BorderSide(color: AppTheme.primaryColor),
+                    minimumSize: Size.fromHeight(48.h),
                   ),
                 ),
               ),
@@ -1464,7 +1458,7 @@ class _TouristSpotDetailScreenState
                 return Container(
                   padding: EdgeInsets.all(20.w),
                   child: Text(
-                    'No reviews yet. Be the first to review!',
+                    'No reviews yet. Be the first to share your experience.',
                     style: GoogleFonts.roboto(
                       fontSize: 12.sp,
                       color: Colors.grey[600],
@@ -1474,7 +1468,7 @@ class _TouristSpotDetailScreenState
                 );
               }
               return Column(
-                children: reviews.take(3).map((review) {
+                children: reviews.map((review) {
                   return _buildReviewItem(review);
                 }).toList(),
               );
@@ -1586,14 +1580,23 @@ class _TouristSpotDetailScreenState
             ],
           ),
           SizedBox(height: 6.h),
+          if (review['status'] == 'pending') ...[
+            Text(
+              'Pending approval',
+              style: GoogleFonts.roboto(
+                fontSize: 10.sp,
+                color: Colors.orange[800],
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            SizedBox(height: 6.h),
+          ],
           Text(
-            review['comment'] ?? '',
+            review['comment']?.toString() ?? '',
             style: GoogleFonts.roboto(
               fontSize: 11.sp,
               color: Colors.grey[700],
             ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
           ),
           if (review['created_at'] != null) ...[
             SizedBox(height: 6.h),

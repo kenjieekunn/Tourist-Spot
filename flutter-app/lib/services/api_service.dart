@@ -337,10 +337,45 @@ class ApiService {
       final response = await get(ApiConstants.spotDetail(spotId));
       final List<dynamic> data =
           (response.data['data']?['reviews']) ?? response.data['reviews'] ?? [];
-      return data
+      final reviews = data
           .whereType<Map>()
           .map((review) => Map<String, dynamic>.from(review))
           .toList();
+
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString(_authTokenKey);
+      if (token == null || token.isEmpty) return reviews;
+
+      try {
+        final pendingResponse = await get(
+          ApiConstants.myPendingSpotReviews(spotId),
+        );
+        final List<dynamic> pendingData =
+            pendingResponse.data['data'] ?? <dynamic>[];
+        reviews.addAll(
+          pendingData
+              .whereType<Map>()
+              .map((review) => Map<String, dynamic>.from(review)),
+        );
+      } catch (_) {
+        // Keep public approved reviews visible if the private request fails.
+      }
+
+      final uniqueReviews = <String, Map<String, dynamic>>{};
+      for (final review in reviews) {
+        uniqueReviews[review['id']?.toString() ?? review.hashCode.toString()] =
+            review;
+      }
+      final result = uniqueReviews.values.toList()
+        ..sort((left, right) {
+          final leftDate =
+              DateTime.tryParse(left['created_at']?.toString() ?? '');
+          final rightDate =
+              DateTime.tryParse(right['created_at']?.toString() ?? '');
+          return (rightDate ?? DateTime.fromMillisecondsSinceEpoch(0))
+              .compareTo(leftDate ?? DateTime.fromMillisecondsSinceEpoch(0));
+        });
+      return result;
     } catch (e) {
       throw Exception('Reviews unavailable. Check API: $e');
     }

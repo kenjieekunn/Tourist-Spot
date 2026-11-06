@@ -53,11 +53,12 @@ class ApiConstants {
 
   // Auth Endpoints
   static const String googleAuth = 'auth/google';
-  static const String facebookAuth = 'auth/facebook';
   static const String currentUser = 'user';
 
   // Reviews Endpoints
   static String spotReviews(int spotId) => 'spots/$spotId/reviews';
+  static String myPendingSpotReviews(int spotId) =>
+      'spots/$spotId/reviews/mine';
   static String createReview(int spotId) => 'spots/$spotId/reviews';
 
   // Timeout

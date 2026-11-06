@@ -30,14 +30,10 @@ class AuthUserNotifier extends StateNotifier<AuthUser?> {
     state = user;
   }
 
-  Future<void> signInWithGoogle() async {
+  Future<AuthUser?> signInWithGoogle() async {
     final user = await _authService.signInWithGoogle();
     state = user;
-  }
-
-  Future<void> signInWithFacebook() async {
-    final user = await _authService.signInWithFacebook();
-    state = user;
+    return user;
   }
 
   Future<void> logout() async {

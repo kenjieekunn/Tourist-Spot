@@ -77,6 +77,7 @@ Route::middleware(\App\Http\Middleware\ApiTokenAuth::class)->prefix('v1')->group
 
     // Add review to a spot (requires login)
     Route::post('/spots/{spotId}/reviews', [TouristSpotApiController::class, 'addReview']);
+    Route::get('/spots/{spotId}/reviews/mine', [TouristSpotApiController::class, 'getMyPendingReviews']);
 
     // Toggle a tourist spot favorite for the signed-in user
     Route::post('/spots/{spotId}/favorite', [TouristSpotApiController::class, 'toggleFavorite']);

@@ -194,7 +194,7 @@ class TouristSpotApiController extends Controller
                 'user_name' => $user->name,
                 'rating' => $validated['rating'],
                 'comment' => $validated['comment'],
-                'status' => 'pending',
+                'status' => 'approved',
             ];
 
             if (!empty($imagePaths)) {
@@ -212,7 +212,7 @@ class TouristSpotApiController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Review submitted successfully and is awaiting moderation',
+                'message' => 'Review submitted successfully',
                 'data' => $this->transformReview($review->load('user')),
             ], 201);
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -345,6 +345,30 @@ class TouristSpotApiController extends Controller
                 'message' => 'Failed to generate directions: ' . $e->getMessage(),
             ], 500);
         }
+    }
+
+    public function getMyPendingReviews(Request $request, $spotId)
+    {
+        $spot = $this->approvedSpotsQuery()->find($spotId);
+        if (!$spot) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tourist spot not found',
+            ], 404);
+        }
+
+        $reviews = $spot->reviews()
+            ->where('user_id', $request->user()->id)
+            ->where('status', 'pending')
+            ->with('user')
+            ->latest()
+            ->get()
+            ->map(fn (Review $review) => $this->transformReview($review));
+
+        return response()->json([
+            'success' => true,
+            'data' => $reviews,
+        ]);
     }
 
     public function toggleFavorite(Request $request, $spotId)

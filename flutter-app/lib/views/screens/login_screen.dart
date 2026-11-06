@@ -23,30 +23,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     });
 
     try {
-      await ref.read(authUserProvider.notifier).signInWithGoogle();
-      if (mounted) {
-        Navigator.pop(context, true);
-      }
-    } catch (e) {
-      setState(() {
-        _errorMessage = e.toString().replaceFirst('Exception: ', '');
-      });
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
-  }
-
-  Future<void> _handleFacebookSignIn() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-
-    try {
-      await ref.read(authUserProvider.notifier).signInWithFacebook();
-      if (mounted) {
+      final user = await ref.read(authUserProvider.notifier).signInWithGoogle();
+      if (user != null && mounted) {
         Navigator.pop(context, true);
       }
     } catch (e) {
@@ -100,7 +78,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             ),
             SizedBox(height: 12.h),
             Text(
-              'Sign in with your Google or Facebook account to submit reviews and help other travelers.',
+              'Sign in with your Google account to submit reviews and help other travelers.',
               style: GoogleFonts.roboto(
                 fontSize: 14.sp,
                 color: Colors.grey[600],
@@ -143,29 +121,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   foregroundColor: AppTheme.primaryColor,
                   padding: EdgeInsets.symmetric(vertical: 14.h),
                   side: const BorderSide(color: AppTheme.primaryColor),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8.r),
-                  ),
-                ),
-              ),
-            ),
-            SizedBox(height: 12.h),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: _isLoading ? null : _handleFacebookSignIn,
-                icon: const Icon(Icons.facebook),
-                label: Text(
-                  'Sign in with Facebook',
-                  style: GoogleFonts.roboto(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.secondaryColor,
-                  foregroundColor: Colors.white,
-                  padding: EdgeInsets.symmetric(vertical: 14.h),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8.r),
                   ),

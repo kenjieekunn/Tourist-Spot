@@ -1,5 +1,12 @@
 import java.util.Properties
 
+val localPropertiesFile = rootProject.file("local.properties")
+val localProperties = Properties().apply {
+    if (localPropertiesFile.exists()) {
+        localPropertiesFile.inputStream().use { load(it) }
+    }
+}
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
@@ -30,14 +37,8 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
-        val localPropertiesFile = rootProject.file("local.properties")
-        val localMapsApiKey = if (localPropertiesFile.exists()) {
-            Properties().apply {
-                localPropertiesFile.inputStream().use { load(it) }
-            }.getProperty("MAPS_API_KEY")?.takeIf { it.isNotBlank() }
-        } else {
-            null
-        }
+        val localMapsApiKey = localProperties.getProperty("MAPS_API_KEY")
+            ?.takeIf { it.isNotBlank() }
         val mapsApiKey = (project.findProperty("MAPS_API_KEY") as? String)
             ?.takeIf { it.isNotBlank() }
             ?: System.getenv("MAPS_API_KEY")?.takeIf { it.isNotBlank() }
