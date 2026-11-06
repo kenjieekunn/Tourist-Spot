@@ -1547,6 +1547,8 @@ class _TouristSpotDetailScreenState
   }
 
   Widget _buildReviewItem(Map<String, dynamic> review) {
+    final reviewImages = _reviewImageUrls(review);
+
     return Container(
       margin: EdgeInsets.only(bottom: 12.h),
       padding: EdgeInsets.all(12.w),
@@ -1562,7 +1564,7 @@ class _TouristSpotDetailScreenState
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                review['user_name'] ?? 'Anonymous',
+                review['user_name']?.toString() ?? 'Anonymous',
                 style: GoogleFonts.roboto(
                   fontSize: 12.sp,
                   fontWeight: FontWeight.bold,
@@ -1580,17 +1582,6 @@ class _TouristSpotDetailScreenState
             ],
           ),
           SizedBox(height: 6.h),
-          if (review['status'] == 'pending') ...[
-            Text(
-              'Pending approval',
-              style: GoogleFonts.roboto(
-                fontSize: 10.sp,
-                color: Colors.orange[800],
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            SizedBox(height: 6.h),
-          ],
           Text(
             review['comment']?.toString() ?? '',
             style: GoogleFonts.roboto(
@@ -1598,6 +1589,26 @@ class _TouristSpotDetailScreenState
               color: Colors.grey[700],
             ),
           ),
+          if (reviewImages.isNotEmpty) ...[
+            SizedBox(height: 10.h),
+            SizedBox(
+              height: 88.w,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: reviewImages.length,
+                separatorBuilder: (context, index) => SizedBox(width: 8.w),
+                itemBuilder: (context, index) => ClipRRect(
+                  borderRadius: BorderRadius.circular(6.r),
+                  child: CachedImageWidget(
+                    imageUrl: reviewImages[index],
+                    width: 88.w,
+                    height: 88.w,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+            ),
+          ],
           if (review['created_at'] != null) ...[
             SizedBox(height: 6.h),
             Text(
@@ -1614,6 +1625,37 @@ class _TouristSpotDetailScreenState
         ],
       ),
     );
+  }
+
+  List<String> _reviewImageUrls(Map<String, dynamic> review) {
+    final images = <String>{};
+    final rawImages = review['images'];
+    if (rawImages is List) {
+      images.addAll(
+        rawImages
+            .where((image) => image != null)
+            .map((image) => image.toString().trim())
+            .where((image) => image.isNotEmpty),
+      );
+    }
+
+    final rawMedia = review['media'];
+    if (rawMedia is List) {
+      for (final item in rawMedia.whereType<Map>()) {
+        if (item['type']?.toString() == 'image') {
+          final path = (item['url'] ?? item['path'])?.toString().trim();
+          if (path != null && path.isNotEmpty) images.add(path);
+        }
+      }
+    }
+
+    final legacyImage =
+        (review['image_url'] ?? review['image_path'])?.toString().trim();
+    if (legacyImage != null && legacyImage.isNotEmpty) {
+      images.add(legacyImage);
+    }
+
+    return images.toList();
   }
 
   Widget _buildChip({
