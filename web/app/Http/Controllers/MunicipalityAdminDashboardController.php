@@ -55,6 +55,9 @@ class MunicipalityAdminDashboardController extends Controller
             'totalReviews' => Review::whereHas('touristSpot', function ($query) use ($municipality) {
                 $query->where('municipality_id', $municipality->id);
             })->count(),
+            'averageRating' => round((float) Review::whereHas('touristSpot', function ($query) use ($municipality) {
+                $query->where('municipality_id', $municipality->id);
+            })->avg('rating'), 1),
             'pendingReviews' => Review::where('status', 'pending')
                 ->whereHas('touristSpot', function ($query) use ($municipality) {
                     $query->where('municipality_id', $municipality->id);

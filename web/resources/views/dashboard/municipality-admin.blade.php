@@ -41,9 +41,13 @@
     .stat-card.verified-card .stat-value { color: #3f7d42; }
     .stat-card.pending-card-stat .stat-value { color: #b7791f; }
     .stat-card.staff-card .stat-value { color: #3976a8; }
+    .stat-card.review-card .stat-value { color: #b7791f; }
+    .stat-card.rating-card .stat-value { color: #3f7d42; }
     .stat-card.verified-card::before { background: #3f7d42; }
     .stat-card.pending-card-stat::before { background: #d69e2e; }
     .stat-card.staff-card::before { background: #3976a8; }
+    .stat-card.review-card::before { background: #d69e2e; }
+    .stat-card.rating-card::before { background: #3f7d42; }
     .btn-tourism { background: #0f766e; border-color: #0f766e; color: #fff; }
     .btn-tourism:hover { background: #115e59; border-color: #115e59; color: #fff; }
     .stat-card::before {
@@ -401,6 +405,23 @@
         </div>
     </div>
 </div>
+@endif
+
+@if(auth()->user()->hasPermission('manage_reviews'))
+    <div class="row mb-4">
+        <div class="col-12 col-md-6 col-xl-3">
+            <a href="{{ route('municipality-admin.reviews') }}" class="stat-card review-card h-100 w-100" aria-label="View {{ $totalReviews }} tourist reviews">
+                <div class="stat-value">{{ $totalReviews }}</div>
+                <div class="stat-label">Total Reviews</div>
+            </a>
+        </div>
+        <div class="col-12 col-md-6 col-xl-3">
+            <a href="{{ route('municipality-admin.reviews') }}" class="stat-card rating-card h-100 w-100" aria-label="Average tourist rating {{ number_format($averageRating, 1) }} out of 5">
+                <div class="stat-value">{{ number_format($averageRating, 1) }} / 5</div>
+                <div class="stat-label">Average Tourist Rating</div>
+            </a>
+        </div>
+    </div>
 @endif
 
 @if($canManageStaff && !auth()->user()->hasPermission('manage_spots'))
