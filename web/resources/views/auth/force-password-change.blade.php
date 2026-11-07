@@ -7,9 +7,9 @@
 <div class="row justify-content-center">
     <div class="col-12 col-md-8 col-lg-6">
         <div class="card">
-            <div class="card-header bg-light"><h5 class="mb-0">Secure your staff account</h5></div>
+            <div class="card-header bg-light"><h5 class="mb-0">Secure your municipality account</h5></div>
             <div class="card-body">
-                <p class="text-muted">Your admin provided a temporary password. Change it now to continue to your dashboard.</p>
+                <p class="text-muted">You are using a temporary password. Change it now to continue to your dashboard.</p>
                 <form action="{{ route('account.password.update') }}" method="POST">
                     @csrf
                     @method('PUT')

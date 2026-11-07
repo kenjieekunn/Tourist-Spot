@@ -73,7 +73,7 @@ class AuthController extends Controller
             ]);
             $request->session()->regenerate();
 
-            if ($user->isMunicipalityStaff() && AdminTempCredential::where('user_id', $user->id)->exists()) {
+            if ($user->belongsToMunicipalityTeam() && AdminTempCredential::where('user_id', $user->id)->exists()) {
                 return redirect()->route('account.password.change');
             }
 
@@ -109,7 +109,7 @@ class AuthController extends Controller
     public function updatePassword(Request $request)
     {
         $user = $request->user();
-        $mustChangeTemporaryPassword = $user->isMunicipalityStaff()
+        $mustChangeTemporaryPassword = $user->belongsToMunicipalityTeam()
             && AdminTempCredential::where('user_id', $user->id)->exists();
 
         $validated = $request->validate([
@@ -121,7 +121,7 @@ class AuthController extends Controller
         AdminTempCredential::where('user_id', $user->id)->delete();
 
         if ($mustChangeTemporaryPassword) {
-            return redirect()->route('dashboard')->with('success', 'Password changed. You can now access your staff dashboard.');
+            return redirect()->route('dashboard')->with('success', 'Password changed. You can now access your municipality dashboard.');
         }
 
         return back()->with('success', 'Your password has been updated.');
@@ -130,7 +130,7 @@ class AuthController extends Controller
     public function requirePasswordChange(Request $request)
     {
         $user = $request->user();
-        abort_unless($user && $user->isMunicipalityStaff(), 404);
+        abort_unless($user && $user->belongsToMunicipalityTeam(), 404);
 
         if (!AdminTempCredential::where('user_id', $user->id)->exists()) {
             return redirect()->route('dashboard');
