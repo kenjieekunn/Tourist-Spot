@@ -39,6 +39,7 @@ Route::middleware(['auth', 'temporary-password', 'prevent.cache'])->group(functi
         Route::get('/admins', [SuperAdminDashboardController::class, 'admins'])->name('admins');
         Route::get('/admins/create', [SuperAdminDashboardController::class, 'createAdmin'])->name('admins.create');
         Route::post('/admins', [SuperAdminDashboardController::class, 'storeAdmin'])->name('admins.store');
+        Route::delete('/admins/{admin}', [SuperAdminDashboardController::class, 'destroyAdmin'])->name('admins.destroy');
         Route::get('/reports', [SuperAdminDashboardController::class, 'reports'])->name('reports');
         Route::patch('/admins/{admin}/status', [SuperAdminDashboardController::class, 'toggleAdminStatus'])->name('admins.toggle-status');
         Route::get('/admins/{admin}/password', [SuperAdminDashboardController::class, 'getAdminPassword'])->name('admins.password');

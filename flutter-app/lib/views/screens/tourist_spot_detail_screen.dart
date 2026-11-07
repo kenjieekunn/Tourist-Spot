@@ -574,11 +574,15 @@ class _TouristSpotDetailScreenState
     );
   }
 
-  void _openImageGallery(List<String> images, int initialIndex) {
+  void _openImageGallery(
+    List<String> images,
+    int initialIndex, {
+    String? title,
+  }) {
     Navigator.of(context).push<void>(
       MaterialPageRoute(
         builder: (_) => _SpotImageGalleryPage(
-          spotName: widget.spot.name,
+          spotName: title ?? widget.spot.name,
           images: images,
           initialIndex: initialIndex,
         ),
@@ -1597,13 +1601,20 @@ class _TouristSpotDetailScreenState
                 scrollDirection: Axis.horizontal,
                 itemCount: reviewImages.length,
                 separatorBuilder: (context, index) => SizedBox(width: 8.w),
-                itemBuilder: (context, index) => ClipRRect(
-                  borderRadius: BorderRadius.circular(6.r),
-                  child: CachedImageWidget(
-                    imageUrl: reviewImages[index],
-                    width: 88.w,
-                    height: 88.w,
-                    fit: BoxFit.cover,
+                itemBuilder: (context, index) => GestureDetector(
+                  onTap: () => _openImageGallery(
+                    reviewImages,
+                    index,
+                    title: review['user_name']?.toString() ?? 'Review photos',
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(6.r),
+                    child: CachedImageWidget(
+                      imageUrl: reviewImages[index],
+                      width: 88.w,
+                      height: 88.w,
+                      fit: BoxFit.cover,
+                    ),
                   ),
                 ),
               ),

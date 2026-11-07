@@ -489,6 +489,22 @@ class SuperAdminDashboardController extends Controller
     }
 
     /**
+     * Delete a disabled municipality admin account.
+     */
+    public function destroyAdmin(User $admin)
+    {
+        abort_unless($admin->role === 'municipality-admin' && ! $admin->is_active, 404);
+
+        DB::transaction(function () use ($admin) {
+            AdminTempCredential::where('user_id', $admin->id)->delete();
+            $admin->delete();
+        });
+
+        return redirect()->route('super-admin.admins')
+            ->with('success', "Disabled municipality admin '{$admin->name}' has been deleted.");
+    }
+
+    /**
      * Get admin password for viewing credentials
      */
     public function getAdminPassword(User $admin)

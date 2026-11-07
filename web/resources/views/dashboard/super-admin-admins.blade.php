@@ -80,6 +80,13 @@
                         </td>
                         <td class="text-end">
                             <button type="button" class="btn btn-sm btn-tourism" data-show-admin-credentials data-admin-id="{{ $admin->id }}" data-admin-name="{{ $admin->name }}" data-admin-email="{{ $admin->email }}" data-bs-toggle="modal" data-bs-target="#credentialsModal" title="Show temporary credentials"><i class="fas fa-key"></i> Credentials</button>
+                            @if(!$admin->is_active)
+                                <form action="{{ route('super-admin.admins.destroy', $admin) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete the disabled account for {{ addslashes($admin->name) }}? This cannot be undone.');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fas fa-trash-alt me-1"></i>Delete</button>
+                                </form>
+                            @endif
                         </td>
                     </tr>
                 @empty
