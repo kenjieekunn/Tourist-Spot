@@ -29,12 +29,12 @@
         .login-modal { width: min(440px, calc(100% - 32px)); max-height: calc(100% - 32px); overflow-y: auto; padding: 0; border: 1px solid var(--line); border-radius: 8px; color: var(--ink); background: white; box-shadow: 0 24px 80px rgba(4, 28, 31, .28); }
         .login-modal::backdrop { background: rgba(4, 28, 31, .68); backdrop-filter: blur(3px); }
         .login-modal-content { padding: 30px; }
-        .login-modal-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; margin-bottom: 24px; }
+        .login-modal-header { display: flex; justify-content: flex-end; align-items: flex-start; gap: 20px; margin-bottom: 16px; }
         .login-modal-header h2 { margin: 0; font-size: 1.65rem; }
         .login-modal-header p { color: var(--muted); margin: 5px 0 0; font-size: .9rem; }
         .login-modal-close { flex: 0 0 36px; width: 36px; height: 36px; border: 1px solid var(--line); border-radius: 50%; color: var(--ink); background: white; cursor: pointer; font-size: 1.2rem; }
-        .login-modal label { display: block; margin-bottom: 7px; font-size: .88rem; font-weight: 700; }
-        .login-modal input { width: 100%; min-height: 46px; padding: 10px 12px; border: 1px solid #cbd9d3; border-radius: 5px; color: var(--ink); font: inherit; }
+        .login-modal label { display: block; margin-bottom: 7px; font-size: .88rem; font-weight: 700; text-align: center; }
+        .login-modal input { width: 100%; min-height: 46px; padding: 10px 12px; border: 1px solid #cbd9d3; border-radius: 5px; color: var(--ink); font: inherit; text-align: center; }
         .login-modal input:focus { outline: 3px solid rgba(26, 92, 82, .16); border-color: var(--teal-mid); }
         .login-modal-field { margin-bottom: 18px; }
         .login-modal-error { padding: 12px 14px; margin-bottom: 18px; border: 1px solid #f0c4be; border-radius: 5px; color: #8f2d20; background: #fff2f0; font-size: .88rem; }
@@ -143,10 +143,9 @@
         <section class="section steps"><div class="wrap"><div class="section-heading"><div><div class="eyebrow" style="color:var(--teal-mid)">A simpler way to wander</div><h2>From curious to there.</h2></div></div><div class="step-grid"><div class="step"><div class="step-number">01</div><div><h3>Search and browse</h3><p>Find a spot or municipality that fits the day you want.</p></div></div><div class="step"><div class="step-number">02</div><div><h3>See the details</h3><p>Check photos, descriptions, ratings, and visitor reviews.</p></div></div><div class="step"><div class="step-number">03</div><div><h3>Get directions</h3><p>Choose your route and let the adventure begin.</p></div></div></div></div></section>
     </main>
 
-    <dialog class="login-modal" id="login-modal" aria-labelledby="login-modal-title" data-open-on-load="{{ request()->boolean('login') || $errors->any() ? 'true' : 'false' }}">
+    <dialog class="login-modal" id="login-modal" aria-label="Admin login" data-open-on-load="{{ request()->boolean('login') || $errors->any() ? 'true' : 'false' }}">
         <div class="login-modal-content">
             <div class="login-modal-header">
-                <div><h2 id="login-modal-title">Welcome back</h2><p>Sign in to the admin portal.</p></div>
                 <button class="login-modal-close" type="button" aria-label="Close login dialog" data-close-login>&times;</button>
             </div>
             @if($errors->any())
