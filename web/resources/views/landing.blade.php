@@ -37,10 +37,6 @@
         .login-modal input { width: 100%; min-height: 46px; padding: 10px 12px; border: 1px solid #cbd9d3; border-radius: 5px; color: var(--ink); font: inherit; text-align: center; }
         .login-modal input:focus { outline: 3px solid rgba(26, 92, 82, .16); border-color: var(--teal-mid); }
         .login-modal-field { margin-bottom: 18px; }
-        .login-password-wrap { position: relative; }
-        .login-password-wrap input { padding-right: 44px; }
-        .login-password-toggle { position: absolute; top: 50%; right: 10px; display: grid; width: 28px; height: 28px; place-items: center; padding: 0; transform: translateY(-50%); border: 0; color: var(--muted); background: transparent; cursor: pointer; }
-        .login-password-toggle:focus-visible { outline: 2px solid var(--teal-mid); outline-offset: 2px; border-radius: 4px; }
         .login-modal-error { padding: 12px 14px; margin-bottom: 18px; border: 1px solid #f0c4be; border-radius: 5px; color: #8f2d20; background: #fff2f0; font-size: .88rem; }
         .login-modal-submit { width: 100%; min-height: 48px; border: 0; border-radius: 5px; color: white; background: var(--teal); font: inherit; font-weight: 700; cursor: pointer; }
         .login-modal-submit:hover { background: var(--teal-mid); }
@@ -162,13 +158,12 @@
             <form action="{{ route('login') }}" method="POST">
                 @csrf
                 <div class="login-modal-field">
-                    <input id="login-modal-username" type="text" name="login" value="{{ old('login') }}" placeholder="superadmin or admin@example.com" aria-label="Email or username" autocomplete="username" required autofocus>
+                    <label for="login-modal-username">Email or username</label>
+                    <input id="login-modal-username" type="text" name="login" value="{{ old('login') }}" placeholder="superadmin or admin@example.com" autocomplete="username" required autofocus>
                 </div>
                 <div class="login-modal-field">
-                    <div class="login-password-wrap">
-                        <input id="login-modal-password" type="password" name="password" placeholder="Enter your password" aria-label="Password" autocomplete="current-password" required>
-                        <button class="login-password-toggle" type="button" aria-label="Show password" aria-pressed="false" title="Show password" data-toggle-login-password><i class="fas fa-eye" aria-hidden="true"></i></button>
-                    </div>
+                    <label for="login-modal-password">Password</label>
+                    <input id="login-modal-password" type="password" name="password" placeholder="Enter your password" autocomplete="current-password" required>
                 </div>
                 <button class="login-modal-submit" type="submit">Login</button>
             </form>
@@ -179,16 +174,6 @@
         const loginModal = document.getElementById('login-modal');
         document.querySelector('.login-btn').addEventListener('click', () => loginModal.showModal());
         document.querySelector('[data-close-login]').addEventListener('click', () => loginModal.close());
-        const passwordInput = document.getElementById('login-modal-password');
-        const passwordToggle = document.querySelector('[data-toggle-login-password]');
-        passwordToggle.addEventListener('click', () => {
-            const showPassword = passwordInput.type === 'password';
-            passwordInput.type = showPassword ? 'text' : 'password';
-            passwordToggle.setAttribute('aria-label', showPassword ? 'Hide password' : 'Show password');
-            passwordToggle.setAttribute('aria-pressed', String(showPassword));
-            passwordToggle.title = showPassword ? 'Hide password' : 'Show password';
-            passwordToggle.querySelector('i').className = showPassword ? 'fas fa-eye-slash' : 'fas fa-eye';
-        });
         loginModal.addEventListener('click', (event) => {
             if (event.target === loginModal) loginModal.close();
         });
