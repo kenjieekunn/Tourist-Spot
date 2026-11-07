@@ -8,7 +8,6 @@
     .admin-list-page { --tourism-teal: #0f766e; --tourism-green: #3f7d42; --tourism-ink: #173f43; }
     .admin-list-page .card { border: 1px solid #dce9e5; border-radius: 10px; box-shadow: 0 8px 24px rgba(23, 63, 67, .06); }
     .admin-list-page .card-header { color: var(--tourism-ink); border-bottom-color: #dce9e5; }
-    .admin-list-page .coverage-panel { background: linear-gradient(135deg, #effaf7, #f7fbf3); border: 1px solid #c8e5da; border-radius: 10px; }
     .admin-list-page .btn-tourism, .create-admin-modal .btn-tourism, #credentialsModal .btn-tourism { background: var(--tourism-teal, #0f766e); border-color: var(--tourism-teal, #0f766e); color: #fff; }
     .admin-list-page .btn-tourism:hover, .admin-list-page .btn-tourism:focus-visible,
     .create-admin-modal .btn-tourism:hover, .create-admin-modal .btn-tourism:focus-visible,
@@ -22,7 +21,7 @@
     .admin-list-page .admin-table th:nth-child(3) { min-width: 140px; }
     .admin-list-page .admin-table th:nth-child(4) { min-width: 110px; }
     .admin-list-page .admin-table th:nth-child(5) { min-width: 90px; }
-    .admin-list-page .admin-table th:nth-child(6) { min-width: 125px; }
+    .admin-list-page .admin-table th:nth-child(6) { min-width: 70px; }
     .admin-list-page .table tbody tr { transition: background-color .15s ease; }
     .admin-list-page .table tbody tr:hover { --bs-table-hover-bg: #eef9f6; }
     .admin-list-page .admin-name-cell { width: 18%; min-width: 180px; max-width: 260px; white-space: normal; }
@@ -32,15 +31,6 @@
 </style>
 
 <div class="admin-list-page">
-    <div class="coverage-panel p-3 p-md-4 mb-4 d-flex flex-wrap align-items-center justify-content-between gap-3">
-        <div>
-            <div class="text-uppercase small fw-bold" style="color: var(--tourism-teal); letter-spacing: .06em;">Pangasinan 2nd District</div>
-            <h2 class="h4 mb-1">Municipality Admins</h2>
-            <p class="mb-0 text-muted">{{ $municipalitiesWithAdmins }} of {{ $municipalityCount }} municipalities sa 2nd District</p>
-        </div>
-        <div class="text-end"><span class="badge rounded-pill text-bg-light border">{{ $admins->count() }} admins</span></div>
-    </div>
-
     <div class="card">
     <div class="card-header bg-light d-flex flex-wrap justify-content-between align-items-center gap-3">
         <div><h5 class="mb-1">Municipal Admin Directory</h5><small class="text-muted">Manage access and monitor tourism coverage by municipality.</small></div>
@@ -79,11 +69,10 @@
                             </span>
                         </td>
                         <td class="text-end">
-                            <button type="button" class="btn btn-sm btn-tourism" data-show-admin-credentials data-admin-id="{{ $admin->id }}" data-admin-name="{{ $admin->name }}" data-admin-email="{{ $admin->email }}" data-bs-toggle="modal" data-bs-target="#credentialsModal" title="Show temporary credentials"><i class="fas fa-key"></i> Credentials</button>
                             <form action="{{ route('super-admin.admins.destroy', $admin) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete the municipality admin account for {{ addslashes($admin->name) }}? This cannot be undone.');">
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fas fa-trash-alt me-1"></i>Delete</button>
+                                <button type="submit" class="btn btn-sm btn-outline-danger" aria-label="Delete {{ $admin->name }} account" title="Delete admin account"><i class="fas fa-trash-alt" aria-hidden="true"></i></button>
                             </form>
                         </td>
                     </tr>
@@ -153,26 +142,6 @@
 </div>
 
 <script>
-function showCredentials(adminId, name, email) {
-    document.getElementById('credentialName').value = name;
-    document.getElementById('credentialEmail').value = email;
-
-    const passwordInput = document.getElementById('credentialPassword');
-    passwordInput.value = 'Loading...';
-    fetch(`/super-admin/admins/${adminId}/password`)
-        .then(response => {
-            if (!response.ok) throw new Error('Unable to load credentials.');
-            return response.json();
-        })
-        .then(data => {
-            passwordInput.value = data.password || 'Password not available';
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            passwordInput.value = 'Error loading password';
-        });
-}
-
 function copyPassword() {
     const passwordInput = document.getElementById('credentialPassword');
     passwordInput.select();
@@ -187,12 +156,6 @@ function copyPassword() {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
-    document.querySelectorAll('[data-show-admin-credentials]').forEach(function (button) {
-        button.addEventListener('click', function () {
-            showCredentials(button.dataset.adminId, button.dataset.adminName, button.dataset.adminEmail);
-        });
-    });
-
     const credentialsModal = document.getElementById('credentialsModal');
     if (credentialsModal?.dataset.initialPassword) {
         document.getElementById('credentialName').value = credentialsModal.dataset.initialName;

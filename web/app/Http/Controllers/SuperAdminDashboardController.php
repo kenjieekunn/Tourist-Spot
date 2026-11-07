@@ -208,16 +208,8 @@ class SuperAdminDashboardController extends Controller
                 ->orderBy('name')
                 ->get();
 
-            $municipalityCount = Municipality::count();
-            $municipalitiesWithAdmins = User::where('role', 'municipality-admin')
-                ->whereNotNull('municipality_id')
-                ->distinct('municipality_id')
-                ->count('municipality_id');
-
             return view('dashboard.super-admin-admins', [
                 'admins' => $admins,
-                'municipalityCount' => $municipalityCount,
-                'municipalitiesWithAdmins' => $municipalitiesWithAdmins,
                 'availableMunicipalities' => Municipality::whereDoesntHave('admins')->orderBy('name')->get(),
                 'selectedMunicipalityId' => (int) $request->query('municipality_id', 0),
             ]);
