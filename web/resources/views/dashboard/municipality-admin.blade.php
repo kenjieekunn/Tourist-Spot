@@ -43,21 +43,16 @@
     .stat-card.staff-card .stat-value { color: #3976a8; }
     .stat-card.review-card .stat-value { color: #b7791f; }
     .stat-card.rating-card .stat-value { color: #3f7d42; }
+    .rating-chart-container { height: 280px; max-width: 760px; margin: 0 auto; }
+    .rating-chart-legend { display: grid; gap: .75rem; align-content: center; }
+    .rating-chart-legend-item { align-items: center; display: flex; justify-content: space-between; gap: .75rem; }
+    .rating-chart-legend-label { align-items: center; display: inline-flex; gap: .55rem; }
+    .rating-chart-swatch { border-radius: 50%; display: inline-block; height: .75rem; width: .75rem; }
     .stat-card.verified-card::before { background: #3f7d42; }
     .stat-card.pending-card-stat::before { background: #d69e2e; }
     .stat-card.staff-card::before { background: #3976a8; }
     .stat-card.review-card::before { background: #d69e2e; }
     .stat-card.rating-card::before { background: #3f7d42; }
-    .rating-overview-body { align-items: center; display: grid; gap: 1.75rem; grid-template-columns: minmax(200px, 260px) minmax(0, 1fr); }
-    .rating-pie { aspect-ratio: 1; border-radius: 50%; display: grid; margin-inline: auto; place-items: center; width: min(220px, 100%); }
-    .rating-pie-center { align-items: center; aspect-ratio: 1; background: #fff; border: 1px solid #e5e7eb; border-radius: 50%; display: flex; flex-direction: column; justify-content: center; width: 58%; }
-    .rating-pie-center strong { color: #173f43; font-size: 1.75rem; line-height: 1.1; }
-    .rating-pie-center span { color: #6b7280; font-size: .75rem; }
-    .rating-legend { display: grid; gap: .75rem 1.5rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .rating-legend-item { align-items: center; display: flex; gap: .6rem; min-width: 0; }
-    .rating-legend-swatch { border-radius: 3px; flex: 0 0 12px; height: 12px; }
-    .rating-legend-item strong { margin-left: auto; }
-    .rating-legend-item small { color: #6b7280; min-width: 3ch; text-align: right; }
     .btn-tourism { background: #0f766e; border-color: #0f766e; color: #fff; }
     .btn-tourism:hover { background: #115e59; border-color: #115e59; color: #fff; }
     .stat-card::before {
@@ -178,8 +173,6 @@
         overflow-wrap: anywhere;
     }
     @media (max-width: 575.98px) {
-        .rating-overview-body { grid-template-columns: minmax(0, 1fr); }
-        .rating-legend { grid-template-columns: minmax(0, 1fr); }
         .spot-panel-header {
             align-items: flex-start !important;
             flex-direction: column;
@@ -311,56 +304,63 @@
 </div>
 
 @if(auth()->user()->hasPermission('manage_reviews'))
-    @php
-        $ratingColors = [
-            5 => '#0f766e',
-            4 => '#64a674',
-            3 => '#e4ad43',
-            2 => '#e78353',
-            1 => '#c94c4c',
-        ];
-        $ratingTotal = array_sum($ratingDistribution);
-        $ratingStops = [];
-        $ratingAngle = 0;
-        foreach ($ratingColors as $stars => $color) {
-            $segmentAngle = $ratingTotal > 0 ? (($ratingDistribution[$stars] ?? 0) / $ratingTotal) * 360 : 0;
-            if ($segmentAngle > 0) {
-                $nextAngle = $ratingAngle + $segmentAngle;
-                $ratingStops[] = "{$color} {$ratingAngle}deg {$nextAngle}deg";
-                $ratingAngle = $nextAngle;
-            }
-        }
-        $ratingPieBackground = $ratingTotal > 0
-            ? 'conic-gradient(' . implode(', ', $ratingStops) . ')'
-            : 'conic-gradient(#e9ecef 0deg 360deg)';
-    @endphp
-    <section class="card mb-4" aria-labelledby="ratingOverviewTitle">
-        <div class="card-header bg-light d-flex flex-wrap justify-content-between align-items-center gap-2">
-            <h5 class="mb-0" id="ratingOverviewTitle">Average Ratings Overview</h5>
-            <span class="text-muted small">{{ $ratingTotal }} {{ \Illuminate\Support\Str::plural('review', $ratingTotal) }}</span>
-        </div>
+    <div class="card mb-4">
+        <div class="card-header bg-light"><h5 class="mb-0">Reviews by Star Rating</h5></div>
         <div class="card-body">
-            <div class="rating-overview-body">
-                <div class="rating-pie" style="background: {{ $ratingPieBackground }}" role="img" aria-label="Rating distribution from {{ $ratingTotal }} reviews. Average {{ number_format($averageRating, 1) }} out of 5.">
-                    <div class="rating-pie-center">
-                        <strong>{{ number_format($averageRating, 1) }}</strong>
-                        <span>Average / 5</span>
+            @if($totalReviews > 0)
+                @php($ratingColors = ['#d95d39', '#e7a83e', '#79a94b', '#338f83', '#396d9a'])
+                <div class="row align-items-center g-4">
+                    <div class="col-12 col-md-7">
+                        <div class="rating-chart-container"><canvas id="reviewRatingChart" role="img" aria-label="Doughnut chart showing the number of reviews for each rating from one to five stars"></canvas></div>
+                    </div>
+                    <div class="col-12 col-md-5 rating-chart-legend" aria-label="Review counts by star rating">
+                        @for($rating = 1; $rating <= 5; $rating++)
+                            <div class="rating-chart-legend-item">
+                                <span class="rating-chart-legend-label"><span class="rating-chart-swatch" style="background: {{ $ratingColors[$rating - 1] }}"></span>{{ $rating }} {{ $rating === 1 ? 'Star' : 'Stars' }}</span>
+                                <strong>{{ $ratingDistribution[$rating - 1] }}</strong>
+                            </div>
+                        @endfor
                     </div>
                 </div>
-                <div class="rating-legend" aria-label="Reviews by star rating">
-                    @foreach($ratingColors as $stars => $color)
-                        @php($starCount = (int) ($ratingDistribution[$stars] ?? 0))
-                        <div class="rating-legend-item">
-                            <span class="rating-legend-swatch" style="background: {{ $color }}" aria-hidden="true"></span>
-                            <span>{{ $stars }} {{ \Illuminate\Support\Str::plural('star', $stars) }}</span>
-                            <strong>{{ $starCount }}</strong>
-                            <small>{{ $ratingTotal > 0 ? number_format(($starCount / $ratingTotal) * 100, 0) : 0 }}%</small>
-                        </div>
-                    @endforeach
-                </div>
-            </div>
+            @else
+                <p class="text-muted text-center mb-0 py-4">No reviews to chart yet.</p>
+            @endif
         </div>
-    </section>
+    </div>
+@endif
+
+@if(auth()->user()->hasPermission('manage_reviews') && $totalReviews > 0)
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <script>
+        const ratingChartCanvas = document.getElementById('reviewRatingChart');
+        if (ratingChartCanvas) {
+            new Chart(ratingChartCanvas, {
+                type: 'doughnut',
+                data: {
+                    labels: ['1 Star', '2 Stars', '3 Stars', '4 Stars', '5 Stars'],
+                    datasets: [{
+                        data: @json($ratingDistribution),
+                        backgroundColor: @json($ratingColors),
+                        borderColor: '#ffffff',
+                        borderWidth: 3,
+                        hoverOffset: 6,
+                    }],
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    cutout: '68%',
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: context => `${context.label}: ${context.raw} ${context.raw === 1 ? 'review' : 'reviews'}`,
+                            },
+                        },
+                    },
+                },
+            });
+        }
+    </script>
 @endif
 
 @if(auth()->user()->hasPermission('manage_spots'))

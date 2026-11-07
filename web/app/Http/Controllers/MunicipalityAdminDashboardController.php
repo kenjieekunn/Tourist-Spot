@@ -26,6 +26,12 @@ class MunicipalityAdminDashboardController extends Controller
 
         $municipality = $user->municipality;
         $hasVerificationStatus = Schema::hasColumn('tourist_spots', 'verification_status');
+        $ratingCounts = Review::whereHas('touristSpot', function ($query) use ($municipality) {
+            $query->where('municipality_id', $municipality->id);
+        })
+            ->selectRaw('rating, COUNT(*) as review_count')
+            ->groupBy('rating')
+            ->pluck('review_count', 'rating');
 
         $dashboardData = [
             'municipality' => $municipality,
@@ -58,15 +64,8 @@ class MunicipalityAdminDashboardController extends Controller
             'averageRating' => round((float) Review::whereHas('touristSpot', function ($query) use ($municipality) {
                 $query->where('municipality_id', $municipality->id);
             })->avg('rating'), 1),
-            'ratingDistribution' => Review::whereHas('touristSpot', function ($query) use ($municipality) {
-                $query->where('municipality_id', $municipality->id);
-            })
-                ->selectRaw('rating, COUNT(*) as review_count')
-                ->whereBetween('rating', [1, 5])
-                ->groupBy('rating')
-                ->orderByDesc('rating')
-                ->pluck('review_count', 'rating')
-                ->map(fn ($count) => (int) $count)
+            'ratingDistribution' => collect(range(1, 5))
+                ->map(fn ($rating) => (int) $ratingCounts->get($rating, 0))
                 ->all(),
             'pendingReviews' => Review::where('status', 'pending')
                 ->whereHas('touristSpot', function ($query) use ($municipality) {
