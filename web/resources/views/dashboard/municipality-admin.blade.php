@@ -48,6 +48,16 @@
     .stat-card.staff-card::before { background: #3976a8; }
     .stat-card.review-card::before { background: #d69e2e; }
     .stat-card.rating-card::before { background: #3f7d42; }
+    .rating-overview-body { align-items: center; display: grid; gap: 1.75rem; grid-template-columns: minmax(200px, 260px) minmax(0, 1fr); }
+    .rating-pie { aspect-ratio: 1; border-radius: 50%; display: grid; margin-inline: auto; place-items: center; width: min(220px, 100%); }
+    .rating-pie-center { align-items: center; aspect-ratio: 1; background: #fff; border: 1px solid #e5e7eb; border-radius: 50%; display: flex; flex-direction: column; justify-content: center; width: 58%; }
+    .rating-pie-center strong { color: #173f43; font-size: 1.75rem; line-height: 1.1; }
+    .rating-pie-center span { color: #6b7280; font-size: .75rem; }
+    .rating-legend { display: grid; gap: .75rem 1.5rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .rating-legend-item { align-items: center; display: flex; gap: .6rem; min-width: 0; }
+    .rating-legend-swatch { border-radius: 3px; flex: 0 0 12px; height: 12px; }
+    .rating-legend-item strong { margin-left: auto; }
+    .rating-legend-item small { color: #6b7280; min-width: 3ch; text-align: right; }
     .btn-tourism { background: #0f766e; border-color: #0f766e; color: #fff; }
     .btn-tourism:hover { background: #115e59; border-color: #115e59; color: #fff; }
     .stat-card::before {
@@ -168,6 +178,8 @@
         overflow-wrap: anywhere;
     }
     @media (max-width: 575.98px) {
+        .rating-overview-body { grid-template-columns: minmax(0, 1fr); }
+        .rating-legend { grid-template-columns: minmax(0, 1fr); }
         .spot-panel-header {
             align-items: flex-start !important;
             flex-direction: column;
@@ -297,6 +309,59 @@
         </div>
     @endif
 </div>
+
+@if(auth()->user()->hasPermission('manage_reviews'))
+    @php
+        $ratingColors = [
+            5 => '#0f766e',
+            4 => '#64a674',
+            3 => '#e4ad43',
+            2 => '#e78353',
+            1 => '#c94c4c',
+        ];
+        $ratingTotal = array_sum($ratingDistribution);
+        $ratingStops = [];
+        $ratingAngle = 0;
+        foreach ($ratingColors as $stars => $color) {
+            $segmentAngle = $ratingTotal > 0 ? (($ratingDistribution[$stars] ?? 0) / $ratingTotal) * 360 : 0;
+            if ($segmentAngle > 0) {
+                $nextAngle = $ratingAngle + $segmentAngle;
+                $ratingStops[] = "{$color} {$ratingAngle}deg {$nextAngle}deg";
+                $ratingAngle = $nextAngle;
+            }
+        }
+        $ratingPieBackground = $ratingTotal > 0
+            ? 'conic-gradient(' . implode(', ', $ratingStops) . ')'
+            : 'conic-gradient(#e9ecef 0deg 360deg)';
+    @endphp
+    <section class="card mb-4" aria-labelledby="ratingOverviewTitle">
+        <div class="card-header bg-light d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <h5 class="mb-0" id="ratingOverviewTitle">Average Ratings Overview</h5>
+            <span class="text-muted small">{{ $ratingTotal }} {{ \Illuminate\Support\Str::plural('review', $ratingTotal) }}</span>
+        </div>
+        <div class="card-body">
+            <div class="rating-overview-body">
+                <div class="rating-pie" style="background: {{ $ratingPieBackground }}" role="img" aria-label="Rating distribution from {{ $ratingTotal }} reviews. Average {{ number_format($averageRating, 1) }} out of 5.">
+                    <div class="rating-pie-center">
+                        <strong>{{ number_format($averageRating, 1) }}</strong>
+                        <span>Average / 5</span>
+                    </div>
+                </div>
+                <div class="rating-legend" aria-label="Reviews by star rating">
+                    @foreach($ratingColors as $stars => $color)
+                        @php($starCount = (int) ($ratingDistribution[$stars] ?? 0))
+                        <div class="rating-legend-item">
+                            <span class="rating-legend-swatch" style="background: {{ $color }}" aria-hidden="true"></span>
+                            <span>{{ $stars }} {{ \Illuminate\Support\Str::plural('star', $stars) }}</span>
+                            <strong>{{ $starCount }}</strong>
+                            <small>{{ $ratingTotal > 0 ? number_format(($starCount / $ratingTotal) * 100, 0) : 0 }}%</small>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        </div>
+    </section>
+@endif
 
 @if(auth()->user()->hasPermission('manage_spots'))
 <div class="modal fade pending-verification-modal" id="pendingVerificationModal" tabindex="-1" aria-labelledby="pendingVerificationModalLabel" aria-hidden="true">
