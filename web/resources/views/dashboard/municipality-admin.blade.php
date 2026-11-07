@@ -253,56 +253,37 @@
 @endif
 
 @php($canManageStaff = auth()->user()->isMunicipalityAdmin() && auth()->user()->hasPermission('manage_staff'))
-@php($canManageSpots = auth()->user()->hasPermission('manage_spots'))
-@php($canManageReviews = auth()->user()->hasPermission('manage_reviews'))
-@if($canManageSpots || $canManageReviews || $canManageStaff)
+@if(auth()->user()->hasPermission('manage_spots'))
 <!-- Statistics Row -->
-<div class="row g-4 mb-4 align-items-stretch">
-    @if($canManageSpots)
-        <div class="col-12 col-md-6 col-xl-4">
-            <a href="{{ route('municipality-admin.tourist-spots') }}" class="stat-card h-100 w-100" aria-label="View all tourist spots">
-                <div class="stat-value">{{ $totalSpots }}</div>
-                <div class="stat-label">Total Tourist Spots</div>
-            </a>
-        </div>
-        <div class="col-12 col-md-6 col-xl-4">
-            <a href="{{ route('municipality-admin.tourist-spots', ['verification_status' => 'approved']) }}" class="stat-card verified-card h-100 w-100" aria-label="View verified tourist spots">
-                <div class="stat-value">{{ $verifiedSpots }}</div>
-                <div class="stat-label">Verified Spots</div>
-            </a>
-        </div>
-        <div class="col-12 col-md-6 col-xl-4">
-            <button type="button" class="stat-card pending-card-stat h-100 w-100 border-0" data-bs-toggle="modal" data-bs-target="#pendingVerificationModal" aria-label="View tourist spots pending verification">
-                <div class="stat-value">{{ $pendingVerificationSpots }}</div>
-                <div class="stat-label">Pending Verification</div>
-            </button>
-        </div>
-    @endif
+<div class="row mb-4">
+    <div class="col-12 col-md-6 {{ $canManageStaff ? 'col-xl-3' : 'col-xl-4' }}">
+        <a href="{{ route('municipality-admin.tourist-spots') }}" class="stat-card h-100 w-100" aria-label="View all tourist spots">
+            <div class="stat-value">{{ $totalSpots }}</div>
+            <div class="stat-label">Total Tourist Spots</div>
+        </a>
+    </div>
+    <div class="col-12 col-md-6 {{ $canManageStaff ? 'col-xl-3' : 'col-xl-4' }}">
+        <a href="{{ route('municipality-admin.tourist-spots', ['verification_status' => 'approved']) }}" class="stat-card verified-card h-100 w-100" aria-label="View verified tourist spots">
+            <div class="stat-value">{{ $verifiedSpots }}</div>
+            <div class="stat-label">Verified Spots</div>
+        </a>
+    </div>
+    <div class="col-12 col-md-6 {{ $canManageStaff ? 'col-xl-3' : 'col-xl-4' }}">
+        <button type="button" class="stat-card pending-card-stat h-100 w-100 border-0" data-bs-toggle="modal" data-bs-target="#pendingVerificationModal" aria-label="View tourist spots pending verification">
+            <div class="stat-value">{{ $pendingVerificationSpots }}</div>
+            <div class="stat-label">Pending Verification</div>
+        </button>
+    </div>
     @if($canManageStaff)
-        <div class="col-12 col-md-6 col-xl-4">
+        <div class="col-12 col-md-6 col-xl-3">
             <a href="{{ route('municipality-admin.staff') }}" class="stat-card staff-card h-100 w-100" aria-label="Open staff accounts">
                 <div class="stat-value">{{ $totalStaff }}</div>
                 <div class="stat-label">Staff</div>
             </a>
         </div>
     @endif
-    @if($canManageReviews)
-        <div class="col-12 col-md-6 col-xl-4">
-            <a href="{{ route('municipality-admin.reviews') }}" class="stat-card review-card h-100 w-100" aria-label="View {{ $totalReviews }} tourist reviews">
-                <div class="stat-value">{{ $totalReviews }}</div>
-                <div class="stat-label">Total Reviews</div>
-            </a>
-        </div>
-        <div class="col-12 col-md-6 col-xl-4">
-            <a href="{{ route('municipality-admin.reviews') }}" class="stat-card rating-card h-100 w-100" aria-label="Average tourist rating {{ number_format($averageRating, 1) }} out of 5">
-                <div class="stat-value">{{ number_format($averageRating, 1) }} / 5</div>
-                <div class="stat-label">Average Tourist Rating</div>
-            </a>
-        </div>
-    @endif
 </div>
 
-@if($canManageSpots)
 <div class="modal fade pending-verification-modal" id="pendingVerificationModal" tabindex="-1" aria-labelledby="pendingVerificationModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content">
@@ -352,6 +333,106 @@
         </div>
     </div>
 </div>
+
+<div class="row g-4 spot-panels">
+    <!-- Recent Tourist Spots -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header bg-light">
+                <div class="d-flex justify-content-between align-items-center spot-panel-header">
+                    <h5 class="mb-0">Recent Tourist Spots</h5>
+                    <div class="d-flex gap-2 spot-panel-actions">
+                        <a href="{{ route('municipality-admin.tourist-spots') }}" class="btn btn-sm btn-tourism">View All</a>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                @forelse($recentSpots as $spot)
+                    <div class="d-flex justify-content-between align-items-start gap-3 mb-3 pb-3 border-bottom spot-row">
+                        <div class="d-flex align-items-start gap-3">
+                            @if($spot->image_url)
+                                <img class="spot-row-thumbnail" src="{{ preg_match('#^https?://#i', $spot->image_url) ? $spot->image_url : url($spot->image_url) }}" alt="{{ $spot->name }} thumbnail">
+                            @else
+                                <span class="spot-row-thumbnail spot-row-placeholder"><i class="fas fa-image"></i></span>
+                            @endif
+                            <div class="spot-row-details">
+                            <h6 class="mb-1">{{ $spot->name }}</h6>
+                            <small class="text-muted">{{ $spot->address ?? 'No address provided' }}</small>
+                            </div>
+                        </div>
+                        <div class="text-end spot-row-status">
+                            <span class="verification-pill verification-status-badge">
+                                {{ $spot->verification_status === 'approved' ? 'Verified' : ucfirst($spot->verification_status ?? 'Pending') }}
+                            </span>
+                            <div class="mt-2">
+                                <span class="spot-status-badge operational-status-badge">
+                                    {{ in_array($spot->status, ['open', 'active']) ? 'Open' : 'Closed' }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                @empty
+                    <p class="text-muted">No tourist spots added yet</p>
+                @endforelse
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Spots Waiting for Super Admin Approval -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">Waiting for Approval</h5>
+                <div class="approval-caption mt-1">Submitted spots will be reviewed by the Provincial Tourism Office.</div>
+            </div>
+            <div class="card-body">
+                @forelse($pendingSpots as $spot)
+                    <div class="pending-card {{ $spot->created_at && $spot->created_at->diffInDays(now()) >= 3 ? 'is-overdue' : '' }}">
+                        <div class="d-flex justify-content-between align-items-start gap-3 mb-2 pending-card-header">
+                            <div>
+                            @include('dashboard.partials.tourist-spot-preview-modal')
+                                <h6 class="mb-1">{{ $spot->name }}</h6>
+                                <small class="text-muted">Added {{ $spot->created_at->diffForHumans() }}</small>
+                            </div>
+                            <span class="badge bg-warning text-dark">Pending for {{ $spot->created_at?->diffForHumans() ?? 'some time' }}</span>
+                        </div>
+                        <p class="text-muted small mb-0">{{ Str::limit($spot->description, 100) }}</p>
+                    </div>
+                @empty
+                    <p class="text-muted">All your spots are verified or currently closed.</p>
+                @endforelse
+            </div>
+        </div>
+    </div>
+</div>
+@endif
+
+@if(auth()->user()->hasPermission('manage_reviews'))
+    <div class="row mb-4">
+        <div class="col-12 col-md-6 col-xl-3">
+            <a href="{{ route('municipality-admin.reviews') }}" class="stat-card review-card h-100 w-100" aria-label="View {{ $totalReviews }} tourist reviews">
+                <div class="stat-value">{{ $totalReviews }}</div>
+                <div class="stat-label">Total Reviews</div>
+            </a>
+        </div>
+        <div class="col-12 col-md-6 col-xl-3">
+            <a href="{{ route('municipality-admin.reviews') }}" class="stat-card rating-card h-100 w-100" aria-label="Average tourist rating {{ number_format($averageRating, 1) }} out of 5">
+                <div class="stat-value">{{ number_format($averageRating, 1) }} / 5</div>
+                <div class="stat-label">Average Tourist Rating</div>
+            </a>
+        </div>
+    </div>
+@endif
+
+@if($canManageStaff && !auth()->user()->hasPermission('manage_spots'))
+    <div class="row mb-4">
+        <div class="col-12 col-md-6 col-xl-3">
+            <a href="{{ route('municipality-admin.staff') }}" class="stat-card staff-card h-100 w-100" aria-label="Open staff accounts">
+                <div class="stat-value">{{ $totalStaff }}</div>
+                <div class="stat-label">Staff</div>
+            </a>
+        </div>
+    </div>
 @endif
 
 <!-- Pending Reviews -->
