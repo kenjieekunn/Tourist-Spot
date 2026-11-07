@@ -22,7 +22,7 @@
         color: var(--dash-text);
         text-align: left;
         box-shadow: 0 12px 24px rgba(17, 24, 39, 0.06);
-        margin-bottom: 1.5rem;
+        margin-bottom: 0;
         overflow: hidden;
         min-height: 168px;
         height: 100%;
@@ -43,11 +43,15 @@
     .stat-card.staff-card .stat-value { color: #3976a8; }
     .stat-card.review-card .stat-value { color: #b7791f; }
     .stat-card.rating-card .stat-value { color: #3f7d42; }
+    .stat-card.rejected-card .stat-value { color: #b42318; }
+    .stat-card.closed-card .stat-value { color: #52616b; }
     .stat-card.verified-card::before { background: #3f7d42; }
     .stat-card.pending-card-stat::before { background: #d69e2e; }
     .stat-card.staff-card::before { background: #3976a8; }
     .stat-card.review-card::before { background: #d69e2e; }
     .stat-card.rating-card::before { background: #3f7d42; }
+    .stat-card.rejected-card::before { background: #b42318; }
+    .stat-card.closed-card::before { background: #52616b; }
     .btn-tourism { background: #0f766e; border-color: #0f766e; color: #fff; }
     .btn-tourism:hover { background: #115e59; border-color: #115e59; color: #fff; }
     .stat-card::before {
@@ -89,40 +93,12 @@
     }
     .municipality-banner-copy { position: relative; z-index: 1; }
     .municipality-banner-subtitle { margin: 0; opacity: .9; }
-    .spot-row-thumbnail { width: 60px; height: 60px; border-radius: 10px; object-fit: cover; flex: 0 0 auto; background: #eef5f2; }
-    .spot-row-placeholder { display: inline-flex; align-items: center; justify-content: center; color: #0f766e; border: 1px solid #c8e5da; }
-    .verification-status-badge { background: #fff3cd; color: #856404; border: 1px solid #f1d487; }
-    .operational-status-badge { background: transparent; color: #6b7280; border: 1px solid #9ca3af; }
-    .approval-caption { color: #55736e; font-size: .85rem; }
-    .pending-card.is-overdue { border-left-color: #c53030; background-color: #fff5f5; }
     .pending-card {
         border-left: 4px solid #ff6b35;
         background-color: #fff9f5;
         padding: 1rem;
         border-radius: 8px;
         margin-bottom: 1rem;
-    }
-    .spot-status-badge {
-        display: inline-block;
-        padding: 0.25rem 0.75rem;
-        border-radius: 20px;
-        font-size: 0.85rem;
-        font-weight: 500;
-    }
-    .status-open {
-        background-color: #d4edda;
-        color: #155724;
-    }
-    .status-closed {
-        background-color: #fff3cd;
-        color: #856404;
-    }
-    .verification-pill {
-        display: inline-block;
-        padding: 0.25rem 0.75rem;
-        border-radius: 999px;
-        font-size: 0.8rem;
-        font-weight: 600;
     }
     .verification-pending {
         background: #fff3cd;
@@ -136,26 +112,6 @@
         background: #f8d7da;
         color: #842029;
     }
-    .spot-panels > [class*="col-"] {
-        display: flex;
-    }
-    .spot-panels .card {
-        width: 100%;
-    }
-    .spot-row {
-        min-width: 0;
-    }
-    .spot-row-details {
-        min-width: 0;
-    }
-    .spot-row-details h6,
-    .spot-row-details small {
-        overflow-wrap: anywhere;
-    }
-    .spot-row-status {
-        flex: 0 0 auto;
-        min-width: 92px;
-    }
     .pending-card-header {
         min-width: 0;
     }
@@ -168,31 +124,6 @@
         overflow-wrap: anywhere;
     }
     @media (max-width: 575.98px) {
-        .spot-panel-header {
-            align-items: flex-start !important;
-            flex-direction: column;
-            gap: .75rem;
-        }
-        .spot-panel-actions {
-            width: 100%;
-        }
-        .spot-panel-actions .btn {
-            flex: 1 1 auto;
-        }
-        .spot-row {
-            align-items: flex-start;
-            flex-wrap: wrap;
-            row-gap: .75rem;
-        }
-        .spot-row-status {
-            flex: 1 1 100%;
-            min-width: 0;
-            padding-left: 76px;
-            text-align: left !important;
-        }
-        .spot-row-status .mt-2 {
-            margin-top: .35rem !important;
-        }
         .pending-card-header {
             flex-direction: column;
         }
@@ -252,38 +183,66 @@
     </div>
 @endif
 
-@php($canManageStaff = auth()->user()->isMunicipalityAdmin() && auth()->user()->hasPermission('manage_staff'))
-@if(auth()->user()->hasPermission('manage_spots'))
-<!-- Statistics Row -->
-<div class="row mb-4">
-    <div class="col-12 col-md-6 {{ $canManageStaff ? 'col-xl-3' : 'col-xl-4' }}">
-        <a href="{{ route('municipality-admin.tourist-spots') }}" class="stat-card h-100 w-100" aria-label="View all tourist spots">
-            <div class="stat-value">{{ $totalSpots }}</div>
-            <div class="stat-label">Total Tourist Spots</div>
-        </a>
-    </div>
-    <div class="col-12 col-md-6 {{ $canManageStaff ? 'col-xl-3' : 'col-xl-4' }}">
-        <a href="{{ route('municipality-admin.tourist-spots', ['verification_status' => 'approved']) }}" class="stat-card verified-card h-100 w-100" aria-label="View verified tourist spots">
-            <div class="stat-value">{{ $verifiedSpots }}</div>
-            <div class="stat-label">Verified Spots</div>
-        </a>
-    </div>
-    <div class="col-12 col-md-6 {{ $canManageStaff ? 'col-xl-3' : 'col-xl-4' }}">
-        <button type="button" class="stat-card pending-card-stat h-100 w-100 border-0" data-bs-toggle="modal" data-bs-target="#pendingVerificationModal" aria-label="View tourist spots pending verification">
-            <div class="stat-value">{{ $pendingVerificationSpots }}</div>
-            <div class="stat-label">Pending Verification</div>
-        </button>
-    </div>
+@php
+    $canManageSpots = auth()->user()->hasPermission('manage_spots');
+    $canManageReviews = auth()->user()->hasPermission('manage_reviews');
+    $canManageStaff = auth()->user()->isMunicipalityAdmin() && auth()->user()->hasPermission('manage_staff');
+@endphp
+<div class="row g-3 mb-4 dashboard-stat-grid">
+    @if($canManageSpots)
+        <div class="col-12 col-sm-6 col-xl-4">
+            <a href="{{ route('municipality-admin.tourist-spots') }}" class="stat-card h-100 w-100" aria-label="View all tourist spots">
+                <div class="stat-value">{{ $totalSpots }}</div><div class="stat-label">Total Tourist Spots</div>
+            </a>
+        </div>
+        <div class="col-12 col-sm-6 col-xl-4">
+            <a href="{{ route('municipality-admin.tourist-spots', ['verification_status' => 'approved']) }}" class="stat-card verified-card h-100 w-100" aria-label="View verified tourist spots">
+                <div class="stat-value">{{ $verifiedSpots }}</div><div class="stat-label">Verified Spots</div>
+            </a>
+        </div>
+        <div class="col-12 col-sm-6 col-xl-4">
+            <button type="button" class="stat-card pending-card-stat h-100 w-100 border-0" data-bs-toggle="modal" data-bs-target="#pendingVerificationModal" aria-label="View tourist spots pending verification">
+                <div class="stat-value">{{ $pendingVerificationSpots }}</div><div class="stat-label">Pending Verification</div>
+            </button>
+        </div>
+        <div class="col-12 col-sm-6 col-xl-4">
+            <a href="{{ route('municipality-admin.tourist-spots') }}" class="stat-card rejected-card h-100 w-100" aria-label="View rejected tourist spots">
+                <div class="stat-value">{{ $rejectedSpots }}</div><div class="stat-label">Rejected Spots</div>
+            </a>
+        </div>
+        <div class="col-12 col-sm-6 col-xl-4">
+            <a href="{{ route('municipality-admin.tourist-spots') }}" class="stat-card closed-card h-100 w-100" aria-label="View closed tourist spots">
+                <div class="stat-value">{{ $closedSpots }}</div><div class="stat-label">Closed Spots</div>
+            </a>
+        </div>
+    @endif
     @if($canManageStaff)
-        <div class="col-12 col-md-6 col-xl-3">
+        <div class="col-12 col-sm-6 col-xl-4">
             <a href="{{ route('municipality-admin.staff') }}" class="stat-card staff-card h-100 w-100" aria-label="Open staff accounts">
-                <div class="stat-value">{{ $totalStaff }}</div>
-                <div class="stat-label">Staff</div>
+                <div class="stat-value">{{ $totalStaff }}</div><div class="stat-label">Staff Accounts</div>
+            </a>
+        </div>
+    @endif
+    @if($canManageReviews)
+        <div class="col-12 col-sm-6 col-xl-4">
+            <a href="{{ route('municipality-admin.reviews') }}" class="stat-card review-card h-100 w-100" aria-label="View {{ $totalReviews }} tourist reviews">
+                <div class="stat-value">{{ $totalReviews }}</div><div class="stat-label">Total Reviews</div>
+            </a>
+        </div>
+        <div class="col-12 col-sm-6 col-xl-4">
+            <a href="{{ route('municipality-admin.reviews') }}" class="stat-card pending-card-stat h-100 w-100" aria-label="View {{ $pendingReviews }} pending reviews">
+                <div class="stat-value">{{ $pendingReviews }}</div><div class="stat-label">Pending Reviews</div>
+            </a>
+        </div>
+        <div class="col-12 col-sm-6 col-xl-4">
+            <a href="{{ route('municipality-admin.reviews') }}" class="stat-card rating-card h-100 w-100" aria-label="Average tourist rating {{ number_format($averageRating, 1) }} out of 5">
+                <div class="stat-value">{{ number_format($averageRating, 1) }} / 5</div><div class="stat-label">Average Tourist Rating</div>
             </a>
         </div>
     @endif
 </div>
 
+@if($canManageSpots)
 <div class="modal fade pending-verification-modal" id="pendingVerificationModal" tabindex="-1" aria-labelledby="pendingVerificationModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content">
@@ -334,105 +293,6 @@
     </div>
 </div>
 
-<div class="row g-4 spot-panels">
-    <!-- Recent Tourist Spots -->
-    <div class="col-lg-6">
-        <div class="card">
-            <div class="card-header bg-light">
-                <div class="d-flex justify-content-between align-items-center spot-panel-header">
-                    <h5 class="mb-0">Recent Tourist Spots</h5>
-                    <div class="d-flex gap-2 spot-panel-actions">
-                        <a href="{{ route('municipality-admin.tourist-spots') }}" class="btn btn-sm btn-tourism">View All</a>
-                    </div>
-                </div>
-            </div>
-            <div class="card-body">
-                @forelse($recentSpots as $spot)
-                    <div class="d-flex justify-content-between align-items-start gap-3 mb-3 pb-3 border-bottom spot-row">
-                        <div class="d-flex align-items-start gap-3">
-                            @if($spot->image_url)
-                                <img class="spot-row-thumbnail" src="{{ preg_match('#^https?://#i', $spot->image_url) ? $spot->image_url : url($spot->image_url) }}" alt="{{ $spot->name }} thumbnail">
-                            @else
-                                <span class="spot-row-thumbnail spot-row-placeholder"><i class="fas fa-image"></i></span>
-                            @endif
-                            <div class="spot-row-details">
-                            <h6 class="mb-1">{{ $spot->name }}</h6>
-                            <small class="text-muted">{{ $spot->address ?? 'No address provided' }}</small>
-                            </div>
-                        </div>
-                        <div class="text-end spot-row-status">
-                            <span class="verification-pill verification-status-badge">
-                                {{ $spot->verification_status === 'approved' ? 'Verified' : ucfirst($spot->verification_status ?? 'Pending') }}
-                            </span>
-                            <div class="mt-2">
-                                <span class="spot-status-badge operational-status-badge">
-                                    {{ in_array($spot->status, ['open', 'active']) ? 'Open' : 'Closed' }}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                @empty
-                    <p class="text-muted">No tourist spots added yet</p>
-                @endforelse
-            </div>
-        </div>
-    </div>
-
-    <!-- Pending Spots Waiting for Super Admin Approval -->
-    <div class="col-lg-6">
-        <div class="card">
-            <div class="card-header bg-light">
-                <h5 class="mb-0">Waiting for Approval</h5>
-                <div class="approval-caption mt-1">Submitted spots will be reviewed by the Provincial Tourism Office.</div>
-            </div>
-            <div class="card-body">
-                @forelse($pendingSpots as $spot)
-                    <div class="pending-card {{ $spot->created_at && $spot->created_at->diffInDays(now()) >= 3 ? 'is-overdue' : '' }}">
-                        <div class="d-flex justify-content-between align-items-start gap-3 mb-2 pending-card-header">
-                            <div>
-                            @include('dashboard.partials.tourist-spot-preview-modal')
-                                <h6 class="mb-1">{{ $spot->name }}</h6>
-                                <small class="text-muted">Added {{ $spot->created_at->diffForHumans() }}</small>
-                            </div>
-                            <span class="badge bg-warning text-dark">Pending for {{ $spot->created_at?->diffForHumans() ?? 'some time' }}</span>
-                        </div>
-                        <p class="text-muted small mb-0">{{ Str::limit($spot->description, 100) }}</p>
-                    </div>
-                @empty
-                    <p class="text-muted">All your spots are verified or currently closed.</p>
-                @endforelse
-            </div>
-        </div>
-    </div>
-</div>
-@endif
-
-@if(auth()->user()->hasPermission('manage_reviews'))
-    <div class="row mb-4">
-        <div class="col-12 col-md-6 col-xl-3">
-            <a href="{{ route('municipality-admin.reviews') }}" class="stat-card review-card h-100 w-100" aria-label="View {{ $totalReviews }} tourist reviews">
-                <div class="stat-value">{{ $totalReviews }}</div>
-                <div class="stat-label">Total Reviews</div>
-            </a>
-        </div>
-        <div class="col-12 col-md-6 col-xl-3">
-            <a href="{{ route('municipality-admin.reviews') }}" class="stat-card rating-card h-100 w-100" aria-label="Average tourist rating {{ number_format($averageRating, 1) }} out of 5">
-                <div class="stat-value">{{ number_format($averageRating, 1) }} / 5</div>
-                <div class="stat-label">Average Tourist Rating</div>
-            </a>
-        </div>
-    </div>
-@endif
-
-@if($canManageStaff && !auth()->user()->hasPermission('manage_spots'))
-    <div class="row mb-4">
-        <div class="col-12 col-md-6 col-xl-3">
-            <a href="{{ route('municipality-admin.staff') }}" class="stat-card staff-card h-100 w-100" aria-label="Open staff accounts">
-                <div class="stat-value">{{ $totalStaff }}</div>
-                <div class="stat-label">Staff</div>
-            </a>
-        </div>
-    </div>
 @endif
 
 <!-- Pending Reviews -->
@@ -483,6 +343,7 @@
             </div>
         </div>
     </div>
+    @include('dashboard.partials.tourist-spot-preview-modal')
 @endif
 
 @endsection

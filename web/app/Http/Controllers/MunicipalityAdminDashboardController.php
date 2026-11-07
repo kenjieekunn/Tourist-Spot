@@ -66,10 +66,6 @@ class MunicipalityAdminDashboardController extends Controller
             'totalStaff' => $user->isMunicipalityAdmin() && $user->hasPermission('manage_staff')
                 ? $municipality->staffAccounts()->count()
                 : 0,
-            'recentSpots' => TouristSpot::where('municipality_id', $municipality->id)
-                ->latest('created_at')
-                ->take(8)
-                ->get(),
             'pendingSpots' => $hasVerificationStatus
                 ? TouristSpot::where('municipality_id', $municipality->id)
                     ->where('verification_status', 'pending')
