@@ -36,6 +36,10 @@
         .login-modal label { display: block; margin-bottom: 7px; font-size: .88rem; font-weight: 700; text-align: center; }
         .login-modal input { width: 100%; min-height: 46px; padding: 10px 12px; border: 1px solid #cbd9d3; border-radius: 5px; color: var(--ink); font: inherit; text-align: center; }
         .login-modal input:focus { outline: 3px solid rgba(26, 92, 82, .16); border-color: var(--teal-mid); }
+        .login-password-control { display: flex; }
+        .login-password-control input { min-width: 0; border-top-right-radius: 0; border-bottom-right-radius: 0; }
+        .login-password-toggle { flex: 0 0 46px; min-height: 46px; border: 1px solid #cbd9d3; border-left: 0; border-radius: 0 5px 5px 0; color: var(--ink); background: white; cursor: pointer; }
+        .login-password-toggle:focus-visible { outline: 3px solid rgba(26, 92, 82, .22); outline-offset: 2px; }
         .login-modal-field { margin-bottom: 18px; }
         .login-modal-error { padding: 12px 14px; margin-bottom: 18px; border: 1px solid #f0c4be; border-radius: 5px; color: #8f2d20; background: #fff2f0; font-size: .88rem; }
         .login-modal-submit { width: 100%; min-height: 48px; border: 0; border-radius: 5px; color: white; background: var(--teal); font: inherit; font-weight: 700; cursor: pointer; }
@@ -159,11 +163,16 @@
                 @csrf
                 <div class="login-modal-field">
                     <label for="login-modal-username">Email or username</label>
-                    <input id="login-modal-username" type="text" name="login" value="{{ old('login') }}" placeholder="superadmin or admin@example.com" autocomplete="username" required autofocus>
+                    <input id="login-modal-username" type="text" name="login" value="{{ old('login') }}" autocomplete="username" required autofocus>
                 </div>
                 <div class="login-modal-field">
                     <label for="login-modal-password">Password</label>
-                    <input id="login-modal-password" type="password" name="password" placeholder="Enter your password" autocomplete="current-password" required>
+                    <div class="login-password-control">
+                        <input id="login-modal-password" type="password" name="password" autocomplete="current-password" required>
+                        <button class="login-password-toggle" type="button" aria-label="Show password" aria-pressed="false" aria-controls="login-modal-password" data-toggle-password>
+                            <i class="fas fa-eye" aria-hidden="true"></i>
+                        </button>
+                    </div>
                 </div>
                 <button class="login-modal-submit" type="submit">Login</button>
             </form>
@@ -174,6 +183,15 @@
         const loginModal = document.getElementById('login-modal');
         document.querySelector('.login-btn').addEventListener('click', () => loginModal.showModal());
         document.querySelector('[data-close-login]').addEventListener('click', () => loginModal.close());
+        document.querySelector('[data-toggle-password]').addEventListener('click', (event) => {
+            const button = event.currentTarget;
+            const passwordInput = document.getElementById('login-modal-password');
+            const showPassword = passwordInput.type === 'password';
+            passwordInput.type = showPassword ? 'text' : 'password';
+            button.setAttribute('aria-label', showPassword ? 'Hide password' : 'Show password');
+            button.setAttribute('aria-pressed', String(showPassword));
+            button.querySelector('i').className = showPassword ? 'fas fa-eye-slash' : 'fas fa-eye';
+        });
         loginModal.addEventListener('click', (event) => {
             if (event.target === loginModal) loginModal.close();
         });
