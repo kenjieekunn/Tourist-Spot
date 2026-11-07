@@ -8,7 +8,6 @@
     $reportTitles = ['management' => 'Tourist Spot Management Report', 'verification' => 'Tourist Spot Verification Report', 'reviews' => 'Tourist Reviews Report'];
     $reportTitle = $reportTitles[$reportType];
     $reportIcon = ['management' => 'fa-chart-column', 'verification' => 'fa-clipboard-check', 'reviews' => 'fa-star'][$reportType];
-    $chartMax = max(1, $municipalities->max('tourist_spots_count'));
 @endphp
 <style>
     .reports-page { --tourism-teal: #0f766e; --tourism-green: #3f7d42; --tourism-ink: #173f43; }
@@ -38,10 +37,6 @@
     .report-detail-table th { background: #e6f5f1; color: #173f43; font-size: .78rem; text-transform: uppercase; }
     .municipality-divider td { background: #eef8f5; color: #0f766e; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; }
     .report-chart { margin: 0 1.5rem 1rem; }
-    .chart-row { align-items: center; display: flex; gap: .6rem; margin: .35rem 0; }
-    .chart-label { flex: 0 0 8rem; font-size: .78rem; }
-    .chart-track { background: #e5efec; flex: 1; height: .55rem; }
-    .chart-fill { background: linear-gradient(90deg, #0f766e, #3f7d42); height: 100%; }
     .report-signoff { display: flex; gap: 3rem; margin: 2rem 1.5rem 1.5rem; page-break-inside: avoid; }
     .report-signoff div { flex: 1; }
     .report-signoff p { margin: .55rem 0; }
@@ -50,24 +45,25 @@
     .report-preview-empty { border: 1px dashed #9bd2c7; border-radius: 10px; color: #55736e; padding: 4rem 1rem; text-align: center; }
     .filter-section + .filter-section { border-top: 1px solid #e3ece8; margin-top: 1.25rem; padding-top: 1.25rem; }
     .filter-section-title { color: var(--tourism-ink); font-size: .78rem; font-weight: 800; margin-bottom: .85rem; text-transform: uppercase; }
-    .filter-fields { display: grid; gap: 1rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .filter-fields { display: grid; gap: .75rem; grid-template-columns: repeat(4, minmax(0, 1fr)); }
     .filter-field { min-width: 0; }
+    .filter-field > .form-control, .filter-field > .form-select { font-size: .9rem; min-height: 38px; padding: .375rem .5rem; }
     .date-range-control { border: 1px solid #ced4da; border-radius: .375rem; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); overflow: hidden; }
     .date-range-control input { border: 0; border-radius: 0; min-width: 0; }
     .date-range-control input:focus { box-shadow: inset 0 0 0 1px var(--tourism-teal); z-index: 1; }
     .date-range-separator { align-items: center; background: #f4f8f6; color: #64736f; display: flex; padding: 0 .55rem; }
     .date-presets { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .55rem; }
-    .date-preset { background: #f4f8f6; border: 1px solid #dce9e5; border-radius: 4px; color: #285b55; font-size: .75rem; padding: .25rem .5rem; }
+    .date-preset { background: #f4f8f6; border: 1px solid #dce9e5; border-radius: 4px; color: #285b55; font-size: .7rem; padding: .2rem .35rem; }
     .date-preset:hover, .date-preset:focus { background: #e4f2ed; border-color: #9bc9bd; }
-    .report-filter-actions { align-items: flex-end; display: flex; flex-direction: column; grid-column: 1 / -1; }
-    .report-filter-actions .form-check { align-self: flex-start; }
+    .report-filter-actions { display: flex; justify-content: flex-end; margin-top: 1rem; }
     .report-filter-actions .btn { min-width: 190px; }
     .active-filter-list { display: flex; flex-wrap: wrap; gap: .5rem; }
     .active-filter-chip { align-items: center; background: #e9f5f1; border: 1px solid #c6e2d9; border-radius: 999px; color: #20564e; display: inline-flex; font-size: .82rem; gap: .5rem; max-width: 100%; padding: .3rem .4rem .3rem .75rem; }
     .active-filter-chip span { overflow-wrap: anywhere; }
     .active-filter-chip button { align-items: center; background: transparent; border: 0; border-radius: 50%; color: inherit; display: inline-flex; height: 1.35rem; justify-content: center; padding: 0; width: 1.35rem; }
     .active-filter-chip button:hover, .active-filter-chip button:focus { background: #cde8de; }
-    @media (max-width: 575.98px) { .filter-fields { grid-template-columns: minmax(0, 1fr); } .report-filter-actions { align-items: stretch; } .report-filter-actions .btn { width: 100%; } }
+    @media (max-width: 991.98px) { .filter-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 575.98px) { .filter-fields { grid-template-columns: minmax(0, 1fr); } .report-filter-actions .btn { width: 100%; } }
     @media print {
         @page { size: A4 portrait; margin: 10mm; }
         html, body { background: #fff !important; margin: 0 !important; padding: 0 !important; }
@@ -92,7 +88,7 @@
             <form method="GET" action="{{ route('super-admin.reports') }}" id="reportForm">
                 <input type="hidden" name="generated" value="1">
                 <section class="filter-section" aria-labelledby="filterResultsTitle">
-                    <h2 class="filter-section-title" id="filterResultsTitle">Filter Results</h2>
+                    <h2 class="filter-section-title" id="filterResultsTitle">Filters</h2>
                     <div class="filter-fields">
                         <div class="filter-field"><label for="spotName" class="form-label">Tourist Spot Name</label><input type="search" name="spot_name" id="spotName" value="{{ $spotName }}" class="form-control" placeholder="Search spot name"></div>
                         <div class="filter-field"><label for="municipalitySearch" class="form-label">Municipality</label><input type="search" id="municipalitySearch" class="form-control" list="municipalityOptions" value="{{ optional($municipalities->firstWhere('id', $municipalityId))->name }}" placeholder="Type to search municipalities" autocomplete="off"><input type="hidden" name="municipality_id" id="municipalityId" value="{{ $municipalityId }}"><datalist id="municipalityOptions">@foreach($municipalities as $municipality)<option value="{{ $municipality->name }}" data-id="{{ $municipality->id }}"></option>@endforeach</datalist></div>
@@ -100,13 +96,7 @@
                         <div class="filter-field"><label class="form-label" for="dateFrom">Date Range</label><div class="date-range-control" role="group" aria-label="Date range"><input type="date" name="date_from" id="dateFrom" value="{{ $dateFrom }}" class="form-control" aria-label="Start date"><span class="date-range-separator" aria-hidden="true">to</span><input type="date" name="date_to" id="dateTo" value="{{ $dateTo }}" class="form-control" aria-label="End date"></div><div class="date-presets" aria-label="Date range presets"><button type="button" class="date-preset" data-date-preset="7">Last 7 days</button><button type="button" class="date-preset" data-date-preset="month">This month</button><button type="button" class="date-preset" data-date-preset="year">This year</button></div></div>
                     </div>
                 </section>
-                <section class="filter-section" aria-labelledby="reportOptionsTitle">
-                    <h2 class="filter-section-title" id="reportOptionsTitle">Report Options</h2>
-                    <div class="filter-fields">
-                        <div class="filter-field"><div class="form-check mt-2"><input class="form-check-input" type="checkbox" name="include_chart" value="1" id="includeChart" @checked(request()->boolean('include_chart'))><label class="form-check-label" for="includeChart">Include summary chart</label></div></div>
-                        <div class="filter-field report-filter-actions"><button type="submit" class="btn btn-tourism" id="generateReport"><i class="fas fa-file-lines me-1"></i> Generate Report</button></div>
-                    </div>
-                </section>
+                <div class="report-filter-actions"><button type="submit" class="btn btn-tourism" id="generateReport"><i class="fas fa-file-lines me-1"></i> Generate Report</button></div>
             </form>
         </div>
     </div>
@@ -135,7 +125,6 @@
 
             @if($reportType === 'management')
                 <div class="report-section-title">Summary</div><table class="report-summary"><tbody><tr><td>Total Tourist Spots</td><td>{{ $totalSpots }}</td></tr><tr><td>Verified</td><td>{{ $verifiedSpots }}</td></tr><tr><td>Pending Verification</td><td>{{ $pendingSpots }}</td></tr><tr><td>Active</td><td>{{ $activeSpots }}</td></tr><tr><td>Municipalities with 0 spots</td><td>{{ $emptyMunicipalities }}</td></tr></tbody></table>
-                @if(request()->boolean('include_chart'))<div class="report-section-title">Spots by Municipality</div><div class="report-chart">@foreach($municipalities as $municipality)<div class="chart-row"><span class="chart-label">{{ $municipality->name }}</span><span class="chart-track"><span class="chart-fill d-block" style="width: {{ ($municipality->tourist_spots_count / $chartMax) * 100 }}%"></span></span><strong>{{ $municipality->tourist_spots_count }}</strong></div>@endforeach</div>@endif
                 <div class="report-section-title">Detailed Report</div><table class="report-detail-table"><thead><tr><th>No.</th><th>Municipality / Tourist Spot</th><th>Status</th><th>Date Added</th><th>Date Verified</th></tr></thead><tbody>@php $reportNumber = 0; @endphp @forelse($touristSpots as $municipalityName => $spots)<tr class="municipality-divider"><td colspan="5">{{ $municipalityName }} ({{ $spots->count() }} spots)</td></tr>@foreach($spots as $spot)@php $reportNumber++; @endphp<tr><td>{{ $reportNumber }}</td><td><strong>{{ $spot->name }}</strong><br><small>{{ $spot->address ?: 'No address provided' }}</small></td><td>{{ $hasVerificationStatus ? ($spot->verification_status === 'approved' ? 'Verified' : ucfirst($spot->verification_status ?? 'pending')) : (in_array($spot->status, ['open', 'active']) ? 'Active' : ucfirst($spot->status ?? 'Unknown')) }}</td><td>{{ optional($spot->created_at)->format('M d, Y') }}</td><td>{{ $spot->verification_status === 'approved' ? optional($spot->updated_at)->format('M d, Y') : 'Pending' }}</td></tr>@endforeach @empty<tr><td colspan="5" class="text-center py-4">No tourist spots have been added</td></tr>@endforelse</tbody></table>
             @elseif($reportType === 'verification')
                 <div class="report-section-title">Verification Summary</div><table class="report-summary"><tbody><tr><td>Pending Verification</td><td>{{ $pendingSpots }}</td></tr><tr><td>Verified</td><td>{{ $verifiedSpots }}</td></tr><tr><td>Municipalities Covered</td><td>{{ $totalMunicipalities }}</td></tr></tbody></table>
