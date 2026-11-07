@@ -253,7 +253,7 @@ class MunicipalityAdminDashboardController extends Controller
     /**
      * View reviews for this municipality
      */
-    public function reviews(Request $request)
+    public function reviews()
     {
         $user = auth()->user();
         abort_unless($user->hasPermission('manage_reviews'), 403, 'You do not have permission to manage reviews.');
@@ -263,43 +263,17 @@ class MunicipalityAdminDashboardController extends Controller
         }
 
         $municipality = $user->municipality;
-        $reviewDate = trim((string) $request->query('date', ''));
         $reviewsQuery = Review::whereHas('touristSpot', function ($query) use ($municipality) {
             $query->where('municipality_id', $municipality->id);
         })
-            ->with('touristSpot')
-            ->when(preg_match('/^\d{4}-\d{2}-\d{2}$/', $reviewDate), function ($query) use ($reviewDate) {
-                $query->whereDate('created_at', $reviewDate);
-            })
-            ->orderBy('status');
+            ->with(['touristSpot', 'user'])
+            ->latest('created_at');
 
-        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $reviewDate)) {
-            $reviewDate = '';
-        }
-
-        $reportReviews = (clone $reviewsQuery)->latest('created_at')->get();
-        $reviewSummaries = $reportReviews->groupBy('tourist_spot_id')->map(function ($spotReviews) {
-            return [
-                'name' => $spotReviews->first()->touristSpot?->name ?? 'Unknown Tourist Spot',
-                'reviewCount' => $spotReviews->count(),
-                'averageRating' => round((float) $spotReviews->avg('rating'), 1),
-            ];
-        })->sortByDesc('reviewCount')->values();
-
-        $reviews = $reviewsQuery
-            ->paginate(20);
+        $reviews = $reviewsQuery->paginate(20);
 
         return view('dashboard.municipality-admin-reviews', [
             'municipality' => $municipality,
             'reviews' => $reviews,
-            'reportReviews' => $reportReviews,
-            'reviewSummaries' => $reviewSummaries,
-            'reviewDate' => $reviewDate,
-            'totalReviews' => $reportReviews->count(),
-            'averageRating' => $reportReviews->isNotEmpty() ? round((float) $reportReviews->avg('rating'), 1) : 0,
-            'reportPeriod' => $reviewDate !== ''
-                ? Carbon::createFromFormat('!Y-m-d', $reviewDate)->format('F j, Y')
-                : 'All dates',
         ]);
     }
 
