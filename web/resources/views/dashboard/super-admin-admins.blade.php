@@ -61,9 +61,9 @@
                                 <span class="text-muted">-</span>
                             @endif
                         </td>
-                        <td><span class="metric"><i class="fas fa-location-dot me-1" style="color: var(--tourism-teal);"></i>{{ $admin->municipality?->tourist_spots_count ?? 0 }} spots</span></td>
-                        <td><span class="metric"><i class="fas fa-users me-1 text-muted"></i>{{ $admin->municipality?->staff_accounts_count ?? 0 }}/{{ $admin->max_staff_accounts ?? 0 }} staff</span></td>
-                        <td>
+                        <td class="text-center"><span class="metric"><i class="fas fa-location-dot me-1" style="color: var(--tourism-teal);"></i>{{ $admin->municipality?->tourist_spots_count ?? 0 }} spots</span></td>
+                        <td class="text-center"><span class="metric"><i class="fas fa-users me-1 text-muted"></i>{{ $admin->municipality?->staff_accounts_count ?? 0 }}/{{ $admin->max_staff_accounts ?? 0 }} staff</span></td>
+                        <td class="text-center">
                             <span class="badge {{ $admin->is_active ? 'bg-success' : 'bg-secondary' }}">
                                 {{ $admin->is_active ? 'Active' : 'Disabled' }}
                             </span>
