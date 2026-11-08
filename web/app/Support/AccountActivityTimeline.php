@@ -18,7 +18,7 @@ class AccountActivityTimeline
     {
         return $timestamp?->copy()
             ->setTimezone(self::PHILIPPINE_TIMEZONE)
-            ->format('M j, Y g:i A \P\H\T');
+            ->format('M j, Y g:i A');
     }
 
     public static function forUser(User $user, string $loginEventTable): Collection
