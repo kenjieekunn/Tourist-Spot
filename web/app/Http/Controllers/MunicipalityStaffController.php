@@ -216,8 +216,8 @@ class MunicipalityStaffController extends Controller
             'name' => $staff->name,
             'email' => $staff->email,
             'is_active' => $staff->is_active,
-            'created_at' => $staff->created_at?->format('M j, Y g:i A'),
-            'last_login_at' => $staff->last_login_at?->format('M j, Y g:i A'),
+            'created_at' => AccountActivityTimeline::formatPhilippineTime($staff->created_at),
+            'last_login_at' => AccountActivityTimeline::formatPhilippineTime($staff->last_login_at),
             'activity_history' => $activityHistory,
         ]);
     }

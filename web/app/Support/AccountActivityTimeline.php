@@ -5,12 +5,22 @@ namespace App\Support;
 use App\Models\AccountActivityEvent;
 use App\Models\User;
 use Carbon\Carbon;
+use Carbon\CarbonInterface;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 class AccountActivityTimeline
 {
+    private const PHILIPPINE_TIMEZONE = 'Asia/Manila';
+
+    public static function formatPhilippineTime(?CarbonInterface $timestamp): ?string
+    {
+        return $timestamp?->copy()
+            ->setTimezone(self::PHILIPPINE_TIMEZONE)
+            ->format('M j, Y g:i A \P\H\T');
+    }
+
     public static function forUser(User $user, string $loginEventTable): Collection
     {
         $loginEvents = Schema::hasTable($loginEventTable)
@@ -20,7 +30,8 @@ class AccountActivityTimeline
                 ->limit(20)
                 ->get()
                 ->map(function ($event) {
-                    $occurredAt = Carbon::parse($event->logged_in_at);
+                    $occurredAt = Carbon::parse($event->logged_in_at, 'UTC')
+                        ->setTimezone(self::PHILIPPINE_TIMEZONE);
 
                     return [
                         'sort_at' => $occurredAt->getTimestamp(),
@@ -38,7 +49,7 @@ class AccountActivityTimeline
                 ->get()
                 ->map(fn (AccountActivityEvent $event) => [
                     'sort_at' => $event->occurred_at->getTimestamp(),
-                    'occurred_at' => $event->occurred_at,
+                    'occurred_at' => $event->occurred_at->copy()->setTimezone(self::PHILIPPINE_TIMEZONE),
                     'description' => $event->description,
                 ])
             : collect();
@@ -48,7 +59,7 @@ class AccountActivityTimeline
             ->sortByDesc('sort_at')
             ->take(20)
             ->map(fn (array $event) => [
-                'occurred_at' => $event['occurred_at']->format('M j, Y g:i A'),
+                'occurred_at' => self::formatPhilippineTime($event['occurred_at']),
                 'description' => $event['description'],
             ])
             ->values();

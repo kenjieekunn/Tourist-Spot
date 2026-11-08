@@ -229,8 +229,8 @@ class SuperAdminDashboardController extends Controller
             'email' => $admin->email,
             'municipality' => $admin->municipality?->name,
             'is_active' => $admin->is_active,
-            'created_at' => $admin->created_at?->format('M j, Y g:i A'),
-            'last_login_at' => $admin->last_login_at?->format('M j, Y g:i A'),
+            'created_at' => AccountActivityTimeline::formatPhilippineTime($admin->created_at),
+            'last_login_at' => AccountActivityTimeline::formatPhilippineTime($admin->last_login_at),
             'activity_history' => $activityHistory,
         ]);
     }
