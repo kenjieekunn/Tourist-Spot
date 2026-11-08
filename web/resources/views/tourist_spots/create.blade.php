@@ -285,6 +285,7 @@
                     <input type="hidden" id="latitude" name="latitude" value="{{ old('latitude') }}" required>
                     <input type="hidden" id="longitude" name="longitude" value="{{ old('longitude') }}" required>
                     <input type="hidden" id="address" name="address" value="{{ old('address') }}" required>
+                    <input type="hidden" id="barangay" name="barangay" value="{{ old('barangay') }}">
                     <input type="hidden" id="nearby_facilities" name="nearby_facilities" value="">
                     @if($errors->has('latitude') || $errors->has('longitude'))
                         <div class="text-danger small mt-2">
@@ -899,6 +900,11 @@
             input.value = value;
         }
 
+        const barangayInput = document.getElementById('barangay');
+        if (barangayInput) {
+            barangayInput.value = extractBarangayFromAddress(value, getSelectedMunicipalityName()) || '';
+        }
+
         if (preview) {
             preview.textContent = value || 'Select a location to automatically resolve the exact address.';
         }
@@ -1422,7 +1428,11 @@
                 focusMap(lat, lng, 16);
                 ensureMarker(lat, lng);
                 const resolvedAddress = geocoded.formatted_address || barangayLabel;
-                syncAddressForCoordinates(lat, lng, resolvedAddress);
+                await syncAddressForCoordinates(lat, lng, resolvedAddress);
+                const barangayInput = document.getElementById('barangay');
+                if (barangayInput) {
+                    barangayInput.value = result.name;
+                }
                 return;
             }
         }

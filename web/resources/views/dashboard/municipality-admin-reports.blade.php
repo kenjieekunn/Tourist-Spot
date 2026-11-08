@@ -228,7 +228,13 @@
                         <td>{{ $index + 1 }}</td>
                         <td>{{ $spot->name }}</td>
                         <td>{{ ucfirst($spot->category ?? 'nature') }}</td>
-                        <td>{{ $spot->barangay ?: 'Not provided' }}</td>
+                        @php
+                            $reportBarangay = $spot->barangay;
+                            if (!$reportBarangay && preg_match('/(?:\bBarangay|\bBrgy\.?)\s+([^,;()]+)/i', (string) $spot->address, $barangayMatch)) {
+                                $reportBarangay = trim($barangayMatch[1]);
+                            }
+                        @endphp
+                        <td>{{ $reportBarangay ?: 'Not provided' }}</td>
                         <td>
                             @if($hasVerificationStatus && $spot->verification_status === 'approved')
                                 Verified
