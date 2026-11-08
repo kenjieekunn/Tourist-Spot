@@ -8,6 +8,7 @@ use App\Models\Municipality;
 use App\Models\Review;
 use App\Models\User;
 use App\Models\AdminTempCredential;
+use App\Models\MunicipalityAdminLoginEvent;
 use App\Notifications\SpotRevisionRequested;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -215,6 +216,33 @@ class SuperAdminDashboardController extends Controller
             Log::error('Super admin admins view error: ' . $e->getMessage());
             return redirect()->route('super-admin.dashboard')->with('error', 'Error loading admins. Please try again.');
         }
+    }
+
+    public function adminActivity(User $admin)
+    {
+        abort_unless($admin->isMunicipalityAdmin(), 404);
+
+        $loginHistory = Schema::hasTable('municipality_admin_login_events')
+            ? MunicipalityAdminLoginEvent::query()
+                ->where('user_id', $admin->id)
+                ->latest('logged_in_at')
+                ->limit(20)
+                ->get()
+                ->map(fn (MunicipalityAdminLoginEvent $event) => [
+                    'logged_in_at' => $event->logged_in_at->format('M j, Y g:i A'),
+                ])
+                ->values()
+            : collect();
+
+        return response()->json([
+            'name' => $admin->name,
+            'email' => $admin->email,
+            'municipality' => $admin->municipality?->name,
+            'is_active' => $admin->is_active,
+            'created_at' => $admin->created_at?->format('M j, Y g:i A'),
+            'last_login_at' => $admin->last_login_at?->format('M j, Y g:i A'),
+            'login_history' => $loginHistory,
+        ]);
     }
 
     /**

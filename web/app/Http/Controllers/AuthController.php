@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Models\MunicipalityAdminLoginEvent;
 use App\Models\StaffLoginEvent;
 use App\Models\User;
 use App\Models\AdminTempCredential;
@@ -74,6 +75,19 @@ class AuthController extends Controller
                     ]);
                 } catch (QueryException $exception) {
                     \Log::warning('Staff login activity could not be recorded.', [
+                        'user_id' => $user->id,
+                        'message' => $exception->getMessage(),
+                    ]);
+                }
+            }
+            if ($user->isMunicipalityAdmin()) {
+                try {
+                    MunicipalityAdminLoginEvent::create([
+                        'user_id' => $user->id,
+                        'logged_in_at' => now(),
+                    ]);
+                } catch (QueryException $exception) {
+                    \Log::warning('Municipality admin login activity could not be recorded.', [
                         'user_id' => $user->id,
                         'message' => $exception->getMessage(),
                     ]);

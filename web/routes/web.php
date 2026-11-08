@@ -37,6 +37,7 @@ Route::middleware(['auth', 'temporary-password', 'prevent.cache'])->group(functi
         Route::post('/spots/{touristSpot}/request-revision', [SuperAdminDashboardController::class, 'requestSpotRevision'])->name('spots.request-revision');
         Route::get('/tourist-spots', [SuperAdminDashboardController::class, 'touristSpots'])->name('tourist-spots');
         Route::get('/admins', [SuperAdminDashboardController::class, 'admins'])->name('admins');
+        Route::get('/admins/{admin}/activity', [SuperAdminDashboardController::class, 'adminActivity'])->name('admins.activity');
         Route::get('/admins/create', [SuperAdminDashboardController::class, 'createAdmin'])->name('admins.create');
         Route::post('/admins', [SuperAdminDashboardController::class, 'storeAdmin'])->name('admins.store');
         Route::delete('/admins/{admin}', [SuperAdminDashboardController::class, 'destroyAdmin'])->name('admins.destroy');
