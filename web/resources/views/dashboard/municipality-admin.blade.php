@@ -230,19 +230,6 @@
     </div>
 </div>
 
-<ul class="nav nav-tabs mb-4" role="tablist" aria-label="Municipality dashboard views">
-    <li class="nav-item" role="presentation">
-        <button class="nav-link active" id="admin-overview-tab" data-bs-toggle="tab" data-bs-target="#admin-overview" type="button" role="tab" aria-controls="admin-overview" aria-selected="true">Overview</button>
-    </li>
-    @if(auth()->user()->hasPermission('manage_spots'))
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="admin-history-tab" data-bs-toggle="tab" data-bs-target="#admin-history" type="button" role="tab" aria-controls="admin-history" aria-selected="false">History</button>
-        </li>
-    @endif
-</ul>
-
-<div class="tab-content">
-<div class="tab-pane fade show active" id="admin-overview" role="tabpanel" aria-labelledby="admin-overview-tab" tabindex="0">
 @if(auth()->user()->hasPermission('manage_spots') && $revisionNotifications->isNotEmpty())
     <div class="card border-warning mb-4">
         <div class="card-header bg-warning-subtle d-flex justify-content-between align-items-center">
@@ -478,37 +465,5 @@
         </div>
     </div>
 @endif
-
-    </div>
-@if(auth()->user()->hasPermission('manage_spots'))
-    <div class="tab-pane fade" id="admin-history" role="tabpanel" aria-labelledby="admin-history-tab" tabindex="0">
-        <div class="card">
-            <div class="card-header bg-light d-flex flex-wrap justify-content-between align-items-center gap-2">
-                <h5 class="mb-0">Added Tourist Spots</h5>
-                <span class="text-muted small">{{ $spotHistory->count() }} total</span>
-            </div>
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="bg-light">
-                        <tr><th>Tourist Spot</th><th>Added By</th><th>Date and Time Added</th><th>Status</th></tr>
-                    </thead>
-                    <tbody>
-                        @forelse($spotHistory as $spot)
-                            <tr>
-                                <td><strong>{{ $spot->name }}</strong><div class="small text-muted">{{ ucfirst($spot->category ?? 'nature') }}</div></td>
-                                <td>{{ $spot->creator?->name ?? 'Unknown' }}</td>
-                                <td class="text-nowrap">{{ $spot->created_at?->format('M d, Y h:i A') ?? 'Not available' }}</td>
-                                <td>{{ ucfirst($spot->verification_status ?? $spot->status ?? 'unknown') }}</td>
-                            </tr>
-                        @empty
-                            <tr><td colspan="4" class="text-center text-muted py-4">No tourist spots have been added yet.</td></tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-@endif
-</div>
 
 @endsection

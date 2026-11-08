@@ -232,6 +232,7 @@ class SuperAdminDashboardController extends Controller
             'created_at' => AccountActivityTimeline::formatPhilippineTime($admin->created_at),
             'last_login_at' => AccountActivityTimeline::formatPhilippineTime($admin->last_login_at),
             'activity_history' => $activityHistory,
+            'activity_log' => AccountActivityTimeline::historyForUser($admin),
         ]);
     }
 

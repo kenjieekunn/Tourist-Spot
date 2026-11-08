@@ -120,19 +120,6 @@
     </div>
 </div>
 
-<ul class="nav nav-tabs mb-4" role="tablist" aria-label="Municipality details">
-    <li class="nav-item" role="presentation">
-        <button class="nav-link active" id="municipality-overview-tab" data-bs-toggle="tab" data-bs-target="#municipality-overview" type="button" role="tab" aria-controls="municipality-overview" aria-selected="true">Overview</button>
-    </li>
-    @if($canViewSubmissionSource)
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="municipality-history-tab" data-bs-toggle="tab" data-bs-target="#municipality-history" type="button" role="tab" aria-controls="municipality-history" aria-selected="false">History</button>
-        </li>
-    @endif
-</ul>
-
-<div class="tab-content">
-<div class="tab-pane fade show active" id="municipality-overview" role="tabpanel" aria-labelledby="municipality-overview-tab" tabindex="0">
 @php
     $hasSpots = $groupedSpots->contains(fn ($spots) => $spots->isNotEmpty());
 @endphp
@@ -202,35 +189,6 @@
     <div class="card">
         <div class="card-body text-center py-5 text-muted">
             No tourist spots found in {{ $municipality->name }}.
-        </div>
-    </div>
-@endif
-</div>
-@if($canViewSubmissionSource)
-    <div class="tab-pane fade" id="municipality-history" role="tabpanel" aria-labelledby="municipality-history-tab" tabindex="0">
-        <div class="card">
-            <div class="card-header bg-light d-flex flex-wrap justify-content-between align-items-center gap-2">
-                <h5 class="mb-0">Added Tourist Spots</h5>
-                <span class="text-muted small">{{ $spots->count() }} total</span>
-            </div>
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="bg-light">
-                        <tr><th>Tourist Spot</th><th>Added By</th><th>Date and Time Added</th></tr>
-                    </thead>
-                    <tbody>
-                        @forelse($spots->sortByDesc('created_at') as $spot)
-                            <tr>
-                                <td><strong>{{ $spot->name }}</strong><div class="small text-muted">{{ ucfirst($spot->category ?? 'nature') }}</div></td>
-                                <td>{{ $spot->creator?->name ?? 'Unknown' }}</td>
-                                <td class="text-nowrap">{{ $spot->created_at?->format('M d, Y h:i A') ?? 'Not available' }}</td>
-                            </tr>
-                        @empty
-                            <tr><td colspan="3" class="text-center text-muted py-4">No tourist spots have been added yet.</td></tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
         </div>
     </div>
 @endif

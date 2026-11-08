@@ -219,6 +219,7 @@ class MunicipalityStaffController extends Controller
             'created_at' => AccountActivityTimeline::formatPhilippineTime($staff->created_at),
             'last_login_at' => AccountActivityTimeline::formatPhilippineTime($staff->last_login_at),
             'activity_history' => $activityHistory,
+            'activity_log' => AccountActivityTimeline::historyForUser($staff),
         ]);
     }
 

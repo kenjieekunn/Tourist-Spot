@@ -67,7 +67,7 @@
 </div>
 
 <div class="modal fade" id="staffActivityModal" tabindex="-1" aria-labelledby="staffActivityModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="staffActivityModalLabel">Staff Activity</h5>
@@ -75,16 +75,29 @@
             </div>
             <div class="modal-body">
                 <div class="alert alert-danger py-2" data-staff-activity-error role="alert" hidden></div>
-                <dl class="row mb-3">
-                    <dt class="col-5">Login</dt><dd class="col-7 mb-2" data-staff-activity-email>Loading...</dd>
-                    <dt class="col-5">Status</dt><dd class="col-7 mb-2" data-staff-activity-status>Loading...</dd>
-                    <dt class="col-5">Account created</dt><dd class="col-7 mb-2" data-staff-activity-created>Loading...</dd>
-                    <dt class="col-5">Last login</dt><dd class="col-7 mb-0" data-staff-activity-last-login>Loading...</dd>
-                </dl>
-                <h6 class="border-top pt-3">Recent activity</h6>
-                <ol class="list-group list-group-flush" data-staff-activity-history>
-                    <li class="list-group-item px-0 text-muted">Loading activity...</li>
-                </ol>
+                <ul class="nav nav-tabs mb-3" role="tablist">
+                    <li class="nav-item" role="presentation"><button class="nav-link active" id="staff-overview-tab" data-bs-toggle="tab" data-bs-target="#staff-overview-panel" type="button" role="tab" aria-controls="staff-overview-panel" aria-selected="true">Overview</button></li>
+                    <li class="nav-item" role="presentation"><button class="nav-link" id="staff-history-tab" data-bs-toggle="tab" data-bs-target="#staff-history-panel" type="button" role="tab" aria-controls="staff-history-panel" aria-selected="false">Activity History</button></li>
+                </ul>
+                <div class="tab-content">
+                    <div class="tab-pane fade show active" id="staff-overview-panel" role="tabpanel" aria-labelledby="staff-overview-tab" tabindex="0">
+                        <dl class="row mb-3">
+                            <dt class="col-5">Login</dt><dd class="col-7 mb-2" data-staff-activity-email>Loading...</dd>
+                            <dt class="col-5">Status</dt><dd class="col-7 mb-2" data-staff-activity-status>Loading...</dd>
+                            <dt class="col-5">Account created</dt><dd class="col-7 mb-2" data-staff-activity-created>Loading...</dd>
+                            <dt class="col-5">Last login</dt><dd class="col-7 mb-0" data-staff-activity-last-login>Loading...</dd>
+                        </dl>
+                        <h6 class="border-top pt-3">Recent activity</h6>
+                        <ol class="list-group list-group-flush" data-staff-activity-history>
+                            <li class="list-group-item px-0 text-muted">Loading activity...</li>
+                        </ol>
+                    </div>
+                    <div class="tab-pane fade" id="staff-history-panel" role="tabpanel" aria-labelledby="staff-history-tab" tabindex="0">
+                        <ol class="list-group list-group-flush" data-staff-activity-log>
+                            <li class="list-group-item px-0 text-muted">Loading history...</li>
+                        </ol>
+                    </div>
+                </div>
             </div>
             <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button></div>
         </div>
@@ -181,6 +194,7 @@
         const activityModal = document.getElementById('staffActivityModal');
         const activityError = activityModal?.querySelector('[data-staff-activity-error]');
         const activityHistory = activityModal?.querySelector('[data-staff-activity-history]');
+        const activityLog = activityModal?.querySelector('[data-staff-activity-log]');
         activityModal?.addEventListener('show.bs.modal', async function (event) {
             const trigger = event.relatedTarget;
             if (!trigger) return;
@@ -191,6 +205,8 @@
             activityModal.querySelector('[data-staff-activity-created]').textContent = 'Loading...';
             activityModal.querySelector('[data-staff-activity-last-login]').textContent = 'Loading...';
             activityHistory.replaceChildren();
+            activityLog.replaceChildren();
+            bootstrap.Tab.getOrCreateInstance(activityModal.querySelector('#staff-overview-tab')).show();
             const loadingItem = document.createElement('li');
             loadingItem.className = 'list-group-item px-0 text-muted';
             loadingItem.textContent = 'Loading activity...';
@@ -213,17 +229,54 @@
                     emptyItem.className = 'list-group-item px-0 text-muted';
                     emptyItem.textContent = 'No activity recorded yet.';
                     activityHistory.appendChild(emptyItem);
+                } else {
+                    result.activity_history.forEach((entry) => {
+                        const item = document.createElement('li');
+                        item.className = 'list-group-item px-0';
+                        item.textContent = `${entry.occurred_at} · ${entry.description}`;
+                        activityHistory.appendChild(item);
+                    });
+                }
+
+                if (!result.activity_log?.length) {
+                    const emptyItem = document.createElement('li');
+                    emptyItem.className = 'list-group-item px-0 text-muted';
+                    emptyItem.textContent = 'No activity history recorded yet.';
+                    activityLog.appendChild(emptyItem);
                     return;
                 }
 
-                result.activity_history.forEach((entry) => {
+                result.activity_log.forEach((entry) => {
                     const item = document.createElement('li');
                     item.className = 'list-group-item px-0';
-                    item.textContent = `${entry.occurred_at} · ${entry.description}`;
-                    activityHistory.appendChild(item);
+                    const row = document.createElement('div');
+                    row.className = 'd-flex flex-column flex-sm-row justify-content-between gap-2';
+                    const details = document.createElement('div');
+                    const type = document.createElement('strong');
+                    type.textContent = entry.type || 'Activity';
+                    const description = document.createElement('div');
+                    description.className = 'text-muted small';
+                    description.textContent = entry.description || 'Activity recorded';
+                    details.append(type, description);
+                    const metadata = document.createElement('div');
+                    metadata.className = 'text-sm-end text-nowrap';
+                    const date = document.createElement('div');
+                    date.className = 'small text-muted';
+                    date.textContent = entry.occurred_at || 'Date unavailable';
+                    metadata.appendChild(date);
+                    if (entry.status) {
+                        const status = document.createElement('span');
+                        status.className = `badge ${entry.status === 'Verified' ? 'bg-success' : entry.status === 'Pending' ? 'bg-warning text-dark' : entry.status === 'Rejected' ? 'bg-danger' : 'bg-secondary'}`;
+                        status.textContent = entry.status;
+                        metadata.appendChild(status);
+                    }
+                    row.append(details, metadata);
+                    item.appendChild(row);
+                    activityLog.appendChild(item);
                 });
             } catch (error) {
                 activityHistory.replaceChildren();
+                activityLog.replaceChildren();
                 activityError.textContent = error.message || 'Unable to load staff activity.';
                 activityError.hidden = false;
             }
