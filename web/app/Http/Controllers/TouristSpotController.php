@@ -864,16 +864,7 @@ class TouristSpotController extends Controller
             'Aguilar' => ['north' => 15.913, 'south' => 15.785, 'east' => 120.312, 'west' => 120.129],
         ];
 
-        $barangays = [
-            'Lingayen' => ['Bolasi', 'Bonuan', 'Bonuan Binac', 'Caba', 'Dagupan', 'Lasip', 'Lingayen', 'Malued', 'Palsol', 'Rosario', 'San Fernando', 'San Jacinto', 'San Juan', 'San Vicente', 'Santa Cruz', 'Santo Domingo', 'Tagudin'],
-            'Binmaley' => ['Alon', 'Asingan', 'Balangabang', 'Balantac', 'Balat', 'Balayong', 'Bani', 'Banaoang', 'Bangar', 'Bansalao', 'Bantay', 'Barangay 1', 'Barangay 2', 'Barangay 3', 'Barangay 4', 'Barangay 5', 'Barangay 6'],
-            'Urbiztondo' => ['Alon', 'Balangabang', 'Balantac', 'Balat', 'Balayong', 'Bani', 'Banaoang', 'Bangar', 'Bansalao', 'Bantay', 'Barangay 1', 'Barangay 2', 'Barangay 3', 'Barangay 4', 'Barangay 5'],
-            'Basista' => ['Alon', 'Balangabang', 'Balantac', 'Balat', 'Balayong', 'Bani', 'Banaoang', 'Bangar', 'Bansalao', 'Bantay', 'Barangay 1', 'Barangay 2', 'Barangay 3'],
-            'Labrador' => ['Alon', 'Balangabang', 'Balantac', 'Balat', 'Balayong', 'Bani', 'Banaoang', 'Bangar', 'Bansalao', 'Bantay', 'Barangay 1', 'Barangay 2'],
-            'Bugallon' => ['Alon', 'Balangabang', 'Balantac', 'Balat', 'Balayong', 'Bani', 'Banaoang', 'Bangar', 'Bansalao', 'Bantay', 'Barangay 1'],
-            'Mangatarem' => ['Alon', 'Balangabang', 'Balantac', 'Balat', 'Balayong', 'Bani', 'Banaoang', 'Bangar', 'Bansalao', 'Bantay'],
-            'Aguilar' => ['Alon', 'Balangabang', 'Balantac', 'Balat', 'Balayong', 'Bani', 'Banaoang', 'Bangar', 'Bansalao'],
-        ];
+        $barangays = array_fill_keys(array_column($municipalities, 'name'), []);
 
         $boundaries = [
             'Basista' => [

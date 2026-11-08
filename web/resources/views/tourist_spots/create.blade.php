@@ -276,7 +276,7 @@
                                 <i class="fas fa-search"></i> Search
                             </button>
                         </div>
-                        <div class="form-text mt-2">You can search by municipality, barangay, landmark, or tourist spot name.</div>
+                        <div class="form-text mt-2" id="location-search-help">You can search by municipality, barangay, landmark, or tourist spot name.</div>
                     </div>
 
                     <!-- Map -->
@@ -428,6 +428,7 @@
     const barangays = { ...(districtMapContext?.barangays || {}) };
     const loadedBarangayMunicipalities = new Set();
     const barangayLoadRequests = new Map();
+    const barangayLoadErrors = new Set();
     let locationSearchRequestId = 0;
     const facilityColors = {
         dining: '#ff6b35',
@@ -527,6 +528,17 @@
         });
     }
 
+    function updateBarangayLoadStatus() {
+        const helpText = document.getElementById('location-search-help');
+        if (!helpText) return;
+
+        const failedMunicipalities = Array.from(barangayLoadErrors);
+        helpText.classList.toggle('text-danger', failedMunicipalities.length > 0);
+        helpText.textContent = failedMunicipalities.length > 0
+            ? `Barangay names could not load for ${failedMunicipalities.join(', ')}. Search again to retry.`
+            : 'You can search by municipality, barangay, landmark, or tourist spot name.';
+    }
+
     function loadBarangaysForMunicipality(municipalityName) {
         const key = normalizeSearchText(municipalityName);
         const municipality = Object.keys(districtMapContext?.barangayApiCodes || {}).find((name) => normalizeSearchText(name) === key);
@@ -553,11 +565,16 @@
                 }
                 barangays[municipality] = results.map((item) => item.name).filter(Boolean);
                 loadedBarangayMunicipalities.add(key);
+                barangayLoadErrors.delete(municipality);
             })
             .catch((error) => {
                 console.warn('Unable to load the official barangay list:', error);
+                barangayLoadErrors.add(municipality);
             })
-            .finally(() => barangayLoadRequests.delete(key));
+            .finally(() => {
+                barangayLoadRequests.delete(key);
+                updateBarangayLoadStatus();
+            });
 
         barangayLoadRequests.set(key, request);
         return request;
@@ -1411,7 +1428,7 @@
         }
 
         if (result.type === 'barangay') {
-            const barangayContext = result.municipalityName ? `${result.name}, ${result.municipalityName}` : result.name;
+            const barangayContext = `Barangay ${result.name}, ${result.municipalityName || selectedMunicipality}, Pangasinan, Philippines`;
             const geocoded = await geocodeLocationQuery(barangayContext);
             if (geocoded?.geometry?.location) {
                 const lat = geocoded.geometry.location.lat();
