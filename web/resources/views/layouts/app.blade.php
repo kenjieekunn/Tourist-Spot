@@ -400,9 +400,6 @@
                             </button>
                             <strong class="super-admin-profile-name">{{ $currentUser->name ?: 'Provincial Tourism Office' }}</strong>
                             <div class="super-admin-profile-actions" id="superAdminProfileActions">
-                                @if($currentUser->isSuperAdmin())
-                                    <button type="button" class="btn w-100 super-admin-profile-action" data-profile-close data-bs-toggle="modal" data-bs-target="#changeOwnPasswordModal" title="Change password"><i class="fas fa-key" aria-hidden="true"></i> Change Password</button>
-                                @endif
                                 <form action="{{ route('logout') }}" method="POST">
                                     @csrf
                                     <button type="submit" class="btn w-100 super-admin-profile-action profile-logout-button" title="Log out"><i class="fas fa-sign-out-alt" aria-hidden="true"></i> Logout</button>
@@ -412,41 +409,6 @@
                     </div>
                 </div>
             </div>
-            @if($currentUser->isSuperAdmin())
-                <div class="modal fade" id="changeOwnPasswordModal" tabindex="-1" aria-labelledby="changeOwnPasswordModalLabel" aria-hidden="true" data-open-on-load="{{ $errors->any() && old('_password_change') ? 'true' : 'false' }}">
-                    <div class="modal-dialog modal-dialog-centered">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title" id="changeOwnPasswordModalLabel">Change Password</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <form action="{{ route('account.password.update') }}" method="POST">
-                                @csrf
-                                @method('PUT')
-                                <input type="hidden" name="_password_change" value="1">
-                                <div class="modal-body">
-                                    <div class="mb-3">
-                                        <label for="currentAccountPassword" class="form-label">Current password</label>
-                                        <input type="password" class="form-control @error('current_password') is-invalid @enderror" id="currentAccountPassword" name="current_password" autocomplete="current-password" required>
-                                        @error('current_password')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="newAccountPassword" class="form-label">New password</label>
-                                        <input type="password" class="form-control @error('password') is-invalid @enderror" id="newAccountPassword" name="password" minlength="8" autocomplete="new-password" required>
-                                        <div class="form-text">Use at least 8 characters, including an uppercase letter and a symbol.</div>
-                                        @error('password')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                                    </div>
-                                    <div>
-                                        <label for="confirmAccountPassword" class="form-label">Confirm new password</label>
-                                        <input type="password" class="form-control" id="confirmAccountPassword" name="password_confirmation" minlength="8" autocomplete="new-password" required>
-                                    </div>
-                                </div>
-                                <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button><button type="submit" class="btn btn-primary">Update Password</button></div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            @endif
             <div class="sidebar-overlay" data-sidebar-overlay></div>
 
             <!-- Main Content -->
@@ -505,11 +467,6 @@
             const overlay = document.querySelector('[data-sidebar-overlay]');
             const profileMenu = document.querySelector('[data-profile-menu]');
             const profileToggle = document.querySelector('[data-profile-toggle]');
-            const changePasswordModal = document.getElementById('changeOwnPasswordModal');
-
-            if (changePasswordModal?.dataset.openOnLoad === 'true') {
-                bootstrap.Modal.getOrCreateInstance(changePasswordModal).show();
-            }
 
             if (profileMenu && profileToggle) {
                 const setProfileOpen = function (isOpen) {
