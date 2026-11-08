@@ -3,8 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\AdminTempCredential;
-use App\Models\StaffLoginEvent;
+use App\Models\AccountActivityEvent;
 use App\Models\User;
+use App\Support\AccountActivityTimeline;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
@@ -96,6 +97,7 @@ class MunicipalityStaffController extends Controller
 
             return $staff;
         });
+        AccountActivityEvent::recordFor($admin, 'staff.created', 'Created staff account: ' . $staff->name);
 
         if ($request->expectsJson()) {
             return response()->json([
@@ -155,6 +157,7 @@ class MunicipalityStaffController extends Controller
             );
         }
         $staff->save();
+        AccountActivityEvent::recordFor($admin, 'staff.updated', 'Updated staff account: ' . $staff->name);
 
         return redirect()->route('municipality-admin.staff')->with('success', 'Staff account updated successfully.');
     }
@@ -164,6 +167,11 @@ class MunicipalityStaffController extends Controller
         $admin = $this->currentAdmin();
         $this->ensureStaffBelongsToAdmin($staff, $admin);
         $staff->update(['is_active' => !$staff->is_active]);
+        AccountActivityEvent::recordFor(
+            $admin,
+            'staff.status_changed',
+            'Set staff account "' . $staff->name . '" to ' . ($staff->is_active ? 'active' : 'inactive')
+        );
 
         return back()->with('success', 'Staff account status updated.');
     }
@@ -177,6 +185,7 @@ class MunicipalityStaffController extends Controller
             AdminTempCredential::where('user_id', $staff->id)->delete();
             $staff->delete();
         });
+        AccountActivityEvent::recordFor($admin, 'staff.deleted', 'Deleted staff account: ' . $staff->name);
 
         return redirect()->route('municipality-admin.staff')->with('success', 'Staff account deleted successfully.');
     }
@@ -201,17 +210,7 @@ class MunicipalityStaffController extends Controller
         $admin = $this->currentAdmin();
         $this->ensureStaffBelongsToAdmin($staff, $admin);
 
-        $loginHistory = Schema::hasTable('staff_login_events')
-            ? StaffLoginEvent::query()
-                ->where('user_id', $staff->id)
-                ->latest('logged_in_at')
-                ->limit(20)
-                ->get()
-                ->map(fn (StaffLoginEvent $event) => [
-                    'logged_in_at' => $event->logged_in_at->format('M j, Y g:i A'),
-                ])
-                ->values()
-            : collect();
+        $activityHistory = AccountActivityTimeline::forUser($staff, 'staff_login_events');
 
         return response()->json([
             'name' => $staff->name,
@@ -219,7 +218,7 @@ class MunicipalityStaffController extends Controller
             'is_active' => $staff->is_active,
             'created_at' => $staff->created_at?->format('M j, Y g:i A'),
             'last_login_at' => $staff->last_login_at?->format('M j, Y g:i A'),
-            'login_history' => $loginHistory,
+            'activity_history' => $activityHistory,
         ]);
     }
 

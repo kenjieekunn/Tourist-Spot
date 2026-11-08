@@ -8,8 +8,8 @@ use App\Models\Municipality;
 use App\Models\Review;
 use App\Models\User;
 use App\Models\AdminTempCredential;
-use App\Models\MunicipalityAdminLoginEvent;
 use App\Notifications\SpotRevisionRequested;
+use App\Support\AccountActivityTimeline;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
@@ -222,17 +222,7 @@ class SuperAdminDashboardController extends Controller
     {
         abort_unless($admin->isMunicipalityAdmin(), 404);
 
-        $loginHistory = Schema::hasTable('municipality_admin_login_events')
-            ? MunicipalityAdminLoginEvent::query()
-                ->where('user_id', $admin->id)
-                ->latest('logged_in_at')
-                ->limit(20)
-                ->get()
-                ->map(fn (MunicipalityAdminLoginEvent $event) => [
-                    'logged_in_at' => $event->logged_in_at->format('M j, Y g:i A'),
-                ])
-                ->values()
-            : collect();
+        $activityHistory = AccountActivityTimeline::forUser($admin, 'municipality_admin_login_events');
 
         return response()->json([
             'name' => $admin->name,
@@ -241,7 +231,7 @@ class SuperAdminDashboardController extends Controller
             'is_active' => $admin->is_active,
             'created_at' => $admin->created_at?->format('M j, Y g:i A'),
             'last_login_at' => $admin->last_login_at?->format('M j, Y g:i A'),
-            'login_history' => $loginHistory,
+            'activity_history' => $activityHistory,
         ]);
     }
 

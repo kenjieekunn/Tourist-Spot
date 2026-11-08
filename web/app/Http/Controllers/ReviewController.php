@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AccountActivityEvent;
 use App\Models\Review;
 use App\Models\TouristSpot;
 use Illuminate\Http\Request;
@@ -23,6 +24,11 @@ class ReviewController extends Controller
         ]);
 
         $review->update($validated);
+        AccountActivityEvent::recordFor(
+            auth()->user(),
+            'review.status_updated',
+            'Changed review for tourist spot "' . ($review->touristSpot?->name ?? 'Unknown spot') . '" to ' . $validated['status']
+        );
 
         return redirect()->back()->with('success', 'Review status updated successfully!');
     }
@@ -30,6 +36,11 @@ class ReviewController extends Controller
     public function destroy(Review $review)
     {
         $this->authorizeReviewAccess($review);
+        AccountActivityEvent::recordFor(
+            auth()->user(),
+            'review.deleted',
+            'Deleted review for tourist spot: ' . ($review->touristSpot?->name ?? 'Unknown spot')
+        );
         $review->delete();
         return redirect()->back()->with('success', 'Review deleted successfully!');
     }

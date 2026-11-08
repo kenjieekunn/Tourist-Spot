@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Events\TouristSpotChanged;
+use App\Models\AccountActivityEvent;
 use App\Models\TouristSpot;
 use App\Models\Municipality;
 use Illuminate\Http\Request;
@@ -266,6 +267,7 @@ class TouristSpotController extends Controller
         }
 
         $spot = TouristSpot::create($validated);
+        AccountActivityEvent::recordFor($user, 'tourist_spot.created', 'Added tourist spot: ' . $spot->name);
 // event(new TouristSpotChanged('created', $spot->toArray())); // Disabled broadcasting to fix Pusher error
 
         if ($user && $user->belongsToMunicipalityTeam()) {
@@ -400,6 +402,7 @@ class TouristSpotController extends Controller
         }
 
         $touristSpot->update($updates);
+        AccountActivityEvent::recordFor(auth()->user(), 'tourist_spot.updated', 'Updated ' . $section . ' for tourist spot: ' . $touristSpot->name);
         $touristSpot->refresh();
         $facilities = $touristSpot->nearby_facilities;
 
@@ -594,6 +597,7 @@ class TouristSpotController extends Controller
         }
 
         $touristSpot->update($validated);
+        AccountActivityEvent::recordFor($user, 'tourist_spot.updated', 'Updated tourist spot: ' . $touristSpot->name);
         if (Schema::hasColumn('tourist_spots', 'rejection_reason')
             && str_starts_with((string) $touristSpot->rejection_reason, 'Revision requested:')) {
             $touristSpot->update(['rejection_reason' => null]);
@@ -620,6 +624,7 @@ class TouristSpotController extends Controller
         $this->ensureSpotAccess($touristSpot);
 
         $deletedId = $touristSpot->id;
+        AccountActivityEvent::recordFor(auth()->user(), 'tourist_spot.deleted', 'Deleted tourist spot: ' . $touristSpot->name);
         $touristSpot->delete();
 // event(new TouristSpotChanged('deleted', ['id' => $deletedId])); // Disabled broadcasting to fix Pusher error
 

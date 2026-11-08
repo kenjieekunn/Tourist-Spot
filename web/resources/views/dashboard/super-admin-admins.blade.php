@@ -103,9 +103,9 @@
                     <dt class="col-5">Account created</dt><dd class="col-7 mb-2" data-admin-activity-created>Loading...</dd>
                     <dt class="col-5">Last login</dt><dd class="col-7 mb-0" data-admin-activity-last-login>Loading...</dd>
                 </dl>
-                <h6 class="border-top pt-3">Recent login history</h6>
-                <ol class="list-group list-group-flush" data-admin-login-history>
-                    <li class="list-group-item px-0 text-muted">Loading login history...</li>
+                <h6 class="border-top pt-3">Recent activity</h6>
+                <ol class="list-group list-group-flush" data-admin-activity-history>
+                    <li class="list-group-item px-0 text-muted">Loading activity...</li>
                 </ol>
             </div>
             <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button></div>
@@ -185,7 +185,7 @@ function copyPassword() {
 document.addEventListener('DOMContentLoaded', function () {
     const activityModal = document.getElementById('adminActivityModal');
     const activityError = activityModal?.querySelector('[data-admin-activity-error]');
-    const activityHistory = activityModal?.querySelector('[data-admin-login-history]');
+    const activityHistory = activityModal?.querySelector('[data-admin-activity-history]');
 
     activityModal?.addEventListener('show.bs.modal', async function (event) {
         const trigger = event.relatedTarget;
@@ -200,7 +200,7 @@ document.addEventListener('DOMContentLoaded', function () {
         activityHistory.replaceChildren();
         const loadingItem = document.createElement('li');
         loadingItem.className = 'list-group-item px-0 text-muted';
-        loadingItem.textContent = 'Loading login history...';
+        loadingItem.textContent = 'Loading activity...';
         activityHistory.appendChild(loadingItem);
         activityModal.querySelector('.modal-title').textContent = `Admin Activity: ${trigger.dataset.adminName}`;
 
@@ -216,18 +216,18 @@ document.addEventListener('DOMContentLoaded', function () {
             activityModal.querySelector('[data-admin-activity-last-login]').textContent = result.last_login_at || 'No successful login recorded';
             activityHistory.replaceChildren();
 
-            if (!result.login_history?.length) {
+            if (!result.activity_history?.length) {
                 const emptyItem = document.createElement('li');
                 emptyItem.className = 'list-group-item px-0 text-muted';
-                emptyItem.textContent = 'No login history recorded yet.';
+                emptyItem.textContent = 'No activity recorded yet.';
                 activityHistory.appendChild(emptyItem);
                 return;
             }
 
-            result.login_history.forEach((entry) => {
+            result.activity_history.forEach((entry) => {
                 const item = document.createElement('li');
                 item.className = 'list-group-item px-0';
-                item.textContent = entry.logged_in_at;
+                item.textContent = `${entry.occurred_at} · ${entry.description}`;
                 activityHistory.appendChild(item);
             });
         } catch (error) {
