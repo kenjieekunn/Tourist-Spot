@@ -1027,12 +1027,18 @@
         const selectedMunicipality = municipalitySelect?.selectedOptions?.[0]?.textContent?.trim() || '';
         const municipalityName = selectedMunicipality || assignedMunicipalityName || '';
         const parts = [trimmed];
+        const existingParts = new Set(trimmed.split(',').map(normalizeSearchText));
 
-        if (municipalityName) {
-            parts.push(municipalityName);
-        }
+        const appendContextPart = (part) => {
+            const value = String(part || '').trim();
+            const normalizedValue = normalizeSearchText(value);
+            if (!normalizedValue || existingParts.has(normalizedValue)) return;
+            existingParts.add(normalizedValue);
+            parts.push(value);
+        };
 
-        parts.push(getSearchSuffix());
+        appendContextPart(municipalityName);
+        getSearchSuffix().split(',').forEach(appendContextPart);
 
         return parts.filter(Boolean).join(', ');
     }
@@ -1428,8 +1434,7 @@
         }
 
         if (result.type === 'barangay') {
-            const barangayContext = `Barangay ${result.name}, ${result.municipalityName || selectedMunicipality}, Pangasinan, Philippines`;
-            const geocoded = await geocodeLocationQuery(barangayContext);
+            const geocoded = await geocodeLocationQuery(`Barangay ${result.name}`);
             if (geocoded?.geometry?.location) {
                 const lat = geocoded.geometry.location.lat();
                 const lng = geocoded.geometry.location.lng();
