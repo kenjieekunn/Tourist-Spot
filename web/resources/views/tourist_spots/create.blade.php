@@ -424,7 +424,10 @@
     const districtMapContext = @json($districtMapContext);
     const assignedMunicipalityName = @json($assignedMunicipality?->name);
     const localPlaces = Array.isArray(districtMapContext?.localPlaces) ? districtMapContext.localPlaces : [];
-    const barangays = districtMapContext?.barangays || {};
+    const barangays = { ...(districtMapContext?.barangays || {}) };
+    const loadedBarangayMunicipalities = new Set();
+    const barangayLoadRequests = new Map();
+    let locationSearchRequestId = 0;
     const facilityColors = {
         dining: '#ff6b35',
         gas_station: '#0d6efd',
@@ -521,6 +524,51 @@
                 municipalityName,
             }));
         });
+    }
+
+    function loadBarangaysForMunicipality(municipalityName) {
+        const key = normalizeSearchText(municipalityName);
+        const municipality = Object.keys(districtMapContext?.barangayApiCodes || {}).find((name) => normalizeSearchText(name) === key);
+        if (!municipality || loadedBarangayMunicipalities.has(key)) {
+            return Promise.resolve();
+        }
+
+        if (barangayLoadRequests.has(key)) {
+            return barangayLoadRequests.get(key);
+        }
+
+        const code = districtMapContext.barangayApiCodes[municipality];
+        barangays[municipality] = [];
+        const request = fetch(`https://psgc.gitlab.io/api/cities-municipalities/${encodeURIComponent(code)}/barangays/`)
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error('Barangay list could not be loaded.');
+                }
+                return response.json();
+            })
+            .then((results) => {
+                if (!Array.isArray(results)) {
+                    throw new Error('Invalid barangay list.');
+                }
+                barangays[municipality] = results.map((item) => item.name).filter(Boolean);
+                loadedBarangayMunicipalities.add(key);
+            })
+            .catch((error) => {
+                console.warn('Unable to load the official barangay list:', error);
+            })
+            .finally(() => barangayLoadRequests.delete(key));
+
+        barangayLoadRequests.set(key, request);
+        return request;
+    }
+
+    function loadSelectedMunicipalityBarangays() {
+        const selectedMunicipality = getSelectedMunicipalityName();
+        if (selectedMunicipality) {
+            return loadBarangaysForMunicipality(selectedMunicipality);
+        }
+
+        return Promise.all(Object.keys(districtMapContext?.barangayApiCodes || {}).map(loadBarangaysForMunicipality));
     }
 
     function geocodeLocationQuery(query) {
@@ -1189,9 +1237,16 @@
         } : null;
     }
 
-    function searchLocationAPI(query) {
+    async function searchLocationAPI(query) {
         const normalizedQuery = query.trim();
         if (normalizedQuery.length < 1) return;
+
+        const requestId = ++locationSearchRequestId;
+        await loadSelectedMunicipalityBarangays();
+        if (requestId !== locationSearchRequestId
+            || document.getElementById('location-search')?.value.trim() !== normalizedQuery) {
+            return;
+        }
 
         const exactBarangay = getExactBarangayResult(normalizedQuery);
         if (exactBarangay) {
@@ -1203,6 +1258,10 @@
             Promise.resolve(buildLocalSuggestions(normalizedQuery)),
             searchGoogleSuggestions(normalizedQuery)
         ]).then(([localResults, googleResults]) => {
+            if (requestId !== locationSearchRequestId) {
+                return;
+            }
+
             const primaryResults = dedupeSuggestions([
                 ...localResults,
                 ...googleResults
@@ -1217,12 +1276,20 @@
             }
 
             return geocodeSearchSuggestion(normalizedQuery).then((geocodedResult) => {
+                if (requestId !== locationSearchRequestId) {
+                    return;
+                }
+
                 if (geocodedResult) {
                     displaySuggestions(dedupeSuggestions([...localResults, geocodedResult]).slice(0, 10));
                     return;
                 }
 
                 return searchNominatimSuggestions(normalizedQuery).then((nominatimResults) => {
+                if (requestId !== locationSearchRequestId) {
+                    return;
+                }
+
                 const combined = dedupeSuggestions([...localResults, ...nominatimResults]);
                 combined.sort((a, b) => scoreSuggestion(b, normalizeSearchText(normalizedQuery), tokens) - scoreSuggestion(a, normalizeSearchText(normalizedQuery), tokens));
                 if (combined.length > 0) {
@@ -1234,6 +1301,10 @@
                 });
             });
         }).catch((error) => {
+            if (requestId !== locationSearchRequestId) {
+                return;
+            }
+
             console.error('Search error:', error);
             displaySuggestions(buildLocalSuggestions(normalizedQuery));
         });
@@ -1441,6 +1512,8 @@
         const nameInput = document.getElementById('name');
         const form = document.getElementById('tourist-spot-form');
         const municipalitySelect = document.getElementById('municipality_id');
+
+        loadSelectedMunicipalityBarangays();
         
         searchInput.addEventListener('input', function(e) {
             clearTimeout(searchTimeout);

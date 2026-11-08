@@ -944,6 +944,16 @@ class TouristSpotController extends Controller
             'municipalities' => $municipalityNames,
             'municipalityPoints' => $visibleMunicipalities,
             'barangays' => $visibleBarangays,
+            'barangayApiCodes' => [
+                'Aguilar' => '015502000',
+                'Basista' => '015509000',
+                'Binmaley' => '015513000',
+                'Bugallon' => '015515000',
+                'Labrador' => '015521000',
+                'Lingayen' => '015522000',
+                'Mangatarem' => '015527000',
+                'Urbiztondo' => '015545000',
+            ],
             'boundary' => $selectedMunicipality ? ($boundaries[$selectedMunicipality->name] ?? null) : null,
             'localPlaces' => $localPlaces,
             'bounds' => [
