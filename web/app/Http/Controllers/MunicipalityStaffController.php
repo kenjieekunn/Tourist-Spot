@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AdminTempCredential;
+use App\Models\StaffLoginEvent;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -192,6 +193,33 @@ class MunicipalityStaffController extends Controller
             'name' => $staff->name,
             'email' => $staff->email,
             'password' => decrypt($credential->password),
+        ]);
+    }
+
+    public function activity(User $staff)
+    {
+        $admin = $this->currentAdmin();
+        $this->ensureStaffBelongsToAdmin($staff, $admin);
+
+        $loginHistory = Schema::hasTable('staff_login_events')
+            ? StaffLoginEvent::query()
+                ->where('user_id', $staff->id)
+                ->latest('logged_in_at')
+                ->limit(20)
+                ->get()
+                ->map(fn (StaffLoginEvent $event) => [
+                    'logged_in_at' => $event->logged_in_at->format('M j, Y g:i A'),
+                ])
+                ->values()
+            : collect();
+
+        return response()->json([
+            'name' => $staff->name,
+            'email' => $staff->email,
+            'is_active' => $staff->is_active,
+            'created_at' => $staff->created_at?->format('M j, Y g:i A'),
+            'last_login_at' => $staff->last_login_at?->format('M j, Y g:i A'),
+            'login_history' => $loginHistory,
         ]);
     }
 

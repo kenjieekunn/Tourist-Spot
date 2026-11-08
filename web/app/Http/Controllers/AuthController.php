@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Models\StaffLoginEvent;
 use App\Models\User;
 use App\Models\AdminTempCredential;
 use Illuminate\Support\Facades\Hash;
@@ -65,6 +66,19 @@ class AuthController extends Controller
                 $user->forceFill(['last_login_at' => now()])->save();
             }
             Auth::login($user);
+            if ($user->isMunicipalityStaff()) {
+                try {
+                    StaffLoginEvent::create([
+                        'user_id' => $user->id,
+                        'logged_in_at' => now(),
+                    ]);
+                } catch (QueryException $exception) {
+                    \Log::warning('Staff login activity could not be recorded.', [
+                        'user_id' => $user->id,
+                        'message' => $exception->getMessage(),
+                    ]);
+                }
+            }
             \Log::info('Login successful', [
                 'login' => $loginValue,
                 'user_id' => Auth::id(),

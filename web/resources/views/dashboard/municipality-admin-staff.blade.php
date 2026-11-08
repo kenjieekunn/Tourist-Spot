@@ -31,6 +31,7 @@
                             @if($hasTemporaryCredential)
                                 <button type="button" class="btn btn-sm btn-outline-success me-1" data-bs-toggle="modal" data-bs-target="#staffCredentialsModal" data-credentials-url="{{ route('municipality-admin.staff.credentials', $member) }}" aria-label="View temporary credentials for {{ $member->name }}" title="View temporary credentials"><i class="fas fa-key" aria-hidden="true"></i></button>
                             @endif
+                            <button type="button" class="btn btn-sm btn-outline-primary me-1" data-bs-toggle="modal" data-bs-target="#staffActivityModal" data-activity-url="{{ route('municipality-admin.staff.activity', $member) }}" data-staff-name="{{ $member->name }}" aria-label="View activity for {{ $member->name }}" title="View staff activity"><i class="fas fa-clock-rotate-left" aria-hidden="true"></i></button>
                             <form action="{{ route('municipality-admin.staff.destroy', $member) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete the staff account for {{ addslashes($member->name) }}? This cannot be undone.');">
                                 @csrf
                                 @method('DELETE')
@@ -61,6 +62,31 @@
                 <div><label for="staffCredentialPassword" class="form-label">Temporary password</label><div class="input-group"><input class="form-control" id="staffCredentialPassword" readonly autocomplete="off"><button class="btn btn-success" type="button" data-copy-staff-credential aria-label="Copy temporary password"><i class="fas fa-copy" aria-hidden="true"></i></button></div></div>
             </div>
             <div class="modal-footer"><button type="button" class="btn btn-success" data-bs-dismiss="modal">Close</button></div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="staffActivityModal" tabindex="-1" aria-labelledby="staffActivityModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="staffActivityModalLabel">Staff Activity</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger py-2" data-staff-activity-error role="alert" hidden></div>
+                <dl class="row mb-3">
+                    <dt class="col-5">Login</dt><dd class="col-7 mb-2" data-staff-activity-email>Loading...</dd>
+                    <dt class="col-5">Status</dt><dd class="col-7 mb-2" data-staff-activity-status>Loading...</dd>
+                    <dt class="col-5">Account created</dt><dd class="col-7 mb-2" data-staff-activity-created>Loading...</dd>
+                    <dt class="col-5">Last login</dt><dd class="col-7 mb-0" data-staff-activity-last-login>Loading...</dd>
+                </dl>
+                <h6 class="border-top pt-3">Recent login history</h6>
+                <ol class="list-group list-group-flush" data-staff-login-history>
+                    <li class="list-group-item px-0 text-muted">Loading login history...</li>
+                </ol>
+            </div>
+            <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button></div>
         </div>
     </div>
 </div>
@@ -149,6 +175,57 @@
                 document.getElementById('staffCredentialPassword').value = '';
                 credentialsError.textContent = error.message || 'Unable to load temporary credentials.';
                 credentialsError.hidden = false;
+            }
+        });
+
+        const activityModal = document.getElementById('staffActivityModal');
+        const activityError = activityModal?.querySelector('[data-staff-activity-error]');
+        const activityHistory = activityModal?.querySelector('[data-staff-login-history]');
+        activityModal?.addEventListener('show.bs.modal', async function (event) {
+            const trigger = event.relatedTarget;
+            if (!trigger) return;
+
+            activityError.hidden = true;
+            activityModal.querySelector('[data-staff-activity-email]').textContent = 'Loading...';
+            activityModal.querySelector('[data-staff-activity-status]').textContent = 'Loading...';
+            activityModal.querySelector('[data-staff-activity-created]').textContent = 'Loading...';
+            activityModal.querySelector('[data-staff-activity-last-login]').textContent = 'Loading...';
+            activityHistory.replaceChildren();
+            const loadingItem = document.createElement('li');
+            loadingItem.className = 'list-group-item px-0 text-muted';
+            loadingItem.textContent = 'Loading login history...';
+            activityHistory.appendChild(loadingItem);
+            activityModal.querySelector('.modal-title').textContent = `Staff Activity: ${trigger.dataset.staffName}`;
+
+            try {
+                const response = await fetch(trigger.dataset.activityUrl, { headers: { Accept: 'application/json' } });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.message || 'Unable to load staff activity.');
+
+                activityModal.querySelector('[data-staff-activity-email]').textContent = result.email || 'Not available';
+                activityModal.querySelector('[data-staff-activity-status]').textContent = result.is_active ? 'Active' : 'Inactive';
+                activityModal.querySelector('[data-staff-activity-created]').textContent = result.created_at || 'Not available';
+                activityModal.querySelector('[data-staff-activity-last-login]').textContent = result.last_login_at || 'No successful login recorded';
+                activityHistory.replaceChildren();
+
+                if (!result.login_history?.length) {
+                    const emptyItem = document.createElement('li');
+                    emptyItem.className = 'list-group-item px-0 text-muted';
+                    emptyItem.textContent = 'No login history recorded yet.';
+                    activityHistory.appendChild(emptyItem);
+                    return;
+                }
+
+                result.login_history.forEach((entry) => {
+                    const item = document.createElement('li');
+                    item.className = 'list-group-item px-0';
+                    item.textContent = entry.logged_in_at;
+                    activityHistory.appendChild(item);
+                });
+            } catch (error) {
+                activityHistory.replaceChildren();
+                activityError.textContent = error.message || 'Unable to load staff activity.';
+                activityError.hidden = false;
             }
         });
 
