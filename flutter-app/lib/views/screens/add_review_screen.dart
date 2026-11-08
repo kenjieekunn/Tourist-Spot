@@ -68,6 +68,7 @@ class _AddReviewScreenState extends ConsumerState<AddReviewScreen> {
         });
       }
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error picking image: $e')),
       );
@@ -85,6 +86,7 @@ class _AddReviewScreenState extends ConsumerState<AddReviewScreen> {
         setState(() => _selectedVideo = pickedFile.path);
       }
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error picking video: $e')),
       );

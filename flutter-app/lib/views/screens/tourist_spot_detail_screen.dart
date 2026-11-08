@@ -59,6 +59,7 @@ class _TouristSpotDetailScreenState
     _isSaved = widget.spot.isFavorited;
     _scrollController = ScrollController();
     _scrollController.addListener(_handleScroll);
+    _initLocationTracking();
   }
 
   @override
@@ -452,6 +453,11 @@ class _TouristSpotDetailScreenState
             child: _buildContactInfo(),
           ),
 
+          // Location and navigation
+          SliverToBoxAdapter(
+            child: _buildMapSection(),
+          ),
+
           // Nearby Facilities
           SliverToBoxAdapter(
             child: _buildNearbyFacilities(),
@@ -560,7 +566,7 @@ class _TouristSpotDetailScreenState
               child: Container(
                 padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.65),
+                  color: Colors.black.withValues(alpha: 0.65),
                   borderRadius: BorderRadius.circular(16.r),
                 ),
                 child: Text(
@@ -1342,7 +1348,7 @@ class _TouristSpotDetailScreenState
                     width: 34.w,
                     height: 34.w,
                     decoration: BoxDecoration(
-                      color: color.withOpacity(0.12),
+                      color: color.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(10.r),
                     ),
                     child: Icon(icon, size: 18.sp, color: color),

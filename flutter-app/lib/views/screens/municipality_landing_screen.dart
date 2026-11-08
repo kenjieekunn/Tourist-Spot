@@ -87,7 +87,7 @@ class _MunicipalityLandingScreenState
             child: Container(
               padding: EdgeInsets.all(16.w),
               decoration: BoxDecoration(
-                color: Colors.orange.withOpacity(0.1),
+                color: Colors.orange.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12.r),
                 border: Border.all(
                   color: Colors.orange,
@@ -316,7 +316,7 @@ class _MunicipalityLandingScreenState
                   Text(
                     'Eight municipalities. A hundred ways to explore.',
                     style: GoogleFonts.roboto(
-                      color: Colors.white.withOpacity(0.88),
+                      color: Colors.white.withValues(alpha: 0.88),
                       fontSize: 13.sp,
                     ),
                   ),
@@ -357,7 +357,7 @@ class _MunicipalityLandingScreenState
         border: Border.all(color: const Color(0xFFE1EBE6)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -493,7 +493,7 @@ class _MunicipalityLandingScreenState
                   end: Alignment.bottomCenter,
                   colors: [
                     Colors.transparent,
-                    Colors.black.withOpacity(0.7),
+                    Colors.black.withValues(alpha: 0.7),
                   ],
                 ),
               ),

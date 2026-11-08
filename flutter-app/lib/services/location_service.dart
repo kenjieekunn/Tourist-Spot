@@ -1,8 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 
 class LocationService {
-  static const String TAG = 'LocationService';
-
   /// Request location permissions and return the status
   static Future<bool> requestLocationPermission() async {
     try {
@@ -16,7 +15,7 @@ class LocationService {
 
       return true;
     } catch (e) {
-      print('Error requesting location permission: $e');
+      debugPrint('Error requesting location permission: $e');
       return false;
     }
   }
@@ -28,7 +27,7 @@ class LocationService {
       return status == LocationPermission.whileInUse ||
           status == LocationPermission.always;
     } catch (e) {
-      print('Error checking location permission: $e');
+      debugPrint('Error checking location permission: $e');
       return false;
     }
   }
@@ -39,7 +38,7 @@ class LocationService {
       // Check if location services are enabled
       final isServiceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!isServiceEnabled) {
-        print('Location services are disabled.');
+        debugPrint('Location services are disabled.');
         return null;
       }
 
@@ -48,7 +47,7 @@ class LocationService {
       if (!hasPermission) {
         final granted = await requestLocationPermission();
         if (!granted) {
-          print('Location permission denied.');
+          debugPrint('Location permission denied.');
           return null;
         }
       }
@@ -60,7 +59,7 @@ class LocationService {
 
       return position;
     } catch (e) {
-      print('Error getting current position: $e');
+      debugPrint('Error getting current position: $e');
       return null;
     }
   }

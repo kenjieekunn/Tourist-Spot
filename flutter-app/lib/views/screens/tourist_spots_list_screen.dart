@@ -147,7 +147,7 @@ class _TouristSpotsListScreenState
           child: Container(
             padding: EdgeInsets.all(16.w),
             decoration: BoxDecoration(
-              color: Colors.red.withOpacity(0.1),
+              color: Colors.red.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12.r),
               border: Border.all(color: Colors.red, width: 1.5),
             ),
@@ -398,7 +398,7 @@ class _TouristSpotsListScreenState
         border: Border.all(color: const Color(0xFFFFD7C2)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -656,7 +656,7 @@ class _TouristSpotsListScreenState
                   end: Alignment.bottomCenter,
                   colors: [
                     Colors.transparent,
-                    Colors.black.withOpacity(0.7),
+                    Colors.black.withValues(alpha: 0.7),
                   ],
                 ),
               ),
@@ -781,7 +781,7 @@ class _TouristSpotsListScreenState
     final isLoading = _updatingFavorites.contains(spot.id);
 
     return Material(
-      color: Colors.black.withOpacity(0.18),
+      color: Colors.black.withValues(alpha: 0.18),
       shape: const CircleBorder(),
       child: InkWell(
         customBorder: const CircleBorder(),
@@ -833,7 +833,7 @@ class _TouristSpotsListScreenState
       ref.invalidate(
           touristSpotsByMunicipalityStreamProvider(widget.municipality.id));
 
-      if (!mounted) return;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -845,7 +845,7 @@ class _TouristSpotsListScreenState
         ),
       );
     } catch (e) {
-      if (!mounted) return;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(

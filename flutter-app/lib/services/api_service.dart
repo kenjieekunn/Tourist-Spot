@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tourist_spot_app/config/constants/api_constants.dart';
 import 'package:tourist_spot_app/models/municipality_model.dart';
@@ -37,7 +38,7 @@ class ApiService {
     _dio.interceptors.add(LogInterceptor(
       requestBody: true,
       responseBody: true,
-      logPrint: (obj) => print(obj),
+      logPrint: (obj) => debugPrint(obj.toString()),
     ));
   }
 
@@ -485,7 +486,7 @@ class ApiService {
           .toList();
     } catch (e) {
       // Return empty list if directions fail (fall back to direct route)
-      print('Failed to get directions: $e');
+      debugPrint('Failed to get directions: $e');
       return [];
     }
   }

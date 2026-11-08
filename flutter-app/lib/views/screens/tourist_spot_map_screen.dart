@@ -93,7 +93,7 @@ class _TouristSpotMapScreenState extends State<TouristSpotMapScreen> {
         _isLoading = false;
       });
     } catch (e) {
-      print('Error initializing map: $e');
+      debugPrint('Error initializing map: $e');
       if (!mounted) return;
       _setupMapElements();
       setState(() {
@@ -189,7 +189,7 @@ class _TouristSpotMapScreenState extends State<TouristSpotMapScreen> {
         _directions = directions;
       });
     } catch (e) {
-      print('Error fetching directions: $e');
+      debugPrint('Error fetching directions: $e');
       // Fall back to mock directions if API fails
       final mockDirections = _generateMockDirections();
       setState(() {
@@ -236,10 +236,11 @@ class _TouristSpotMapScreenState extends State<TouristSpotMapScreen> {
         mapType: MapType.google,
         coords: coords,
         title: widget.touristSpot.name,
-        description: widget.touristSpot.address ?? '',
+        description: widget.touristSpot.address,
       );
     } catch (e) {
-      print('Error launching maps: $e');
+      debugPrint('Error launching maps: $e');
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Could not launch maps: $e')),
       );
@@ -408,7 +409,7 @@ class _TouristSpotMapScreenState extends State<TouristSpotMapScreen> {
       ),
       style: OutlinedButton.styleFrom(
         foregroundColor: color,
-        side: BorderSide(color: color.withOpacity(0.35)),
+        side: BorderSide(color: color.withValues(alpha: 0.35)),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       ),
     );
@@ -517,7 +518,7 @@ class _TouristSpotMapScreenState extends State<TouristSpotMapScreen> {
                             borderRadius: BorderRadius.circular(8),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
+                                color: Colors.black.withValues(alpha: 0.1),
                                 blurRadius: 8,
                               ),
                             ],
@@ -573,7 +574,7 @@ class _TouristSpotMapScreenState extends State<TouristSpotMapScreen> {
                               borderRadius: BorderRadius.circular(8),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.1),
+                                  color: Colors.black.withValues(alpha: 0.1),
                                   blurRadius: 8,
                                 ),
                               ],
