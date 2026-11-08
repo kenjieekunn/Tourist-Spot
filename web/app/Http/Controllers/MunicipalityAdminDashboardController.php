@@ -86,6 +86,10 @@ class MunicipalityAdminDashboardController extends Controller
                     ->latest('created_at')
                     ->take(5)
                     ->get(),
+            'spotHistory' => TouristSpot::where('municipality_id', $municipality->id)
+                ->with('creator')
+                ->latest('created_at')
+                ->get(),
             'recentReviews' => Review::where('status', 'pending')
                 ->whereHas('touristSpot', function ($query) use ($municipality) {
                     $query->where('municipality_id', $municipality->id);
