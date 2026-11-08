@@ -3,12 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'dart:convert';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:tourist_spot_app/controllers/auth_providers.dart';
 import 'package:tourist_spot_app/models/municipality_model.dart';
-import 'package:tourist_spot_app/models/auth_user_model.dart';
 import 'package:tourist_spot_app/models/tourist_spot_model.dart';
 import 'package:tourist_spot_app/controllers/app_providers.dart';
 import 'package:tourist_spot_app/views/widgets/cached_image_widget.dart';
@@ -48,7 +44,6 @@ class _TouristSpotsListScreenState
   String _searchQuery = '';
   _SpotCategoryFilter _selectedCategory = _SpotCategoryFilter.all;
   bool _isMapView = false;
-  final Set<int> _updatingFavorites = <int>{};
 
   @override
   void dispose() {
@@ -58,7 +53,6 @@ class _TouristSpotsListScreenState
 
   @override
   Widget build(BuildContext context) {
-    final currentUser = ref.watch(authUserProvider);
     final spotsAsync = ref.watch(
       touristSpotsByMunicipalityStreamProvider(widget.municipality.id),
     );
@@ -99,8 +93,6 @@ class _TouristSpotsListScreenState
             spots,
             context,
             timeFormatter.format(now),
-            ref,
-            currentUser,
           ),
           loading: () => _buildLoadingState(),
           error: (error, stackTrace) => _buildErrorState(error, context, ref),
@@ -211,9 +203,9 @@ class _TouristSpotsListScreenState
     );
   }
 
-  Widget _buildSpotsList(List<TouristSpot> spots, BuildContext context,
-      String lastUpdated, WidgetRef ref, AuthUser? currentUser) {
-    final filteredSpots = _filterSpots(spots, currentUser);
+  Widget _buildSpotsList(
+      List<TouristSpot> spots, BuildContext context, String lastUpdated) {
+    final filteredSpots = _filterSpots(spots);
 
     if (spots.isEmpty) {
       return Center(
@@ -299,7 +291,7 @@ class _TouristSpotsListScreenState
                   SizedBox(height: 6.h),
                   Text(
                     _selectedCategory == _SpotCategoryFilter.favorites
-                        ? 'Use the heart button to save spots.'
+                        ? 'Open a spot and tap Save to add it to favorites.'
                         : 'Try a different keyword or choose another category from the dropdown.',
                     style: GoogleFonts.roboto(
                       fontSize: 12.sp,
@@ -562,8 +554,7 @@ class _TouristSpotsListScreenState
     }
   }
 
-  List<TouristSpot> _filterSpots(
-      List<TouristSpot> spots, AuthUser? currentUser) {
+  List<TouristSpot> _filterSpots(List<TouristSpot> spots) {
     final query = _searchQuery.trim().toLowerCase();
 
     return spots.where((spot) {
@@ -630,8 +621,12 @@ class _TouristSpotsListScreenState
 
   Widget _buildSpotCard(TouristSpot spot, BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        Navigator.of(context).pushNamed('/spot-detail', arguments: spot);
+      onTap: () async {
+        await Navigator.of(context).pushNamed('/spot-detail', arguments: spot);
+        if (!mounted) return;
+        ref.invalidate(
+            touristSpotsByMunicipalityStreamProvider(widget.municipality.id));
+        ref.invalidate(localFavoritesProvider);
       },
       child: Card(
         elevation: 4,
@@ -660,11 +655,6 @@ class _TouristSpotsListScreenState
                   ],
                 ),
               ),
-            ),
-            Positioned(
-              top: 8.h,
-              right: 8.w,
-              child: _buildFavoriteButton(spot, context),
             ),
             // Content
             Positioned(
@@ -775,114 +765,6 @@ class _TouristSpotsListScreenState
         ),
       ),
     );
-  }
-
-  Widget _buildFavoriteButton(TouristSpot spot, BuildContext context) {
-    final isLoading = _updatingFavorites.contains(spot.id);
-
-    return Material(
-      color: Colors.black.withValues(alpha: 0.18),
-      shape: const CircleBorder(),
-      child: InkWell(
-        customBorder: const CircleBorder(),
-        onTap: isLoading ? null : () => _handleFavoritePressed(spot, context),
-        child: Padding(
-          padding: EdgeInsets.all(8.w),
-          child: isLoading
-              ? SizedBox(
-                  width: 18.sp,
-                  height: 18.sp,
-                  child: const CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white)),
-                )
-              : Icon(
-                  spot.isFavorited ? Icons.favorite : Icons.favorite_border,
-                  color: spot.isFavorited ? Colors.red : Colors.white,
-                  size: 20.sp,
-                ),
-        ),
-      ),
-    );
-  }
-
-  Future<void> _handleFavoritePressed(
-      TouristSpot spot, BuildContext context) async {
-    await _toggleFavorite(spot, context);
-  }
-
-  Future<void> _toggleFavorite(TouristSpot spot, BuildContext context) async {
-    setState(() {
-      _updatingFavorites.add(spot.id);
-    });
-
-    try {
-      bool newFavoriteState = !spot.isFavorited;
-      final currentUser = ref.read(authUserProvider);
-
-      if (currentUser != null) {
-        final apiService = ref.read(apiServiceProvider);
-        await apiService.toggleSpotFavorite(spot.id);
-      } else {
-        await _toggleLocalFavorite(spot.id);
-      }
-
-      if (!mounted) return;
-
-      await Future.delayed(const Duration(milliseconds: 500));
-      ref.invalidate(
-          touristSpotsByMunicipalityStreamProvider(widget.municipality.id));
-
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            newFavoriteState ? 'Added to favorites' : 'Removed from favorites',
-            style: GoogleFonts.roboto(),
-          ),
-          backgroundColor: Colors.green,
-          duration: const Duration(seconds: 2),
-        ),
-      );
-    } catch (e) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Could not update favorite: $e',
-            style: GoogleFonts.roboto(),
-          ),
-          backgroundColor: Colors.red,
-          duration: const Duration(seconds: 2),
-        ),
-      );
-    } finally {
-      if (mounted) {
-        setState(() {
-          _updatingFavorites.remove(spot.id);
-        });
-      }
-    }
-  }
-
-  Future<void> _toggleLocalFavorite(int spotId) async {
-    final prefs = await SharedPreferences.getInstance();
-    final favoritesJson = prefs.getString('local_favorites') ?? '{}';
-    final favorites = Map<String, bool>.from(
-      (jsonDecode(favoritesJson) as Map).cast<String, bool>(),
-    );
-
-    final key = spotId.toString();
-    if (favorites.containsKey(key)) {
-      favorites.remove(key);
-    } else {
-      favorites[key] = true;
-    }
-
-    await prefs.setString('local_favorites', jsonEncode(favorites));
-
-    if (!mounted) return;
-    ref.invalidate(localFavoritesProvider);
   }
 
   Widget _buildSpotBadge(
