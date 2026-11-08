@@ -621,6 +621,8 @@ class TouristSpotController extends Controller
 
     public function destroy(Request $request, TouristSpot $touristSpot)
     {
+        $user = $request->user();
+        abort_unless($user && ($user->isSuperAdmin() || ($user->belongsToMunicipalityTeam() && $user->hasPermission('manage_spots'))), 403, 'You do not have permission to delete tourist spots.');
         $this->ensureSpotAccess($touristSpot);
 
         $deletedId = $touristSpot->id;

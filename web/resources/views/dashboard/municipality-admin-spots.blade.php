@@ -63,6 +63,9 @@
         color: inherit;
         text-decoration: none;
     }
+    .spot-card-container { position: relative; height: 100%; }
+    .spot-delete-form { position: absolute; top: .5rem; right: .5rem; z-index: 2; }
+    .spot-delete-button { width: 2.25rem; height: 2.25rem; padding: 0; }
     .spot-card-trigger {
         width: 100%;
         border: 0;
@@ -323,6 +326,7 @@
     <div class="row g-3">
         @foreach($spots as $spot)
             <div class="col-12 col-md-6 col-xl-4">
+                <div class="spot-card-container">
                 <button type="button" class="spot-card spot-card-trigger h-100 d-flex flex-column" data-spot-preview
                     data-spot-id="{{ $spot->id }}"
                     data-spot-revision-requested="{{ str_starts_with((string) ($spot->rejection_reason ?? ''), 'Revision requested:') ? 'true' : 'false' }}"
@@ -382,6 +386,15 @@
 
                     </div>
                 </button>
+                <form action="{{ route('tourist_spots.destroy', $spot) }}" method="POST" class="spot-delete-form" onsubmit="return confirm('Delete this tourist spot? This cannot be undone.');">
+                    @csrf
+                    @method('DELETE')
+                    <input type="hidden" name="return_to" value="{{ request()->fullUrl() }}">
+                    <button type="submit" class="btn btn-sm btn-outline-danger spot-delete-button" aria-label="Delete {{ $spot->name }}" title="Delete tourist spot">
+                        <i class="fas fa-trash-can" aria-hidden="true"></i>
+                    </button>
+                </form>
+                </div>
             </div>
         @endforeach
     </div>
