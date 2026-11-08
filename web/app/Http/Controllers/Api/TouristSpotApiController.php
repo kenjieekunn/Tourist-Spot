@@ -148,6 +148,7 @@ class TouristSpotApiController extends Controller
             }
 
             $validated = $request->validate([
+                'user_name' => 'required|string|min:2|max:255',
                 'rating' => 'required|integer|between:1,5',
                 'comment' => 'required|string|min:10',
             ]);
@@ -191,7 +192,7 @@ class TouristSpotApiController extends Controller
 
             $reviewData = [
                 'user_id' => $user->id,
-                'user_name' => $user->name,
+                'user_name' => trim($validated['user_name']),
                 'rating' => $validated['rating'],
                 'comment' => $validated['comment'],
                 'status' => 'approved',

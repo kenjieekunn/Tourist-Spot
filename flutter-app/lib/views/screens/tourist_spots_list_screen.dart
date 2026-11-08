@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:tourist_spot_app/models/municipality_model.dart';
 import 'package:tourist_spot_app/models/tourist_spot_model.dart';
 import 'package:tourist_spot_app/controllers/app_providers.dart';
@@ -43,7 +42,6 @@ class _TouristSpotsListScreenState
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   _SpotCategoryFilter _selectedCategory = _SpotCategoryFilter.all;
-  bool _isMapView = false;
 
   @override
   void dispose() {
@@ -255,8 +253,6 @@ class _TouristSpotsListScreenState
                   _buildSearchBar(),
                   SizedBox(height: 12.h),
                   _buildCategoryChips(),
-                  SizedBox(height: 10.h),
-                  _buildViewToggle(),
                   SizedBox(height: 12.h),
                   Text(
                     'Showing ${filteredSpots.length} of ${spots.length} spots',
@@ -332,8 +328,6 @@ class _TouristSpotsListScreenState
                 _buildSearchBar(),
                 SizedBox(height: 12.h),
                 _buildCategoryChips(),
-                SizedBox(height: 10.h),
-                _buildViewToggle(),
                 SizedBox(height: 12.h),
                 Text(
                   'Showing ${filteredSpots.length} of ${spots.length} spots',
@@ -346,30 +340,21 @@ class _TouristSpotsListScreenState
             ),
           ),
         ),
-        if (_isMapView)
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(12.w, 0, 12.w, 12.h),
-              child: _buildSpotsMap(filteredSpots),
+        SliverPadding(
+          padding: EdgeInsets.all(12.w),
+          sliver: SliverGrid(
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 12.w,
+              mainAxisSpacing: 12.w,
+              childAspectRatio: 0.75,
             ),
-          )
-        else
-          SliverPadding(
-            padding: EdgeInsets.all(12.w),
-            sliver: SliverGrid(
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 12.w,
-                mainAxisSpacing: 12.w,
-                childAspectRatio: 0.75,
-              ),
-              delegate: SliverChildBuilderDelegate(
-                (context, index) =>
-                    _buildSpotCard(filteredSpots[index], context),
-                childCount: filteredSpots.length,
-              ),
+            delegate: SliverChildBuilderDelegate(
+              (context, index) => _buildSpotCard(filteredSpots[index], context),
+              childCount: filteredSpots.length,
             ),
           ),
+        ),
       ],
     );
   }
@@ -470,88 +455,6 @@ class _TouristSpotsListScreenState
         }).toList(),
       ),
     );
-  }
-
-  Widget _buildViewToggle() {
-    return Align(
-      alignment: Alignment.centerRight,
-      child: SegmentedButton<bool>(
-        segments: const [
-          ButtonSegment(
-            value: false,
-            icon: Icon(Icons.grid_view),
-            label: Text('List'),
-          ),
-          ButtonSegment(
-            value: true,
-            icon: Icon(Icons.map_outlined),
-            label: Text('Map'),
-          ),
-        ],
-        selected: {_isMapView},
-        onSelectionChanged: (selection) {
-          setState(() => _isMapView = selection.first);
-        },
-      ),
-    );
-  }
-
-  Widget _buildSpotsMap(List<TouristSpot> spots) {
-    final firstSpot = spots.first;
-    final markers = spots.map((spot) {
-      return Marker(
-        markerId: MarkerId('spot-${spot.id}'),
-        position: LatLng(spot.latitude, spot.longitude),
-        icon:
-            BitmapDescriptor.defaultMarkerWithHue(_categoryHue(spot.category)),
-        infoWindow: InfoWindow(
-          title: spot.name,
-          snippet: spot.categoryLabel,
-          onTap: () =>
-              Navigator.of(context).pushNamed('/spot-detail', arguments: spot),
-        ),
-        onTap: () =>
-            Navigator.of(context).pushNamed('/spot-detail', arguments: spot),
-      );
-    }).toSet();
-
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(12.r),
-      child: SizedBox(
-        height: 500.h,
-        child: GoogleMap(
-          initialCameraPosition: CameraPosition(
-            target: LatLng(firstSpot.latitude, firstSpot.longitude),
-            zoom: spots.length == 1 ? 14 : 10,
-          ),
-          markers: markers,
-          myLocationButtonEnabled: false,
-          zoomControlsEnabled: true,
-        ),
-      ),
-    );
-  }
-
-  double _categoryHue(String? category) {
-    switch ((category ?? '').toLowerCase()) {
-      case 'beach':
-        return BitmapDescriptor.hueAzure;
-      case 'falls':
-      case 'waterfall':
-        return BitmapDescriptor.hueCyan;
-      case 'heritage':
-      case 'church':
-        return BitmapDescriptor.hueViolet;
-      case 'food':
-        return BitmapDescriptor.hueOrange;
-      case 'farm':
-      case 'nature':
-        return BitmapDescriptor.hueGreen;
-      case 'adventure':
-        return BitmapDescriptor.hueRose;
-      default:
-        return BitmapDescriptor.hueRed;
-    }
   }
 
   List<TouristSpot> _filterSpots(List<TouristSpot> spots) {

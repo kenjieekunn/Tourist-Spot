@@ -309,7 +309,7 @@ class _AddReviewScreenState extends ConsumerState<AddReviewScreen> {
               ),
               SizedBox(height: 24.h),
 
-              // Name Field (Read-only, auto-filled from auth)
+              // Name Field (pre-filled from auth, but editable for full name)
               Text(
                 'Your Name',
                 style: GoogleFonts.roboto(
@@ -320,12 +320,13 @@ class _AddReviewScreenState extends ConsumerState<AddReviewScreen> {
               SizedBox(height: 8.h),
               TextFormField(
                 controller: _nameController,
-                readOnly: true,
+                keyboardType: TextInputType.name,
+                textCapitalization: TextCapitalization.words,
                 decoration: InputDecoration(
-                  hintText: 'Your name',
+                  hintText: 'Enter your full name',
                   hintStyle: GoogleFonts.roboto(color: Colors.grey[400]),
                   filled: true,
-                  fillColor: Colors.grey[100],
+                  fillColor: Colors.white,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8.r),
                     borderSide: BorderSide.none,
@@ -334,18 +335,13 @@ class _AddReviewScreenState extends ConsumerState<AddReviewScreen> {
                     horizontal: 12.w,
                     vertical: 12.h,
                   ),
-                  suffixIcon: Padding(
-                    padding: EdgeInsets.only(right: 12.w),
-                    child: Icon(
-                      Icons.verified,
-                      color: Colors.green[600],
-                      size: 20.sp,
-                    ),
-                  ),
                 ),
                 validator: (value) {
-                  if (value?.isEmpty ?? true) {
-                    return 'Please sign in first';
+                  if (value?.trim().isEmpty ?? true) {
+                    return 'Please enter your name';
+                  }
+                  if (value!.trim().length < 2) {
+                    return 'Please enter your full name';
                   }
                   return null;
                 },
