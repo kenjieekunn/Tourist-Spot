@@ -838,14 +838,25 @@ class TouristSpotController extends Controller
     private function districtMapContext(?Municipality $selectedMunicipality = null): array
     {
         $municipalities = [
-            ['name' => 'Lingayen', 'latitude' => 16.0146, 'longitude' => 120.2327],
-            ['name' => 'Binmaley', 'latitude' => 15.9789, 'longitude' => 120.1835],
-            ['name' => 'Urbiztondo', 'latitude' => 16.0713, 'longitude' => 120.2189],
-            ['name' => 'Basista', 'latitude' => 15.8531, 'longitude' => 120.4031],
-            ['name' => 'Labrador', 'latitude' => 16.0045, 'longitude' => 120.2087],
-            ['name' => 'Bugallon', 'latitude' => 16.0574, 'longitude' => 120.1905],
-            ['name' => 'Mangatarem', 'latitude' => 15.9523, 'longitude' => 120.2348],
-            ['name' => 'Aguilar', 'latitude' => 15.9896, 'longitude' => 120.2553],
+            ['name' => 'Lingayen', 'latitude' => 16.0206363, 'longitude' => 120.2307093],
+            ['name' => 'Binmaley', 'latitude' => 16.028915, 'longitude' => 120.2684844],
+            ['name' => 'Urbiztondo', 'latitude' => 15.822391, 'longitude' => 120.3293751],
+            ['name' => 'Basista', 'latitude' => 15.853117, 'longitude' => 120.4031042],
+            ['name' => 'Labrador', 'latitude' => 16.025485, 'longitude' => 120.1462065],
+            ['name' => 'Bugallon', 'latitude' => 15.954067, 'longitude' => 120.2149613],
+            ['name' => 'Mangatarem', 'latitude' => 15.788535, 'longitude' => 120.2938639],
+            ['name' => 'Aguilar', 'latitude' => 15.889032, 'longitude' => 120.2384199],
+        ];
+
+        $municipalityBounds = [
+            'Lingayen' => ['north' => 16.14, 'south' => 15.92, 'east' => 120.33, 'west' => 120.12],
+            'Binmaley' => ['north' => 16.193, 'south' => 15.931, 'east' => 120.336, 'west' => 120.239],
+            'Urbiztondo' => ['north' => 15.878, 'south' => 15.735, 'east' => 120.424, 'west' => 120.281],
+            'Basista' => ['north' => 15.904, 'south' => 15.831, 'east' => 120.456, 'west' => 120.371],
+            'Labrador' => ['north' => 16.079, 'south' => 15.935, 'east' => 120.194, 'west' => 120.095],
+            'Bugallon' => ['north' => 16.011, 'south' => 15.797, 'east' => 120.260, 'west' => 120.088],
+            'Mangatarem' => ['north' => 15.858, 'south' => 15.608, 'east' => 120.386, 'west' => 120.135],
+            'Aguilar' => ['north' => 15.913, 'south' => 15.785, 'east' => 120.312, 'west' => 120.129],
         ];
 
         $barangays = [
@@ -885,9 +896,17 @@ class TouristSpotController extends Controller
         $visibleBarangays = $selectedMunicipality
             ? [$selectedMunicipality->name => ($barangays[$selectedMunicipality->name] ?? [])]
             : $barangays;
-        $latitudes = array_column($visibleMunicipalities, 'latitude');
-        $longitudes = array_column($visibleMunicipalities, 'longitude');
-        $padding = 0.06;
+        $visibleBounds = $selectedMunicipality
+            ? ($municipalityBounds[$selectedMunicipality->name] ?? null)
+            : null;
+        if (!$visibleBounds) {
+            $visibleBounds = [
+                'north' => max(array_column($municipalityBounds, 'north')),
+                'south' => min(array_column($municipalityBounds, 'south')),
+                'east' => max(array_column($municipalityBounds, 'east')),
+                'west' => min(array_column($municipalityBounds, 'west')),
+            ];
+        }
         $localPlaces = collect($visibleMunicipalities)->map(function (array $municipality) {
             return [
                 'name' => $municipality['name'],
@@ -956,15 +975,10 @@ class TouristSpotController extends Controller
             ],
             'boundary' => $selectedMunicipality ? ($boundaries[$selectedMunicipality->name] ?? null) : null,
             'localPlaces' => $localPlaces,
-            'bounds' => [
-                'north' => max($latitudes) + $padding,
-                'south' => min($latitudes) - $padding,
-                'east' => max($longitudes) + $padding,
-                'west' => min($longitudes) - $padding,
-            ],
+            'bounds' => $visibleBounds,
             'center' => [
-                'lat' => round(array_sum($latitudes) / count($latitudes), 6),
-                'lng' => round(array_sum($longitudes) / count($longitudes), 6),
+                'lat' => round(($visibleBounds['north'] + $visibleBounds['south']) / 2, 6),
+                'lng' => round(($visibleBounds['east'] + $visibleBounds['west']) / 2, 6),
             ],
             'searchSuffix' => $selectedMunicipality
                 ? $selectedMunicipality->name . ', Pangasinan, Philippines'
