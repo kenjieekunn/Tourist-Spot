@@ -25,9 +25,7 @@
     <div class="notification-panel">
         <div class="d-flex justify-content-between align-items-center mb-2"><strong>Notifications</strong></div>
         <a href="{{ route('super-admin.tourist-spots') }}" class="notification-item priority" data-notification="notifySpotSubmission" data-count="{{ $pendingVerificationSpots }}"><i class="fas fa-hourglass-half me-2"></i><strong>{{ $pendingVerificationSpots }}</strong> spot submission{{ $pendingVerificationSpots === 1 ? '' : 's' }} pending verification</a>
-        <a href="{{ route('reviews.index') }}" class="notification-item" data-notification="notifyTouristReview" data-count="{{ $pendingReviews }}"><i class="fas fa-star text-info me-2"></i><strong>{{ $pendingReviews }}</strong> new tourist review{{ $pendingReviews === 1 ? '' : 's' }} to review</a>
         <a href="{{ route('super-admin.tourist-spots') }}" class="notification-item" data-notification="notifyReportedSpot" data-count="0"><i class="fas fa-flag text-danger me-2"></i>No reported tourist spots</a>
-        <a href="{{ route('reviews.index') }}" class="notification-item" data-notification="notifyReportedReview" data-count="0"><i class="fas fa-comment-slash text-danger me-2"></i>No reported reviews</a>
         <div class="notification-empty" data-notification-empty>No new notifications</div>
     </div>
 </details>
