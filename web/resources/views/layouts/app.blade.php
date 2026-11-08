@@ -400,7 +400,7 @@
                             </button>
                             <strong class="super-admin-profile-name">{{ $currentUser->name ?: 'Provincial Tourism Office' }}</strong>
                             <div class="super-admin-profile-actions" id="superAdminProfileActions">
-                                @if($currentUser->isSuperAdmin() || $currentUser->isMunicipalityAdmin())
+                                @if($currentUser->isSuperAdmin())
                                     <button type="button" class="btn w-100 super-admin-profile-action" data-profile-close data-bs-toggle="modal" data-bs-target="#changeOwnPasswordModal" title="Change password"><i class="fas fa-key" aria-hidden="true"></i> Change Password</button>
                                 @endif
                                 <form action="{{ route('logout') }}" method="POST">
@@ -412,7 +412,7 @@
                     </div>
                 </div>
             </div>
-            @if($currentUser->isSuperAdmin() || $currentUser->isMunicipalityAdmin())
+            @if($currentUser->isSuperAdmin())
                 <div class="modal fade" id="changeOwnPasswordModal" tabindex="-1" aria-labelledby="changeOwnPasswordModalLabel" aria-hidden="true" data-open-on-load="{{ $errors->any() && old('_password_change') ? 'true' : 'false' }}">
                     <div class="modal-dialog modal-dialog-centered">
                         <div class="modal-content">
