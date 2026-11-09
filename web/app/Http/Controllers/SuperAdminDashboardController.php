@@ -62,7 +62,10 @@ class SuperAdminDashboardController extends Controller
                 'totalSpots' => TouristSpot::count(),
                 'totalMunicipalities' => Municipality::count(),
                 'totalReviews' => Review::count(),
-                'totalAdmins' => User::where('role', 'municipality-admin')->count(),
+                'totalAdmins' => User::where('role', 'municipality-admin')
+                    ->whereNotNull('municipality_id')
+                    ->whereNotIn('id', $this->archivedMunicipalityAdminIds())
+                    ->count(),
                 'pendingVerificationSpots' => $pendingTouristSpots->count(),
                 'pendingTouristSpots' => $pendingTouristSpots,
                 'municipalities' => $municipalityQuery->orderBy('name')->get(),
