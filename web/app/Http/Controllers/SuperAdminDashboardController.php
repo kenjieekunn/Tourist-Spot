@@ -540,6 +540,40 @@ class SuperAdminDashboardController extends Controller
         return back()->with('success', $message);
     }
 
+    public function archiveAdmin(User $admin)
+    {
+        abort_unless($admin->role === 'municipality-admin', 404);
+
+        try {
+            $alreadyArchived = ArchiveEntry::query()
+                ->where('record_type', 'municipality_admin')
+                ->where('source_id', $admin->id)
+                ->exists();
+            if ($alreadyArchived) {
+                return redirect()->route('super-admin.archive', ['type' => 'municipality_admin'])
+                    ->with('info', "Municipality admin '{$admin->name}' is already archived.");
+            }
+
+            $activityLog = AccountActivityTimeline::historyForUser($admin)->all();
+            $loginHistory = AccountActivityTimeline::forUser($admin, 'municipality_admin_login_events')->all();
+
+            DB::transaction(function () use ($admin, $activityLog, $loginHistory) {
+                $admin->update(['is_active' => false]);
+                ArchiveRecord::account($admin, 'municipality_admin', auth()->user(), [
+                    'activity_log' => $activityLog,
+                    'login_history' => $loginHistory,
+                ]);
+            });
+
+            return redirect()->route('super-admin.archive', ['type' => 'municipality_admin'])
+                ->with('success', "Municipality admin '{$admin->name}' was deactivated and archived.");
+        } catch (\Throwable $exception) {
+            Log::error('Super admin could not archive municipality admin: ' . $exception->getMessage());
+
+            return back()->with('error', 'Archive storage is not available. Run php artisan migrate --force, then try again.');
+        }
+    }
+
     /**
      * Delete a municipality admin account.
      */

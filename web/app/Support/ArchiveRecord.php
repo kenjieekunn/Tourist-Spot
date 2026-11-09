@@ -22,7 +22,7 @@ class ArchiveRecord
         );
     }
 
-    public static function account(User $account, string $recordType, ?User $actor): void
+    public static function account(User $account, string $recordType, ?User $actor, array $additionalData = []): void
     {
         $account->loadMissing('municipality');
 
@@ -31,7 +31,7 @@ class ArchiveRecord
             $account->id,
             $account->name,
             $account->municipality?->name,
-            $account->only([
+            array_merge($account->only([
                 'id',
                 'name',
                 'email',
@@ -43,7 +43,7 @@ class ArchiveRecord
                 'permissions',
                 'created_at',
                 'updated_at',
-            ]),
+            ]), $additionalData),
             $actor
         );
     }

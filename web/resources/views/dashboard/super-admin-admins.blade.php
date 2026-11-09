@@ -70,10 +70,10 @@
                         </td>
                         <td class="text-end">
                             <button type="button" class="btn btn-sm btn-outline-primary me-1" data-bs-toggle="modal" data-bs-target="#adminActivityModal" data-activity-url="{{ route('super-admin.admins.activity', $admin) }}" data-admin-name="{{ $admin->name }}" aria-label="View activity for {{ $admin->name }}" title="View admin activity"><i class="fas fa-clock-rotate-left" aria-hidden="true"></i></button>
-                            <form action="{{ route('super-admin.admins.destroy', $admin) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete the municipality admin account for {{ addslashes($admin->name) }}? This cannot be undone.');">
+                            <form action="{{ route('super-admin.admins.archive', $admin) }}" method="POST" class="d-inline" onsubmit="return confirm(@js('Archive ' . $admin->name . '? The account will be inactive and unable to sign in.'))">
                                 @csrf
-                                @method('DELETE')
-                                <button type="submit" class="btn btn-sm btn-outline-danger" aria-label="Delete {{ $admin->name }} account" title="Delete admin account"><i class="fas fa-trash-alt" aria-hidden="true"></i></button>
+                                @method('PATCH')
+                                <button type="submit" class="btn btn-sm btn-outline-secondary" aria-label="Archive {{ $admin->name }} account" title="Deactivate and archive account"><i class="fas fa-user-slash" aria-hidden="true"></i></button>
                             </form>
                         </td>
                     </tr>

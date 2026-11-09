@@ -39,6 +39,7 @@ Route::middleware(['auth', 'temporary-password', 'prevent.cache'])->group(functi
         Route::get('/archive', [SuperAdminDashboardController::class, 'archive'])->name('archive');
         Route::get('/admins', [SuperAdminDashboardController::class, 'admins'])->name('admins');
         Route::get('/admins/{admin}/activity', [SuperAdminDashboardController::class, 'adminActivity'])->name('admins.activity');
+        Route::patch('/admins/{admin}/archive', [SuperAdminDashboardController::class, 'archiveAdmin'])->name('admins.archive');
         Route::get('/admins/create', [SuperAdminDashboardController::class, 'createAdmin'])->name('admins.create');
         Route::post('/admins', [SuperAdminDashboardController::class, 'storeAdmin'])->name('admins.store');
         Route::delete('/admins/{admin}', [SuperAdminDashboardController::class, 'destroyAdmin'])->name('admins.destroy');

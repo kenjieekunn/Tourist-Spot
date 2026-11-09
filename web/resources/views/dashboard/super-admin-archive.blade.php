@@ -30,10 +30,12 @@
     @php
         $recordLabel = match ($archive->record_type) {
             'tourist_spot' => 'Deleted tourist spot',
-            'municipality_admin' => 'Municipality admin account',
+            'municipality_admin' => 'Archived municipality admin',
             'municipality_staff' => 'Staff account',
             default => 'Archived record',
         };
+        $activityLog = data_get($archive->data, 'activity_log', []);
+        $loginHistory = data_get($archive->data, 'login_history', []);
     @endphp
     <article class="border-bottom py-3">
         <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
@@ -56,9 +58,24 @@
                 @if($archive->record_type === 'tourist_spot' && data_get($archive->data, 'address'))
                     <div class="small mt-2">{{ data_get($archive->data, 'address') }}</div>
                 @endif
+                @if($archive->record_type === 'municipality_admin')
+                    <details class="small mt-2">
+                        <summary class="text-primary">Activity history ({{ count($activityLog) + count($loginHistory) }} records)</summary>
+                        @forelse($activityLog as $event)
+                            <div class="mt-2"><span class="text-muted">{{ data_get($event, 'occurred_at') }}</span> | {{ data_get($event, 'description') }}</div>
+                        @empty
+                            @if(count($loginHistory) === 0)
+                                <div class="text-muted mt-2">No account activity recorded.</div>
+                            @endif
+                        @endforelse
+                        @foreach($loginHistory as $event)
+                            <div class="mt-2"><span class="text-muted">{{ data_get($event, 'occurred_at') }}</span> | {{ data_get($event, 'description') }}</div>
+                        @endforeach
+                    </details>
+                @endif
             </div>
             <div class="small text-muted text-md-end">
-                <div>Deleted {{ optional($archive->archived_at)->format('M d, Y h:i A') }}</div>
+                <div>{{ $archive->record_type === 'tourist_spot' ? 'Deleted' : 'Archived' }} {{ optional($archive->archived_at)->format('M d, Y h:i A') }}</div>
                 @if($archive->archived_by_name)
                     <div>By {{ $archive->archived_by_name }}</div>
                 @endif
