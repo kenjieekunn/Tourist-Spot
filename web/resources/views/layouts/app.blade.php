@@ -376,6 +376,11 @@
                                 <i class="fas fa-star"></i> Reviews
                             </a>
                         @endif
+                        @if(auth()->user()->isMunicipalityAdmin())
+                            <a class="nav-link municipality-nav-link @if(Route::currentRouteName() == 'municipality-admin.archive') active @endif" href="{{ route('municipality-admin.archive') }}">
+                                <i class="fas fa-box-archive"></i> Archive
+                            </a>
+                        @endif
                         @if(auth()->user()->hasPermission('view_reports'))
                             <a class="nav-link municipality-nav-link reports-tab @if(Route::currentRouteName() == 'municipality-admin.reports') active @endif" href="{{ route('municipality-admin.reports') }}">
                                 <i class="fas fa-chart-column"></i> Reports

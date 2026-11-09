@@ -3,10 +3,13 @@
 namespace App\Http\Controllers;
 
 use Carbon\Carbon;
+use App\Models\ArchiveEntry;
 use App\Models\TouristSpot;
 use App\Models\Municipality;
 use App\Models\Review;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Notifications\DatabaseNotification;
 
@@ -282,6 +285,55 @@ class MunicipalityAdminDashboardController extends Controller
         return view('dashboard.municipality-admin-reviews', [
             'municipality' => $municipality,
             'reviews' => $reviews,
+        ]);
+    }
+
+    public function archive(Request $request)
+    {
+        $user = auth()->user();
+        abort_unless($user->isMunicipalityAdmin(), 403, 'Only municipality admins can view this archive.');
+
+        if (!$user->municipality_id || !$user->municipality) {
+            return redirect()->route('login.form')->with('error', 'Your municipality has not been assigned.');
+        }
+
+        $types = [
+            'all' => 'All archives',
+            'tourist_spot' => 'Deleted tourist spots',
+            'municipality_staff' => 'Deleted staff accounts',
+        ];
+        $type = (string) $request->query('type', 'all');
+        if (!array_key_exists($type, $types)) {
+            $type = 'all';
+        }
+
+        $archiveUnavailable = false;
+        try {
+            $archives = ArchiveEntry::query()
+                ->whereIn('record_type', ['tourist_spot', 'municipality_staff'])
+                ->where('data->municipality_id', (int) $user->municipality_id)
+                ->when($type !== 'all', fn ($query) => $query->where('record_type', $type))
+                ->orderByDesc('archived_at')
+                ->paginate(25)
+                ->withQueryString();
+        } catch (\Throwable $exception) {
+            Log::error('Municipality archive view error: ' . $exception->getMessage());
+            $archiveUnavailable = true;
+            $archives = new LengthAwarePaginator(
+                collect(),
+                0,
+                25,
+                LengthAwarePaginator::resolveCurrentPage(),
+                ['path' => $request->url(), 'query' => $request->query()]
+            );
+        }
+
+        return view('dashboard.municipality-admin-archive', [
+            'archives' => $archives,
+            'archiveTypes' => $types,
+            'selectedType' => $type,
+            'archiveUnavailable' => $archiveUnavailable,
+            'municipality' => $user->municipality,
         ]);
     }
 

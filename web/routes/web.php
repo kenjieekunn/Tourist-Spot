@@ -56,6 +56,7 @@ Route::middleware(['auth', 'temporary-password', 'prevent.cache'])->group(functi
         Route::get('/tourist-spots', [MunicipalityAdminDashboardController::class, 'touristSpots'])->name('tourist-spots');
         Route::get('/reports', [MunicipalityAdminDashboardController::class, 'reports'])->name('reports');
         Route::get('/reviews', [MunicipalityAdminDashboardController::class, 'reviews'])->name('reviews');
+        Route::get('/archive', [MunicipalityAdminDashboardController::class, 'archive'])->name('archive');
         Route::get('/staff', [MunicipalityStaffController::class, 'index'])->name('staff');
         Route::get('/staff/{staff}/credentials', [MunicipalityStaffController::class, 'credentials'])->name('staff.credentials');
         Route::get('/staff/{staff}/activity', [MunicipalityStaffController::class, 'activity'])->name('staff.activity');
