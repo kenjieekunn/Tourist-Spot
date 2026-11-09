@@ -246,6 +246,7 @@ class SuperAdminDashboardController extends Controller
     {
         try {
             $admins = User::where('role', 'municipality-admin')
+                ->whereNotNull('municipality_id')
                 ->with(['municipality' => fn ($query) => $query->withCount(['touristSpots', 'staffAccounts'])])
                 ->orderBy('name')
                 ->get();
@@ -545,24 +546,37 @@ class SuperAdminDashboardController extends Controller
         abort_unless($admin->role === 'municipality-admin', 404);
 
         try {
-            $alreadyArchived = ArchiveEntry::query()
+            $archiveEntry = ArchiveEntry::query()
                 ->where('record_type', 'municipality_admin')
                 ->where('source_id', $admin->id)
-                ->exists();
-            if ($alreadyArchived) {
-                return redirect()->route('super-admin.archive', ['type' => 'municipality_admin'])
-                    ->with('info', "Municipality admin '{$admin->name}' is already archived.");
-            }
+                ->first();
+            $admin->loadMissing('municipality');
+            $municipalityName = $admin->municipality?->name;
 
             $activityLog = AccountActivityTimeline::historyForUser($admin)->all();
             $loginHistory = AccountActivityTimeline::forUser($admin, 'municipality_admin_login_events')->all();
 
-            DB::transaction(function () use ($admin, $activityLog, $loginHistory) {
-                $admin->update(['is_active' => false]);
-                ArchiveRecord::account($admin, 'municipality_admin', auth()->user(), [
+            DB::transaction(function () use ($admin, $archiveEntry, $municipalityName, $activityLog, $loginHistory) {
+                $snapshot = [
+                    'is_active' => false,
                     'activity_log' => $activityLog,
                     'login_history' => $loginHistory,
+                ];
+
+                if ($archiveEntry) {
+                    $archiveEntry->update([
+                        'municipality_name' => $archiveEntry->municipality_name ?? $municipalityName,
+                        'data' => array_merge($archiveEntry->data ?? [], $snapshot),
+                    ]);
+                } else {
+                    ArchiveRecord::account($admin, 'municipality_admin', auth()->user(), $snapshot);
+                }
+
+                $admin->update([
+                    'is_active' => false,
+                    'municipality_id' => null,
                 ]);
+                AdminTempCredential::where('user_id', $admin->id)->delete();
             });
 
             return redirect()->route('super-admin.archive', ['type' => 'municipality_admin'])
