@@ -8,8 +8,10 @@ use App\Models\Municipality;
 use App\Models\Review;
 use App\Models\User;
 use App\Models\AdminTempCredential;
+use App\Models\ArchiveEntry;
 use App\Notifications\SpotRevisionRequested;
 use App\Support\AccountActivityTimeline;
+use App\Support\ArchiveRecord;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
@@ -194,6 +196,32 @@ class SuperAdminDashboardController extends Controller
             Log::error('Super admin tourist spots view error: ' . $e->getMessage());
             return redirect()->route('super-admin.dashboard')->with('error', 'Error loading tourist spots. Please try again.');
         }
+    }
+
+    public function archive(Request $request)
+    {
+        $types = [
+            'all' => 'All archives',
+            'tourist_spot' => 'Deleted tourist spots',
+            'municipality_admin' => 'Municipality admins',
+            'municipality_staff' => 'Staff accounts',
+        ];
+        $type = (string) $request->query('type', 'all');
+        if (!array_key_exists($type, $types)) {
+            $type = 'all';
+        }
+
+        $archives = ArchiveEntry::query()
+            ->when($type !== 'all', fn ($query) => $query->where('record_type', $type))
+            ->orderByDesc('archived_at')
+            ->paginate(25)
+            ->withQueryString();
+
+        return view('dashboard.super-admin-archive', [
+            'archives' => $archives,
+            'archiveTypes' => $types,
+            'selectedType' => $type,
+        ]);
     }
 
     /**
@@ -505,6 +533,7 @@ class SuperAdminDashboardController extends Controller
         abort_unless($admin->role === 'municipality-admin', 404);
 
         DB::transaction(function () use ($admin) {
+            ArchiveRecord::account($admin, 'municipality_admin', auth()->user());
             AdminTempCredential::where('user_id', $admin->id)->delete();
             $admin->delete();
         });

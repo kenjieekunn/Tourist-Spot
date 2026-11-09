@@ -6,6 +6,7 @@ use App\Events\TouristSpotChanged;
 use App\Models\AccountActivityEvent;
 use App\Models\TouristSpot;
 use App\Models\Municipality;
+use App\Support\ArchiveRecord;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
@@ -625,9 +626,11 @@ class TouristSpotController extends Controller
         abort_unless($user && ($user->isSuperAdmin() || ($user->belongsToMunicipalityTeam() && $user->hasPermission('manage_spots'))), 403, 'You do not have permission to delete tourist spots.');
         $this->ensureSpotAccess($touristSpot);
 
-        $deletedId = $touristSpot->id;
-        AccountActivityEvent::recordFor(auth()->user(), 'tourist_spot.deleted', 'Deleted tourist spot: ' . $touristSpot->name);
-        $touristSpot->delete();
+        DB::transaction(function () use ($touristSpot, $user) {
+            ArchiveRecord::touristSpot($touristSpot, $user);
+            AccountActivityEvent::recordFor($user, 'tourist_spot.deleted', 'Deleted tourist spot: ' . $touristSpot->name);
+            $touristSpot->delete();
+        });
 // event(new TouristSpotChanged('deleted', ['id' => $deletedId])); // Disabled broadcasting to fix Pusher error
 
         $returnTo = $request->input('return_to');

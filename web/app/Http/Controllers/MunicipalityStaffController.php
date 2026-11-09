@@ -6,6 +6,7 @@ use App\Models\AdminTempCredential;
 use App\Models\AccountActivityEvent;
 use App\Models\User;
 use App\Support\AccountActivityTimeline;
+use App\Support\ArchiveRecord;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
@@ -181,7 +182,8 @@ class MunicipalityStaffController extends Controller
         $admin = $this->currentAdmin();
         $this->ensureStaffBelongsToAdmin($staff, $admin);
 
-        DB::transaction(function () use ($staff) {
+        DB::transaction(function () use ($staff, $admin) {
+            ArchiveRecord::account($staff, 'municipality_staff', $admin);
             AdminTempCredential::where('user_id', $staff->id)->delete();
             $staff->delete();
         });
