@@ -602,7 +602,7 @@ class SuperAdminDashboardController extends Controller
                 AdminTempCredential::where('user_id', $admin->id)->delete();
             });
 
-            return redirect()->route('super-admin.archive', ['type' => 'municipality_admin'])
+            return redirect()->route('super-admin.admins')
                 ->with('success', "Municipality admin '{$admin->name}' was deactivated and archived.");
         } catch (\Throwable $exception) {
             Log::error('Super admin could not archive municipality admin: ' . $exception->getMessage());
