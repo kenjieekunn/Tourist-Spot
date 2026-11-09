@@ -183,7 +183,6 @@ class MunicipalityStaffController extends Controller
 
         DB::transaction(function () use ($staff) {
             AdminTempCredential::where('user_id', $staff->id)->delete();
-            $staff->update(['is_active' => false]);
             $staff->delete();
         });
         AccountActivityEvent::recordFor($admin, 'staff.deleted', 'Deleted staff account: ' . $staff->name);

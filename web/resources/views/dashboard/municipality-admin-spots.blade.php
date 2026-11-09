@@ -386,12 +386,12 @@
 
                     </div>
                 </button>
-                <form action="{{ route('tourist_spots.destroy', $spot) }}" method="POST" class="spot-delete-form" onsubmit="return confirm('Archive this tourist spot?');">
+                <form action="{{ route('tourist_spots.destroy', $spot) }}" method="POST" class="spot-delete-form" onsubmit="return confirm('Delete this tourist spot? This cannot be undone.');">
                     @csrf
                     @method('DELETE')
                     <input type="hidden" name="return_to" value="{{ request()->fullUrl() }}">
-                    <button type="submit" class="btn btn-sm btn-outline-secondary spot-delete-button" aria-label="Archive {{ $spot->name }}" title="Archive tourist spot">
-                        <i class="fas fa-box-archive" aria-hidden="true"></i>
+                    <button type="submit" class="btn btn-sm btn-outline-danger spot-delete-button" aria-label="Delete {{ $spot->name }}" title="Delete tourist spot">
+                        <i class="fas fa-trash-can" aria-hidden="true"></i>
                     </button>
                 </form>
                 </div>
