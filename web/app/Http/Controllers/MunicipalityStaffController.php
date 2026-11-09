@@ -177,7 +177,7 @@ class MunicipalityStaffController extends Controller
         return back()->with('success', 'Staff account status updated.');
     }
 
-    public function destroy(User $staff)
+    public function archive(User $staff)
     {
         $admin = $this->currentAdmin();
         $this->ensureStaffBelongsToAdmin($staff, $admin);
@@ -189,7 +189,8 @@ class MunicipalityStaffController extends Controller
         });
         AccountActivityEvent::recordFor($admin, 'staff.deleted', 'Deleted staff account: ' . $staff->name);
 
-        return redirect()->route('municipality-admin.staff')->with('success', 'Staff account deleted successfully.');
+        return redirect()->route('municipality-admin.archive', ['type' => 'municipality_staff'])
+            ->with('success', 'Staff account archived successfully.');
     }
 
     public function credentials(User $staff)
