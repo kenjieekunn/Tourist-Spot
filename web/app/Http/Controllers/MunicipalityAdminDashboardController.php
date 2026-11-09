@@ -300,7 +300,7 @@ class MunicipalityAdminDashboardController extends Controller
         $types = [
             'all' => 'All archives',
             'tourist_spot' => 'Archive Tourist Spots',
-            'municipality_staff' => 'Deleted staff accounts',
+            'municipality_staff' => 'Archive Staff Accounts',
         ];
         $type = (string) $request->query('type', 'all');
         if (!array_key_exists($type, $types)) {
