@@ -21,6 +21,11 @@
     @endforeach
 </nav>
 
+@if($archiveUnavailable)
+    <div class="alert alert-warning" role="alert">
+        Archive storage is not available on this server yet. Run <code>php artisan migrate --force</code> from the Laravel app directory, then reload this page.
+    </div>
+@else
 @forelse($archives as $archive)
     @php
         $recordLabel = match ($archive->record_type) {
@@ -68,4 +73,5 @@
 @endforelse
 
 <div class="mt-3">{{ $archives->links() }}</div>
+@endif
 @endsection

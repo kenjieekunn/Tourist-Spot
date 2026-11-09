@@ -13,6 +13,7 @@ use App\Notifications\SpotRevisionRequested;
 use App\Support\AccountActivityTimeline;
 use App\Support\ArchiveRecord;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
@@ -211,16 +212,30 @@ class SuperAdminDashboardController extends Controller
             $type = 'all';
         }
 
-        $archives = ArchiveEntry::query()
-            ->when($type !== 'all', fn ($query) => $query->where('record_type', $type))
-            ->orderByDesc('archived_at')
-            ->paginate(25)
-            ->withQueryString();
+        $archiveUnavailable = false;
+        try {
+            $archives = ArchiveEntry::query()
+                ->when($type !== 'all', fn ($query) => $query->where('record_type', $type))
+                ->orderByDesc('archived_at')
+                ->paginate(25)
+                ->withQueryString();
+        } catch (\Throwable $exception) {
+            Log::error('Super admin archive view error: ' . $exception->getMessage());
+            $archiveUnavailable = true;
+            $archives = new LengthAwarePaginator(
+                collect(),
+                0,
+                25,
+                LengthAwarePaginator::resolveCurrentPage(),
+                ['path' => $request->url(), 'query' => $request->query()]
+            );
+        }
 
         return view('dashboard.super-admin-archive', [
             'archives' => $archives,
             'archiveTypes' => $types,
             'selectedType' => $type,
+            'archiveUnavailable' => $archiveUnavailable,
         ]);
     }
 
