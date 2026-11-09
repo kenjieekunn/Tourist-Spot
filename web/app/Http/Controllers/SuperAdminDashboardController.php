@@ -196,6 +196,39 @@ class SuperAdminDashboardController extends Controller
         }
     }
 
+    public function archive()
+    {
+        $archivedAccounts = User::onlyTrashed()
+            ->whereIn('role', ['municipality-admin', 'municipality-staff'])
+            ->with('municipality')
+            ->orderByDesc('deleted_at')
+            ->get();
+        $archivedSpots = TouristSpot::onlyTrashed()
+            ->with('municipality')
+            ->orderByDesc('deleted_at')
+            ->get();
+
+        return view('dashboard.super-admin-archive', compact('archivedAccounts', 'archivedSpots'));
+    }
+
+    public function restoreArchivedAccount(int $userId)
+    {
+        $account = User::onlyTrashed()
+            ->whereIn('role', ['municipality-admin', 'municipality-staff'])
+            ->findOrFail($userId);
+        $account->restore();
+
+        return back()->with('success', $account->name . ' was restored successfully.');
+    }
+
+    public function restoreArchivedSpot(int $spotId)
+    {
+        $spot = TouristSpot::onlyTrashed()->findOrFail($spotId);
+        $spot->restore();
+
+        return back()->with('success', $spot->name . ' was restored successfully.');
+    }
+
     /**
      * View all municipality admins
      */

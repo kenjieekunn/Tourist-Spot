@@ -6,6 +6,7 @@
         'dashboard' => 'Dashboard',
         'super-admin.dashboard' => 'Dashboard',
         'super-admin.tourist-spots' => 'All Tourist Spots',
+        'super-admin.archive' => 'Archive',
         'super-admin.reports' => 'Reports',
         'super-admin.admins' => 'Municipality Admins',
         'super-admin.admins.create' => 'Add Municipality Admin',
@@ -349,6 +350,9 @@
                         </a>
                         <a class="nav-link @if(Route::currentRouteName() == 'super-admin.tourist-spots') active @endif" href="{{ route('super-admin.tourist-spots') }}">
                             <i class="fas fa-map-location-dot"></i> All Tourist Spots
+                        </a>
+                        <a class="nav-link @if(Route::currentRouteName() == 'super-admin.archive') active @endif" href="{{ route('super-admin.archive') }}">
+                            <i class="fas fa-box-archive"></i> Archive
                         </a>
                         <a class="nav-link @if(Route::currentRouteName() == 'super-admin.reports') active @endif" href="{{ route('super-admin.reports') }}">
                             <i class="fas fa-chart-column"></i> Reports
