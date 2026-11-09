@@ -247,13 +247,14 @@ class SuperAdminDashboardController extends Controller
         try {
             $admins = User::where('role', 'municipality-admin')
                 ->whereNotNull('municipality_id')
+                ->whereNotIn('id', $this->archivedMunicipalityAdminIds())
                 ->with(['municipality' => fn ($query) => $query->withCount(['touristSpots', 'staffAccounts'])])
                 ->orderBy('name')
                 ->get();
 
             return view('dashboard.super-admin-admins', [
                 'admins' => $admins,
-                'availableMunicipalities' => Municipality::whereDoesntHave('admins')->orderBy('name')->get(),
+                'availableMunicipalities' => $this->availableMunicipalities(),
                 'selectedMunicipalityId' => (int) $request->query('municipality_id', 0),
             ]);
         } catch (\Exception $e) {
@@ -286,7 +287,7 @@ class SuperAdminDashboardController extends Controller
     public function createAdmin()
     {
         return view('dashboard.super-admin-admin-create', [
-            'municipalities' => Municipality::whereDoesntHave('admins')->orderBy('name')->get(),
+            'municipalities' => $this->availableMunicipalities(),
             'selectedMunicipalityId' => (int) request()->query('municipality_id', 0),
         ]);
     }
@@ -303,7 +304,9 @@ class SuperAdminDashboardController extends Controller
             'municipality_id' => [
                 'required',
                 'exists:municipalities,id',
-                Rule::unique('users', 'municipality_id')->where(fn ($query) => $query->where('role', 'municipality-admin')),
+                Rule::unique('users', 'municipality_id')->where(fn ($query) => $query
+                    ->where('role', 'municipality-admin')
+                    ->whereNotIn('id', $this->archivedMunicipalityAdminIds())),
             ],
             'max_staff_accounts' => ['required', 'integer', 'min:0', 'max:10000'],
         ];
@@ -519,6 +522,26 @@ class SuperAdminDashboardController extends Controller
         return collect($allowed)->mapWithKeys(fn ($permission) => [
             $permission => in_array($permission, $permissions, true),
         ])->all();
+    }
+
+    private function archivedMunicipalityAdminIds()
+    {
+        if (!Schema::hasTable('archive_entries')) {
+            return DB::table('users')->whereRaw('1 = 0')->select('id');
+        }
+
+        return DB::table('archive_entries')
+            ->where('record_type', 'municipality_admin')
+            ->whereNotNull('source_id')
+            ->select('source_id');
+    }
+
+    private function availableMunicipalities()
+    {
+        return Municipality::whereDoesntHave('admins', fn ($query) => $query
+            ->whereNotIn('id', $this->archivedMunicipalityAdminIds()))
+            ->orderBy('name')
+            ->get();
     }
 
     /**
