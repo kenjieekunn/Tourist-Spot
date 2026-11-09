@@ -22,15 +22,12 @@
             <tbody>
                 @forelse($staff as $member)
                     <tr>
-                        @php($hasTemporaryCredential = $temporaryCredentialIds->contains((int) $member->id))
                         <td><strong>{{ $member->name }}</strong></td>
                         <td>{{ $member->email }}</td>
                         <td>{{ collect($member->permissions ?? [])->filter()->keys()->map(fn ($permission) => \Illuminate\Support\Str::headline($permission))->join(', ') ?: 'None' }}</td>
                         <td><span class="badge {{ $member->is_active ? 'bg-success' : 'bg-danger' }}">{{ $member->is_active ? 'Active' : 'Inactive' }}</span></td>
                         <td class="text-end">
-                            @if($hasTemporaryCredential)
-                                <button type="button" class="btn btn-sm btn-outline-success me-1" data-bs-toggle="modal" data-bs-target="#staffCredentialsModal" data-credentials-url="{{ route('municipality-admin.staff.credentials', $member) }}" aria-label="View temporary credentials for {{ $member->name }}" title="View temporary credentials"><i class="fas fa-key" aria-hidden="true"></i></button>
-                            @endif
+                            <button type="button" class="btn btn-sm btn-outline-success me-1" data-bs-toggle="modal" data-bs-target="#staffCredentialsModal" data-credentials-url="{{ route('municipality-admin.staff.credentials', $member) }}" data-reset-url="{{ route('municipality-admin.staff.reset-password', $member) }}" aria-label="View or reset credentials for {{ $member->name }}" title="View or reset staff password"><i class="fas fa-key" aria-hidden="true"></i></button>
                             <button type="button" class="btn btn-sm btn-outline-primary me-1" data-bs-toggle="modal" data-bs-target="#staffActivityModal" data-activity-url="{{ route('municipality-admin.staff.activity', $member) }}" data-staff-name="{{ $member->name }}" aria-label="View activity for {{ $member->name }}" title="View staff activity"><i class="fas fa-clock-rotate-left" aria-hidden="true"></i></button>
                             <form action="{{ route('municipality-admin.staff.archive', $member) }}" method="POST" class="d-inline" onsubmit="return confirm(@js('Archive ' . $member->name . '? The account will be removed from Staff Accounts.'))">
                                 @csrf
@@ -57,11 +54,19 @@
             <div class="modal-body">
                 <div class="alert alert-warning"><i class="fas fa-triangle-exclamation me-1" aria-hidden="true"></i>Share these details securely. They are hidden after the staff member changes the temporary password.</div>
                 <div class="alert alert-danger py-2" data-staff-credentials-error role="alert" hidden></div>
+                <div class="alert alert-info py-2" data-staff-credentials-status role="status" hidden></div>
                 <div class="mb-3"><label for="staffCredentialName" class="form-label">Name</label><input class="form-control" id="staffCredentialName" readonly></div>
                 <div class="mb-3"><label for="staffCredentialEmail" class="form-label">Email</label><input class="form-control" id="staffCredentialEmail" readonly></div>
                 <div><label for="staffCredentialPassword" class="form-label">Temporary password</label><div class="input-group"><input class="form-control" id="staffCredentialPassword" readonly autocomplete="off"><button class="btn btn-success" type="button" data-copy-staff-credential aria-label="Copy temporary password"><i class="fas fa-copy" aria-hidden="true"></i></button></div></div>
             </div>
-            <div class="modal-footer"><button type="button" class="btn btn-success" data-bs-dismiss="modal">Close</button></div>
+            <div class="modal-footer justify-content-between">
+                <form method="POST" data-reset-staff-password-form>
+                    @csrf
+                    @method('PATCH')
+                    <button type="submit" class="btn btn-outline-warning" data-reset-staff-password><i class="fas fa-key me-1" aria-hidden="true"></i>Reset password</button>
+                </form>
+                <button type="button" class="btn btn-success" data-bs-dismiss="modal">Close</button>
+            </div>
         </div>
     </div>
 </div>
@@ -169,11 +174,18 @@
     document.addEventListener('DOMContentLoaded', function () {
         const staffCredentialsModal = document.getElementById('staffCredentialsModal');
         const credentialsError = staffCredentialsModal?.querySelector('[data-staff-credentials-error]');
+        const credentialsStatus = staffCredentialsModal?.querySelector('[data-staff-credentials-status]');
+        const resetPasswordForm = staffCredentialsModal?.querySelector('[data-reset-staff-password-form]');
+        const resetPasswordButton = staffCredentialsModal?.querySelector('[data-reset-staff-password]');
         staffCredentialsModal?.addEventListener('show.bs.modal', async function (event) {
             const trigger = event.relatedTarget;
             if (!trigger) return;
 
             credentialsError.hidden = true;
+            credentialsStatus.hidden = true;
+            resetPasswordForm.action = trigger.dataset.resetUrl;
+            resetPasswordButton.disabled = false;
+            resetPasswordButton.innerHTML = '<i class="fas fa-key me-1" aria-hidden="true"></i>Reset password';
             document.getElementById('staffCredentialName').value = '';
             document.getElementById('staffCredentialEmail').value = '';
             document.getElementById('staffCredentialPassword').value = 'Loading...';
@@ -183,11 +195,46 @@
                 if (!response.ok) throw new Error(result.message || 'Temporary credentials are no longer available.');
                 document.getElementById('staffCredentialName').value = result.name;
                 document.getElementById('staffCredentialEmail').value = result.email;
-                document.getElementById('staffCredentialPassword').value = result.password;
+                document.getElementById('staffCredentialPassword').value = result.password || '';
+                credentialsStatus.textContent = result.has_temporary_password
+                    ? 'A temporary password is available. Reset it here if needed.'
+                    : 'No temporary password is available. Reset the password to generate one.';
+                credentialsStatus.hidden = false;
             } catch (error) {
                 document.getElementById('staffCredentialPassword').value = '';
                 credentialsError.textContent = error.message || 'Unable to load temporary credentials.';
                 credentialsError.hidden = false;
+            }
+        });
+
+        resetPasswordForm?.addEventListener('submit', async function (event) {
+            event.preventDefault();
+            if (!confirm('Reset this staff account password? The staff member will need to change it after signing in.')) return;
+
+            credentialsError.hidden = true;
+            resetPasswordButton.disabled = true;
+            resetPasswordButton.innerHTML = '<span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>Resetting...';
+            try {
+                const response = await fetch(resetPasswordForm.action, {
+                    method: 'POST',
+                    headers: { Accept: 'application/json' },
+                    body: new FormData(resetPasswordForm),
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.message || 'Unable to reset the staff password.');
+
+                document.getElementById('staffCredentialName').value = result.name;
+                document.getElementById('staffCredentialEmail').value = result.email;
+                document.getElementById('staffCredentialPassword').value = result.password;
+                credentialsStatus.textContent = result.message;
+                credentialsStatus.className = 'alert alert-success py-2';
+                credentialsStatus.hidden = false;
+            } catch (error) {
+                credentialsError.textContent = error.message || 'Unable to reset the staff password.';
+                credentialsError.hidden = false;
+            } finally {
+                resetPasswordButton.disabled = false;
+                resetPasswordButton.innerHTML = '<i class="fas fa-key me-1" aria-hidden="true"></i>Reset password';
             }
         });
 

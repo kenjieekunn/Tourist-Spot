@@ -59,6 +59,7 @@ Route::middleware(['auth', 'temporary-password', 'prevent.cache'])->group(functi
         Route::get('/archive', [MunicipalityAdminDashboardController::class, 'archive'])->name('archive');
         Route::get('/staff', [MunicipalityStaffController::class, 'index'])->name('staff');
         Route::get('/staff/{staff}/credentials', [MunicipalityStaffController::class, 'credentials'])->name('staff.credentials');
+        Route::patch('/staff/{staff}/reset-password', [MunicipalityStaffController::class, 'resetPassword'])->name('staff.reset-password');
         Route::get('/staff/{staff}/activity', [MunicipalityStaffController::class, 'activity'])->name('staff.activity');
         Route::get('/staff/create', [MunicipalityStaffController::class, 'create'])->name('staff.create');
         Route::post('/staff', [MunicipalityStaffController::class, 'store'])->name('staff.store');

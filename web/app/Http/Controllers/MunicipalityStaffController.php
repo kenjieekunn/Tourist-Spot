@@ -32,13 +32,9 @@ class MunicipalityStaffController extends Controller
             ->with('municipality')
             ->orderBy('name')
             ->get();
-        $temporaryCredentialIds = AdminTempCredential::whereIn('user_id', $staff->modelKeys())
-            ->pluck('user_id')
-            ->map(fn ($id) => (int) $id);
 
         return view('dashboard.municipality-admin-staff', [
             'staff' => $staff,
-            'temporaryCredentialIds' => $temporaryCredentialIds,
             'permissions' => $this->availablePermissions($admin),
             'staffLimit' => $admin->max_staff_accounts,
         ]);
@@ -199,12 +195,36 @@ class MunicipalityStaffController extends Controller
         $this->ensureStaffBelongsToAdmin($staff, $admin);
 
         $credential = AdminTempCredential::where('user_id', $staff->id)->first();
-        abort_unless($credential, 404, 'Temporary credentials are no longer available.');
 
         return response()->json([
             'name' => $staff->name,
             'email' => $staff->email,
-            'password' => decrypt($credential->password),
+            'password' => $credential ? decrypt($credential->password) : null,
+            'has_temporary_password' => (bool) $credential,
+        ]);
+    }
+
+    public function resetPassword(User $staff)
+    {
+        $admin = $this->currentAdmin();
+        $this->ensureStaffBelongsToAdmin($staff, $admin);
+
+        $temporaryPassword = Str::random(32) . 'A!';
+        DB::transaction(function () use ($staff, $temporaryPassword) {
+            $staff->forceFill(['password' => Hash::make($temporaryPassword)])->save();
+            AdminTempCredential::updateOrCreate(
+                ['user_id' => $staff->id],
+                ['password' => encrypt($temporaryPassword)]
+            );
+        });
+        AccountActivityEvent::recordFor($admin, 'staff.password_reset', 'Reset the temporary password for staff account: ' . $staff->name);
+
+        return response()->json([
+            'name' => $staff->name,
+            'email' => $staff->email,
+            'password' => $temporaryPassword,
+            'has_temporary_password' => true,
+            'message' => 'Password reset. The staff member must change it after signing in.',
         ]);
     }
 
