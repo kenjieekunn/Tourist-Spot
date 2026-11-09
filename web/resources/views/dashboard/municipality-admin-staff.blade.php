@@ -32,10 +32,10 @@
                                 <button type="button" class="btn btn-sm btn-outline-success me-1" data-bs-toggle="modal" data-bs-target="#staffCredentialsModal" data-credentials-url="{{ route('municipality-admin.staff.credentials', $member) }}" aria-label="View temporary credentials for {{ $member->name }}" title="View temporary credentials"><i class="fas fa-key" aria-hidden="true"></i></button>
                             @endif
                             <button type="button" class="btn btn-sm btn-outline-primary me-1" data-bs-toggle="modal" data-bs-target="#staffActivityModal" data-activity-url="{{ route('municipality-admin.staff.activity', $member) }}" data-staff-name="{{ $member->name }}" aria-label="View activity for {{ $member->name }}" title="View staff activity"><i class="fas fa-clock-rotate-left" aria-hidden="true"></i></button>
-                            <form action="{{ route('municipality-admin.staff.destroy', $member) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete the staff account for {{ addslashes($member->name) }}? This cannot be undone.');">
+                            <form action="{{ route('municipality-admin.staff.destroy', $member) }}" method="POST" class="d-inline" onsubmit="return confirm('Archive the staff account for {{ addslashes($member->name) }}?');">
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit" class="btn btn-sm btn-outline-danger" aria-label="Delete {{ $member->name }}" title="Delete staff account"><i class="fas fa-trash-can" aria-hidden="true"></i></button>
+                                <button type="submit" class="btn btn-sm btn-outline-secondary" aria-label="Archive {{ $member->name }}" title="Archive staff account"><i class="fas fa-box-archive" aria-hidden="true"></i></button>
                             </form>
                         </td>
                     </tr>

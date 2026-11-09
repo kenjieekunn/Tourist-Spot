@@ -218,6 +218,21 @@ class SuperAdminDashboardController extends Controller
         }
     }
 
+    public function archives()
+    {
+        return view('dashboard.super-admin-archives', [
+            'archivedUsers' => User::onlyTrashed()
+                ->whereIn('role', ['municipality-admin', 'municipality-staff'])
+                ->with('municipality')
+                ->orderByDesc('deleted_at')
+                ->get(),
+            'archivedTouristSpots' => TouristSpot::onlyTrashed()
+                ->with('municipality')
+                ->orderByDesc('deleted_at')
+                ->get(),
+        ]);
+    }
+
     public function adminActivity(User $admin)
     {
         abort_unless($admin->isMunicipalityAdmin(), 404);
@@ -506,11 +521,12 @@ class SuperAdminDashboardController extends Controller
 
         DB::transaction(function () use ($admin) {
             AdminTempCredential::where('user_id', $admin->id)->delete();
+            $admin->update(['is_active' => false]);
             $admin->delete();
         });
 
-        return redirect()->route('super-admin.admins')
-            ->with('success', "Municipality admin '{$admin->name}' has been deleted.");
+        return redirect()->route('super-admin.archives')
+            ->with('success', "Municipality admin '{$admin->name}' has been archived.");
     }
 
     /**
