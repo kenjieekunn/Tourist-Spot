@@ -206,7 +206,7 @@ class SuperAdminDashboardController extends Controller
     {
         $types = [
             'all' => 'All archives',
-            'tourist_spot' => 'Deleted tourist spots',
+            'tourist_spot' => 'Archive Tourist Spots',
             'municipality_admin' => 'Municipality admins',
             'municipality_staff' => 'Staff accounts',
         ];
