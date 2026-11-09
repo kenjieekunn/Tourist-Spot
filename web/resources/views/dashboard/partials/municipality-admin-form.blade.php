@@ -8,7 +8,7 @@
     </div>
     <div class="col-md-6">
         <label for="{{ $formPrefix }}-login" class="form-label">Email/Username</label>
-        <input type="text" class="form-control @error('login') is-invalid @enderror" id="{{ $formPrefix }}-login" name="login" value="{{ old('login') }}" placeholder="admin@example.com or admin_username" required>
+        <input type="text" class="form-control @error('login') is-invalid @enderror" id="{{ $formPrefix }}-login" name="login" value="{{ old('login') }}" placeholder="Enter Username" required>
         @error('login')<div class="invalid-feedback">{{ $message }}</div>@enderror
     </div>
     <div class="col-md-6">
@@ -26,7 +26,6 @@
         @error('municipality_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
         @if($municipalityOptions->isEmpty())<div class="form-text text-warning">No duplicate municipality admin can be created.</div>@endif
     </div>
-    <div class="col-12"><div class="alert alert-info mb-0"><i class="fas fa-key me-2"></i>A secure temporary password will be generated automatically. The admin can change it after signing in.</div></div>
     <div class="col-md-6">
         <label for="{{ $formPrefix }}-max-staff" class="form-label">Maximum Staff Accounts</label>
         <input type="number" class="form-control @error('max_staff_accounts') is-invalid @enderror" id="{{ $formPrefix }}-max-staff" name="max_staff_accounts" value="{{ old('max_staff_accounts', 5) }}" min="0" max="10000" required>
