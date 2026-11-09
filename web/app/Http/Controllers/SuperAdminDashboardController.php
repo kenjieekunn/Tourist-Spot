@@ -208,7 +208,7 @@ class SuperAdminDashboardController extends Controller
             'all' => 'All archives',
             'tourist_spot' => 'Archive Tourist Spots',
             'municipality_admin' => 'Municipality admins',
-            'municipality_staff' => 'Staff accounts',
+            'municipality_staff' => 'Archive Staff Accounts',
         ];
         $type = (string) $request->query('type', 'all');
         if (!array_key_exists($type, $types)) {
